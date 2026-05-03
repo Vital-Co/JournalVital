@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planning</title>
+<link rel="stylesheet" href="../css/shared.css">
+  <link rel="icon" type="image/png" href="../favicon.png">
+<script src="../i18n/i18n.js"></script>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('vital_theme');
+      if (t && t !== 'light') {
+        document.documentElement.setAttribute('data-theme', t);
+      }
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="../css/journal_planning.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <a href="../index.html" class="btn-tools" data-i18n-title="common.back_to_tools_title" data-i18n="common.back_to_tools">Mes outils</a>
+      <div class="header-title-wrap">
+        <div class="header-title" data-i18n="planning.header_title">Planning de la semaine</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="lang-switcher" role="group" aria-label="Langue / Language">
+        <button type="button" class="lang-btn" data-lang="fr" title="Français">FR</button>
+        <button type="button" class="lang-btn" data-lang="eng" title="English">EN</button>
+        <button type="button" class="lang-btn" data-lang="es" title="Español">ES</button>
+      </div>
+      <div class="theme-switcher" role="group" data-i18n-aria-label="common.theme_chooser_aria">
+        <span class="theme-label" data-i18n="common.theme_chooser_label">Choisis ta couleur...</span>
+        <button type="button" class="theme-dot theme-dot-light" data-theme="light" data-i18n-aria-label="common.theme_light" data-i18n-title="common.theme_light"></button>
+        <button type="button" class="theme-dot theme-dot-green" data-theme="green" data-i18n-aria-label="common.theme_green" data-i18n-title="common.theme_green"></button>
+        <button type="button" class="theme-dot theme-dot-blue" data-theme="blue" data-i18n-aria-label="common.theme_blue" data-i18n-title="common.theme_blue"></button>
+        <button type="button" class="theme-dot theme-dot-orange" data-theme="orange" data-i18n-aria-label="common.theme_orange" data-i18n-title="common.theme_orange"></button>
+        <button type="button" class="theme-dot theme-dot-rose" data-theme="rose" data-i18n-aria-label="common.theme_rose" data-i18n-title="common.theme_rose"></button>
+        <button type="button" class="theme-dot theme-dot-dark" data-theme="dark" data-i18n-aria-label="common.theme_dark" data-i18n-title="common.theme_dark"></button>
+      </div>
+      <div class="header-meta" id="today-date"></div>
+    </div>
+  </header>
+
+  <!-- ============ VIEW: LISTE DES PLANNINGS ============ -->
+  <section id="view-list">
+    <div class="home-hero">
+      <h1 class="home-title" data-i18n="planning.hero_title">Mes plannings</h1>
+      <p class="home-subtitle" data-i18n="planning.hero_subtitle">Organise ta semaine type. Crée autant de plannings que tu veux — un pour chaque rythme de vie.</p>
+    </div>
+    <div id="plannings-list" class="plan-section"></div>
+    <div class="home-create-row">
+      <button class="btn btn-create" id="btn-new-planning" data-i18n="planning.btn_new">+ Nouveau planning</button>
+      <button class="btn btn-import-json" id="btn-import-planning" data-i18n="planning.btn_import">Importer un planning</button>
+      <input type="file" id="import-file-input" accept=".json" style="display:none">
+    </div>
+  </section>
+
+  <!-- ============ VIEW: CRÉATION (single page) ============ -->
+  <section id="view-create" class="hidden">
+    <div class="journal-name-row">
+      <button class="btn-home" id="btn-back-list" data-i18n="common.back">Retour</button>
+      <div class="journal-name-display" data-i18n="planning.new_planning_label">Nouveau planning</div>
+    </div>
+
+    <div class="create-top">
+      <input type="text" id="plan-name" class="plan-name" maxlength="60" data-i18n-placeholder="planning.placeholder_name" placeholder="Nom du planning">
+      <input type="text" id="plan-desc" class="plan-desc" maxlength="120" data-i18n-placeholder="planning.placeholder_desc" placeholder="Description (optionnel)">
+    </div>
+
+    <div class="create-body">
+      <div class="create-grid-area">
+        <div id="sleep-widget"></div>
+        <div id="week-grid"></div>
+      </div>
+
+      <div class="create-palette">
+        <div style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line);">
+          <button class="btn-primary" id="btn-save-planning-palette" style="width:100%;" data-i18n="planning.btn_validate_palette">✓ Valider le planning</button>
+          <div class="plan-error" id="err-save-palette" style="margin-top:6px;"></div>
+        </div>
+        <div class="palette-section palette-brush-section">
+        <div class="palette-title" data-i18n="planning.palette_brush_title">🎨 Pinceau</div>
+        <div class="palette-subtitle" data-i18n="planning.palette_brush_subtitle">Clique sur une activité pour la sélectionner comme pinceau, puis peins la grille.</div>
+        <div class="brush-selector" id="brush-selector"></div>
+        </div>
+
+
+        <details class="palette-section palette-act-section act-collapse">
+        <summary class="palette-title act-summary">
+          <span class="act-summary-chevron">▸</span>
+          <span data-i18n="planning.palette_activities_title">📋 Editeur d'activités</span>
+        </summary>
+        <div class="act-collapse-body">
+        <div class="act-list" id="act-list"></div>
+
+        <div style="margin-top:8px;">
+          <div class="palette-subtitle" style="font-weight:600;" data-i18n="planning.activities_common_label">Activités Communes :</div>
+          <div class="act-add-row">
+            <select id="act-preset-select"><option value="" data-i18n="planning.activities_common_placeholder">— Choisir —</option></select>
+          </div>
+        </div>
+
+        <div style="margin-top:8px;">
+          <div class="palette-subtitle" style="font-weight:600;" data-i18n="planning.activities_custom_label">Activité custom :</div>
+          <div class="act-add-row">
+            <input type="text" id="act-custom-title" maxlength="40" data-i18n-placeholder="planning.placeholder_activity_title" placeholder="Titre">
+          </div>
+          <div class="act-add-row" style="margin-top:3px;">
+            <input type="text" id="act-custom-desc" maxlength="80" data-i18n-placeholder="planning.placeholder_activity_desc" placeholder="Description">
+            <button class="btn-secondary" id="btn-add-custom">+</button>
+          </div>
+        </div>
+
+        <div class="plan-error" id="err-activities"></div>
+        </div>
+        </details>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ VIEW: AFFICHAGE D'UN PLANNING ============ -->
+  <section id="view-show" class="hidden">
+    <div class="journal-name-row">
+      <button class="btn-home" id="btn-back-list2" data-i18n="common.back">Retour</button>
+      <div class="journal-name-display" id="show-plan-name"></div>
+    </div>
+    <p style="font-family:var(--sans), sans-serif;font-size:13px;color:var(--ink-soft);margin:4px 0 14px;" id="show-plan-desc"></p>
+    <div class="legend" id="show-legend"></div>
+    <div class="week-grid-wrap">
+      <div class="view-week-grid" id="show-grid"></div>
+    </div>
+  </section>
+
+</div><!-- /.app -->
+
+<p class="idx-footer" data-i18n="index.footer_license">© 2026 Vital C. — Code source disponible sous licence MIT. </p>
+<p class="idx-footer"> <a href="https://github.com/Vital-Co/JournalVital" target="Sur GitHub">GitHub</a></p>
+
+<script src="../js/common.js"></script>
+<script src="../js/journal_planning.js"></script>
+
+</body>
+</html>

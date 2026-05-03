@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Personnel</title>
+<link rel="stylesheet" href="../css/shared.css">
+  <link rel="icon" type="image/png" href="../favicon.png">
+<script src="../i18n/i18n.js"></script>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('vital_theme');
+      if (t && t !== 'light') {
+        document.documentElement.setAttribute('data-theme', t);
+      }
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="../css/journal_personnel.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <a href="../index.html" class="btn-tools" data-i18n-title="common.back_to_tools_title" data-i18n="common.back_to_tools">Mes outils</a>
+      <div class="header-title-wrap">
+        <div class="header-title" id="header-title-main" data-i18n="perso.header_title">Journal Personnel</div>
+        <div class="header-title-sub hidden" id="header-title-sub"></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="lang-switcher" role="group" aria-label="Langue / Language">
+        <button type="button" class="lang-btn" data-lang="fr" title="Français">FR</button>
+        <button type="button" class="lang-btn" data-lang="eng" title="English">EN</button>
+        <button type="button" class="lang-btn" data-lang="es" title="Español">ES</button>
+      </div>
+      <div class="theme-switcher" role="group" data-i18n-aria-label="common.theme_chooser_aria">
+        <span class="theme-label" data-i18n="common.theme_chooser_label">Choisis ta couleur...</span>
+        <button type="button" class="theme-dot theme-dot-light" data-theme="light" data-i18n-aria-label="common.theme_light" data-i18n-title="common.theme_light"></button>
+        <button type="button" class="theme-dot theme-dot-green" data-theme="green" data-i18n-aria-label="common.theme_green" data-i18n-title="common.theme_green"></button>
+        <button type="button" class="theme-dot theme-dot-blue" data-theme="blue" data-i18n-aria-label="common.theme_blue" data-i18n-title="common.theme_blue"></button>
+        <button type="button" class="theme-dot theme-dot-orange" data-theme="orange" data-i18n-aria-label="common.theme_orange" data-i18n-title="common.theme_orange"></button>
+        <button type="button" class="theme-dot theme-dot-rose" data-theme="rose" data-i18n-aria-label="common.theme_rose" data-i18n-title="common.theme_rose"></button>
+        <button type="button" class="theme-dot theme-dot-dark" data-theme="dark" data-i18n-aria-label="common.theme_dark" data-i18n-title="common.theme_dark"></button>
+      </div>
+      <div class="header-meta" id="today-date"></div>
+    </div>
+  </header>
+
+  <div class="journal-name-row hidden" id="journal-name-row">
+    <button class="btn-home" id="back-home-btn" data-i18n-title="common.back_to_tools_title" data-i18n="common.back">Retour</button>
+    <div class="journal-name-display" id="journal-name-display"></div>
+  </div>
+
+  <div class="main-content">
+
+  <!-- ============ HOME — liste des journaux ============ -->
+  <section id="view-home" class="hidden">
+    <div class="home-hero">
+      <h1 class="home-title" data-i18n="perso.home_title">Mes journaux personnels</h1>
+      <p class="home-subtitle" data-i18n="perso.home_subtitle">
+        Un espace pour écrire, enregistrer ta voix, garder des images. Chaque journal est un fil — ouvres-en un pour continuer, ou crées-en un nouveau.
+      </p>
+    </div>
+
+    <div class="journals-section-title" data-i18n="perso.section_existing_journals">— Journaux existants</div>
+    <div class="journals-list" id="journals-list"></div>
+
+    <div class="home-create-row">
+      <button class="btn btn-create" id="create-journal-btn" data-i18n="perso.btn_new_journal">+ Nouveau journal</button>
+      <button class="btn btn-create" id="import-journal-btn" style="margin-left:12px" data-i18n="perso.btn_import_journal">> Importer un journal</button>
+      <input type="file" id="import-journal-file" accept=".json" style="display:none">
+    </div>
+  </section>
+
+  <!-- ============ WELCOME — création d'un journal ============ -->
+  <section id="view-welcome" class="hidden">
+    <div class="welcome">
+      <div class="welcome-eyebrow" data-i18n="perso.welcome_eyebrow">— Nouveau journal</div>
+      <h1 class="welcome-title" data-i18n="perso.welcome_title">Crée ton journal</h1>
+
+      <div class="config-bloc">
+        <div class="config-title" data-i18n="perso.config_name_label">— Donne un nom à ce journal</div>
+        <input type="text" class="name-input" id="config-journal-name" maxlength="60" data-i18n-placeholder="perso.config_name_placeholder" placeholder="ex. Mon journal, Pensées du soir, Carnet de voyage...">
+      </div>
+
+      <div class="start-row">
+        <button class="btn btn-start" id="start-btn" data-i18n="perso.btn_start">Créer le journal</button>
+      </div>
+      <div class="config-error" id="config-error"></div>
+    </div>
+  </section>
+
+  <!-- ============ MAIN APP — journal ouvert ============ -->
+  <div id="main-app" class="hidden">
+
+  <nav class="tabs">
+    <button class="tab" data-view="browse" data-i18n="perso.nav_browse">Consulter</button>
+    <button class="tab active" data-view="add" data-i18n="perso.nav_add">Ajouter une entrée</button>
+    <button class="tab tab-quit" data-view="settings" data-i18n="perso.nav_settings">Paramètres</button>
+  </nav>
+
+  <!-- ============ ADD ENTRY VIEW ============ -->
+  <section id="view-add">
+    <div class="card">
+      <div class="card-label" data-i18n="perso.add_card_label">Nouvelle entrée</div>
+
+      <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+        <div class="today-row-label"><span data-i18n="perso.add_title_label">Titre</span></div>
+        <input type="text" class="note" id="entry-title" data-i18n-placeholder="perso.add_title_placeholder" placeholder="Titre de l'entrée" required style="resize:none;">
+      </div>
+
+      <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+        <div class="today-row-label"><span data-i18n="perso.add_text_label">Message texte</span></div>
+        <textarea class="note" id="entry-text" data-i18n-placeholder="perso.add_text_placeholder" placeholder="Écris ce que tu veux..." rows="4"></textarea>
+      </div>
+
+      <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+        <div class="today-row-label" data-i18n="perso.add_vocal_label">Message vocal</div>
+        <div class="vocal-note-zone" id="vocal-zone">
+          <button type="button" class="btn btn-vocal" id="vocal-rec-btn" data-i18n="perso.btn_record">🎙 Enregistrer</button>
+          <span class="vocal-status" id="vocal-status"></span>
+          <div class="vocal-list" id="vocal-list"></div>
+        </div>
+      </div>
+
+      <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+        <div class="today-row-label" data-i18n="perso.add_image_label">Image</div>
+        <div class="perso-image-zone">
+          <label class="btn btn-ghost perso-image-pick-label" id="image-pick-label">
+            <span data-i18n="perso.btn_add_image">📷 Ajouter une image</span>
+            <input type="file" id="image-input" accept="image/*" style="display:none" multiple>
+          </label>
+          <div class="perso-image-preview-list" id="image-preview-list"></div>
+        </div>
+      </div>
+
+      <div class="save-row">
+        <span class="save-status" id="save-status"></span>
+        <button class="btn" id="save-entry-btn" data-i18n="perso.btn_save_entry">Enregistrer l'entrée</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BROWSE VIEW ============ -->
+  <section id="view-browse" class="hidden">
+    <div class="card perso-filter-card">
+      <div class="card-label" data-i18n="perso.browse_filter_label">Recherche par date</div>
+      <div class="perso-filter-row">
+        <div class="perso-filter-group">
+          <label class="perso-filter-lbl" for="filter-mode" data-i18n="perso.filter_mode_label">Mode</label>
+          <select id="filter-mode" class="perso-filter-select">
+            <option value="all" data-i18n="perso.filter_all">Tout afficher</option>
+            <option value="exact" data-i18n="perso.filter_exact">Date précise</option>
+            <option value="after" data-i18n="perso.filter_after">Après le…</option>
+            <option value="before" data-i18n="perso.filter_before">Avant le…</option>
+            <option value="range" data-i18n="perso.filter_range">Entre deux dates</option>
+          </select>
+        </div>
+        <div class="perso-filter-group hidden" id="filter-date1-group">
+          <label class="perso-filter-lbl" for="filter-date1" id="filter-date1-label" data-i18n="perso.filter_date_label">Date</label>
+          <input type="date" id="filter-date1" class="perso-filter-date">
+        </div>
+        <div class="perso-filter-group hidden" id="filter-date2-group">
+          <label class="perso-filter-lbl" for="filter-date2" data-i18n="perso.filter_date2_label">Jusqu'au</label>
+          <input type="date" id="filter-date2" class="perso-filter-date">
+        </div>
+        <div id="filter-buttons-group">
+          <button class="btn btn-ghost" id="filter-apply-btn" data-i18n="perso.btn_filter_apply">Filtrer</button>
+          <button class="btn btn-ghost" id="filter-reset-btn" data-i18n="perso.btn_filter_reset">Réinitialiser</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="perso.browse_card_label">Entrées du journal</div>
+      <div id="browse-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS VIEW ============ -->
+  <section id="view-settings" class="hidden">
+    <div class="card" style="margin-top:20px;">
+      <div class="card-label" data-i18n="perso.settings_data_label">Données</div>
+      <p style="font-size:13px; color:var(--ink-soft);" data-i18n="perso.settings_data_text">
+        Tes données sont stockées localement dans ton navigateur et persistent entre les sessions.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="perso.settings_delete_label">Supprimer ce journal</div>
+      <p style="font-size:14px; color:var(--ink-soft); line-height:1.55; margin-bottom:14px;" data-i18n-html="perso.settings_delete_desc">
+        Efface toutes les entrées de <em>ce journal uniquement</em>. Tes autres journaux ne sont pas touchés. Action irréversible.
+      </p>
+      <button class="btn btn-ghost" id="delete-journal-btn" style="border-color:var(--line); color:var(--ink-mute);" data-i18n="perso.btn_delete_journal">Supprimer ce journal</button>
+    </div>
+  </section>
+
+  </div><!-- /#main-app -->
+  </div><!-- /.main-content -->
+</div>
+
+<p class="idx-footer" data-i18n="index.footer_license">© 2026 Vital C. — Code source disponible sous licence MIT. </p>
+<p class="idx-footer"> <a href="https://github.com/Vital-Co/JournalVital" target="Sur GitHub">GitHub</a></p>
+
+<script src="../js/common.js"></script>
+<script src="../js/journal_personnel.js"></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Vital</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="css/shared.css">
+<script src="i18n/i18n.js"></script>
+
+<!--
+  Application IMMÉDIATE du thème AVANT le premier rendu pour éviter le flash
+  blanc-puis-dark. On lit la même clé localStorage que page_addiction.html
+  ('vital_theme'), donc le choix est partagé entre les deux pages.
+-->
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('vital_theme');
+      if (t && t !== 'light') {
+        document.documentElement.setAttribute('data-theme', t);
+      }
+      // 'light' ou absent : pas d'attribut, :root par défaut s'applique.
+    } catch (e) {}
+  })();
+</script>
+
+<link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+<div class="idx-app">
+
+  <!-- ============ HEADER (mêmes classes que page_addiction.html, donc
+                    stylé par shared.css à l'identique) ============ -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-title-wrap">
+        <div class="header-title">Le Journal Vital</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="lang-switcher" role="group" aria-label="Langue / Language">
+        <button type="button" class="lang-btn" data-lang="fr" title="Français">FR</button>
+        <button type="button" class="lang-btn" data-lang="eng" title="English">EN</button>
+        <button type="button" class="lang-btn" data-lang="es" title="Español">ES</button>
+      </div>
+      <div class="theme-switcher" role="group" data-i18n-aria-label="common.theme_chooser_aria">
+        <span class="theme-label" data-i18n="common.theme_chooser_label">Choisis ta couleur...</span>
+        <button type="button" class="theme-dot theme-dot-light" data-theme="light" data-i18n-aria-label="common.theme_light" data-i18n-title="common.theme_light"></button>
+        <button type="button" class="theme-dot theme-dot-green" data-theme="green" data-i18n-aria-label="common.theme_green" data-i18n-title="common.theme_green"></button>
+        <button type="button" class="theme-dot theme-dot-blue"  data-theme="blue"  data-i18n-aria-label="common.theme_blue"  data-i18n-title="common.theme_blue"></button>
+        <button type="button" class="theme-dot theme-dot-orange" data-theme="orange" data-i18n-aria-label="common.theme_orange" data-i18n-title="common.theme_orange"></button>
+        <button type="button" class="theme-dot theme-dot-rose" data-theme="rose" data-i18n-aria-label="common.theme_rose" data-i18n-title="common.theme_rose"></button>
+        <button type="button" class="theme-dot theme-dot-dark"  data-theme="dark"  data-i18n-aria-label="common.theme_dark"  data-i18n-title="common.theme_dark"></button>
+      </div>
+      <div class="header-meta" id="today-date"></div>
+    </div>
+  </header>
+
+  <!-- ============ CONTENU ============ -->
+  <div class="idx-wrap">
+    <h1 class="idx-title" data-i18n="index.hero_title">Mes outils de vie</h1>
+    <p class="idx-subtitle" data-i18n="index.hero_subtitle">Une collection d'applications locales, simples et souveraines.</p>
+
+    <div class="idx-grid idx-grid-featured">
+      <a href="pages/page_journal.html" class="idx-card idx-card-featured">
+        <h2 class="idx-card-name" data-i18n="index.card_perso_name">Journal Personnel</h2>
+        <p class="idx-card-desc" data-i18n="index.card_perso_desc">Ton espace pour écrire, enregistrer, garder une trace.</p>
+      </a>
+    </div>
+
+    <div class="idx-grid">
+      <a href="pages/page_planning.html" class="idx-card">
+        <h2 class="idx-card-name" data-i18n="index.card_planning_name">Planning de la semaine</h2>
+        <p class="idx-card-desc" data-i18n="index.card_planning_desc">Le planning, c'est la base de tout !</p>
+      </a>
+      <a href="pages/page_addiction.html" class="idx-card">
+        <h2 class="idx-card-name" data-i18n="index.card_addiction_name">Aide Addictions</h2>
+        <p class="idx-card-desc" data-i18n="index.card_addiction_desc">Pour ne plus te manquer à toi-même.</p>
+      </a>
+      <!-- Ajouter de nouvelles apps ici, simplement en dupliquant le bloc <a class="idx-card"> ci-dessus -->
+    </div>
+
+    <p class="idx-footer" data-i18n="index.footer_privacy">Vos données personnelles restent sur votre appareil. Cette application fonctionne sans compte, sans serveur de synchronisation
+      et enregistre vos journaux uniquement dans le navigateur. Vous pouvez le vérifier en coupant Internet après le chargement de la page.</p>
+    <p class="idx-footer" data-i18n="index.footer_disclaimer">Ceci n'est pas une application médicale, juste une boîte à outils que je me suis créé pour prendre soin de moi, et que je partage avec vous.</p>
+    <p class="idx-footer" data-i18n="index.footer_medical">Cet outil est un journal, il ne remplace pas un suivi. Consultez un professionnel si nécessaire. Prennez soin de vous!</p>
+    <p class="idx-footer" data-i18n="index.footer_license">© 2026 Vital C. — Code source disponible sous licence MIT. </p>
+    <p class="idx-footer"> <a href="https://github.com/Vital-Co/JournalVital" target="Sur GitHub">GitHub</a></p>
+  </div>
+
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/index.js"></script>
+
+</body>
+</html>

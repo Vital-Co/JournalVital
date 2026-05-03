@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Journal Vital</title>
+<link rel="stylesheet" href="../css/shared.css">
+  <link rel="icon" type="image/png" href="../favicon.png">
+<script src="../i18n/i18n.js"></script>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('vital_theme');
+      if (t && t !== 'light') {
+        document.documentElement.setAttribute('data-theme', t);
+      }
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="../css/journal_addiction.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <a href="../index.html" class="btn-tools" data-i18n-title="common.back_to_tools_title" data-i18n="common.back_to_tools">Mes outils</a>
+      <div class="header-title-wrap">
+        <div class="header-title" id="header-title-main">Le Journal Vital</div>
+        <div class="header-title-sub hidden" id="header-title-sub"></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="lang-switcher" role="group" aria-label="Langue / Language">
+        <button type="button" class="lang-btn" data-lang="fr" title="Français">FR</button>
+        <button type="button" class="lang-btn" data-lang="eng" title="English">EN</button>
+        <button type="button" class="lang-btn" data-lang="es" title="Español">ES</button>
+      </div>
+      <div class="theme-switcher" role="group" data-i18n-aria-label="common.theme_chooser_aria">
+        <span class="theme-label" data-i18n="common.theme_chooser_label">Choisis ta couleur...</span>
+        <button type="button" class="theme-dot theme-dot-light" data-theme="light" data-i18n-aria-label="common.theme_light" data-i18n-title="common.theme_light"></button>
+        <button type="button" class="theme-dot theme-dot-green" data-theme="green" data-i18n-aria-label="common.theme_green" data-i18n-title="common.theme_green"></button>
+        <button type="button" class="theme-dot theme-dot-blue" data-theme="blue" data-i18n-aria-label="common.theme_blue" data-i18n-title="common.theme_blue"></button>
+        <button type="button" class="theme-dot theme-dot-orange" data-theme="orange" data-i18n-aria-label="common.theme_orange" data-i18n-title="common.theme_orange"></button>
+        <button type="button" class="theme-dot theme-dot-rose" data-theme="rose" data-i18n-aria-label="common.theme_rose" data-i18n-title="common.theme_rose"></button>
+        <button type="button" class="theme-dot theme-dot-dark" data-theme="dark" data-i18n-aria-label="common.theme_dark" data-i18n-title="common.theme_dark"></button>
+      </div>
+      <div class="header-meta" id="today-date"></div>
+    </div>
+  </header>
+
+  <div class="journal-name-row hidden" id="journal-name-row">
+    <button class="btn-home" id="back-home-btn" data-i18n-title="common.back_to_tools_title" data-i18n="common.back">Retour</button>
+    <div class="journal-name-display" id="journal-name-display"></div>
+  </div>
+
+  <div class="app-layout">
+
+  <!-- ============ SIDEBAR — outils d'aide ============ -->
+  <aside class="sidebar-aide" id="widgets-aide">
+    <div class="widgets-aide-title" data-i18n="addiction.sidebar_title">— Outils d'aide</div>
+    <div class="timer-banner" id="timer-banner">
+      <div class="timer-banner-text">
+        <div class="timer-banner-title" data-i18n="addiction.timer_title">L'envie monte ?</div>
+        <div class="timer-banner-sub" id="timer-message" data-i18n="addiction.timer_message">Pose-la 10 minutes — l'urgence passe presque toujours.</div>
+      </div>
+      <div class="timer-display" id="timer-display">10:00</div>
+      <button class="btn-timer" id="timer-btn" data-i18n="addiction.btn_timer_start">Lancer</button>
+    </div>
+    <div class="urge-banner" id="urge-banner">
+      <div class="urge-banner-text">
+        <div class="urge-banner-title" data-i18n="addiction.urge_title">Urge surfing 🌊</div>
+        <div class="urge-banner-sub" data-i18n="addiction.urge_subtitle">Surfe sur l'envie au lieu de la combattre — une mini séance guidée.</div>
+      </div>
+      <button class="btn-urge" id="urge-open-btn" data-i18n="addiction.btn_urge_start">Commencer</button>
+    </div>
+  </aside>
+
+  <!-- ============ CONTENU PRINCIPAL ============ -->
+  <div class="main-content">
+
+  <!-- ============ MODALE URGE SURFING ============ -->
+  <div class="urge-modal hidden" id="urge-modal" role="dialog" aria-modal="true" aria-labelledby="urge-modal-title">
+    <div class="urge-backdrop" id="urge-backdrop"></div>
+    <div class="urge-dialog">
+      <div class="urge-head">
+        <div class="urge-title" id="urge-modal-title" data-i18n="addiction.urge_modal_title">Urge Surfing</div>
+        <div class="urge-head-sub" data-i18n="addiction.urge_modal_subtitle">Observe l'envie sans agir. Elle monte, elle crête, elle redescend.</div>
+      </div>
+      <div class="urge-body" id="urge-body">
+        <div class="urge-step active" data-urge-step="0">
+          <div class="urge-step-label" data-i18n="addiction.urge_step1_label">Étape 1 / 5</div>
+          <div class="urge-step-title" data-i18n="addiction.urge_step1_title">Pause</div>
+          <div class="urge-step-text" data-i18n-html="addiction.urge_step1_text">
+            Arrête ce que tu fais.<br>
+            Assieds-toi confortablement, ferme les yeux si tu veux.<br><br>
+            <em>Prends trois grandes respirations lentes.</em>
+          </div>
+        </div>
+        <div class="urge-step" data-urge-step="1">
+          <div class="urge-step-label" data-i18n="addiction.urge_step2_label">Étape 2 / 5</div>
+          <div class="urge-step-title" data-i18n="addiction.urge_step2_title">Localise la sensation</div>
+          <div class="urge-step-text" data-i18n-html="addiction.urge_step2_text">
+            Où est-ce que tu sens l'envie dans ton corps ?<br>
+            Gorge, poitrine, ventre, mains ?<br><br>
+            <em>Ne juge pas. Observe juste où ça se passe.</em>
+          </div>
+        </div>
+        <div class="urge-step" data-urge-step="2">
+          <div class="urge-step-label" data-i18n="addiction.urge_step3_label">Étape 3 / 5</div>
+          <div class="urge-step-title" data-i18n="addiction.urge_step3_title">Décris ce que tu ressens</div>
+          <div class="urge-step-text" data-i18n-html="addiction.urge_step3_text">
+            C'est chaud ? Froid ? Serré ? Ça pulse ?<br>
+            Est-ce que ça bouge ou c'est fixe ?<br><br>
+            <em>Donne des mots à la sensation — comme un observateur curieux.</em>
+          </div>
+        </div>
+        <div class="urge-step" data-urge-step="3">
+          <div class="urge-step-label" data-i18n="addiction.urge_step4_label">Étape 4 / 5</div>
+          <div class="urge-step-title" data-i18n="addiction.urge_step4_title">Respire dedans</div>
+          <div class="urge-step-text" data-i18n-html="addiction.urge_step4_text">
+            Imagine que tu envoies ton souffle directement vers cette zone.<br>
+            Inspire—… expire—… lentement.<br><br>
+            <em>Tu n'essaies pas de la faire partir. Tu la laisses être là.</em>
+          </div>
+        </div>
+        <div class="urge-step" data-urge-step="4">
+          <div class="urge-step-label" data-i18n="addiction.urge_step5_label">Étape 5 / 5</div>
+          <div class="urge-step-title" data-i18n="addiction.urge_step5_title">Observe la vague</div>
+          <div class="urge-step-text" data-i18n-html="addiction.urge_step5_text">
+            L'envie est une vague : elle monte, elle atteint un pic, puis elle redescend.<br>
+            Tu n'as pas besoin d'agir. Juste de surfer.<br><br>
+            <em>Reste ici encore un instant. Tu as déjà tenu — c'est ça, la victoire.</em>
+          </div>
+        </div>
+        <div class="urge-progress" id="urge-progress">
+          <div class="urge-progress-dot done"></div>
+          <div class="urge-progress-dot"></div>
+          <div class="urge-progress-dot"></div>
+          <div class="urge-progress-dot"></div>
+          <div class="urge-progress-dot"></div>
+        </div>
+      </div>
+      <div class="urge-foot">
+        <button class="btn-urge-close" id="urge-close-btn" data-i18n="addiction.btn_urge_close">Fermer</button>
+        <button class="btn-urge-next" id="urge-next-btn" data-i18n="addiction.btn_urge_next">Suivant →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HOME — liste des journaux ============ -->
+  <section id="view-home" class="hidden">
+    <div class="home-hero">
+      <h1 class="home-title" data-i18n="addiction.home_title">Suivi des addictions</h1>
+      <p class="home-subtitle" data-i18n="addiction.home_subtitle">
+        Chaque journal suit une forme de consommation, son propre plan, son propre rythme. Ouvre-en un pour reprendre, ou crée-en un nouveau.
+      </p>
+      <p class="home-reminders">
+        <strong data-i18n="addiction.home_reminders">À savoir :</strong> <span data-i18n="addiction.home_reminders_text">Ce n'est pas grave si tu ne peux pas t'occuper de tes journaux tous les jours!
+        La prochaine fois que tu enregistreras, on te demandera de remplir les jours manquants — juste pour que tes stats restent
+        complètes et cohérentes!</span>
+      </p>
+    </div>
+
+    <div class="journals-section-title" data-i18n="addiction.section_existing_journals">— Journaux existants</div>
+    <div class="journals-list" id="journals-list"></div>
+
+    <div class="home-create-row">
+      <button class="btn btn-create" id="create-journal-btn" data-i18n="addiction.btn_new_journal">+ Nouveau journal</button>
+      <button class="btn btn-create" id="import-journal-btn" style="margin-left:12px" data-i18n="addiction.btn_import_journal">> Importer un journal</button>
+      <input type="file" id="import-journal-file" accept=".json" style="display:none">
+    </div>
+  </section>
+
+  <!-- ============ WELCOME SCREEN (avant démarrage) ============ -->
+  <section id="view-welcome" class="hidden">
+    <div class="welcome">
+      <div class="welcome-eyebrow" data-i18n="addiction.welcome_eyebrow">— Plan Arrêt Addiction</div>
+      <h1 class="welcome-title" data-i18n="addiction.welcome_title">Le bon jour pour commencer</h1>
+
+      <div class="config-bloc">
+        <div class="config-title" data-i18n="addiction.config_journal_name_label">— Donne un nom à ce journal</div>
+        <input type="text" class="name-input" id="config-journal-name" maxlength="60" data-i18n-placeholder="addiction.config_journal_name_placeholder" placeholder="ex. Sevrage Cannabis, Arrêt tabac, Moins d'écrans...">
+      </div>
+
+      <div class="config-bloc">
+        <div class="config-title" data-i18n="addiction.config_reasons_label">— Pourquoi tu fais ça ?</div>
+        <div class="config-hint" style="font-family:var(--sans); font-size:12px; color:var(--ink-mute); font-style:italic; margin-bottom:8px;" data-i18n="addiction.config_reasons_hint">Une raison par ligne.</div>
+        <div class="reasons-list" id="config-reasons-list">
+          <div class="reason-item">
+            <input type="text" class="reason-input" maxlength="120" data-i18n-placeholder="addiction.config_reason_placeholder" placeholder="ex. Pour ma santé">
+            <button type="button" class="reason-remove-btn" data-i18n-title="addiction.reason_remove_title" title="Supprimer">✕</button>
+          </div>
+        </div>
+        <button type="button" class="reason-add-btn" id="reason-add-btn" data-i18n="addiction.btn_add_reason">+ Ajouter une raison</button>
+        <div class="config-error" id="config-reasons-error"></div>
+      </div>
+
+      <div class="config-bloc">
+        <div class="config-title" data-i18n="addiction.config_rules_label">— Tes règles personnelles</div>
+        <div class="config-hint" style="font-family:var(--sans); font-size:12px; color:var(--ink-mute); font-style:italic; margin-bottom:8px;" data-i18n="addiction.config_rules_hint">Une règle par ligne. Optionnel — tu peux laisser vide.</div>
+        <div class="reasons-list" id="config-rules-list">
+          <div class="reason-item">
+            <input type="text" class="rule-input" maxlength="120" data-i18n-placeholder="addiction.config_rule_placeholder" placeholder="ex. Pas de conso après 20h">
+            <button type="button" class="reason-remove-btn" data-i18n-title="addiction.rule_remove_title" title="Supprimer">✕</button>
+          </div>
+        </div>
+        <button type="button" class="reason-add-btn" id="rule-add-btn" data-i18n="addiction.btn_add_rule">+ Ajouter une règle</button>
+      </div>
+
+      <!-- Choix du mode de journal : descente progressive vs abstinence -->
+      <div class="config-bloc">
+        <div class="config-title" data-i18n="addiction.config_mode_label">— Type de suivi</div>
+        <div class="mode-grid">
+          <div class="mode-card active" data-journal-mode="taper">
+            <div class="mode-card-name" data-i18n="addiction.mode_taper_name">Descente progressive</div>
+            <div class="mode-card-hint" data-i18n="addiction.mode_taper_hint">Réduire palier par palier vers une cible. Pour ce qu'on cherche à diminuer sans forcément arrêter d'un coup.</div>
+          </div>
+          <div class="mode-card" data-journal-mode="abstain">
+            <div class="mode-card-name" data-i18n="addiction.mode_abstain_name">Abstinence</div>
+            <div class="mode-card-hint" data-i18n="addiction.mode_abstain_hint">Tenir le plus longtemps possible sans consommer. Le compteur grandit, et redémarre à zéro en cas de rechute.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tous les blocs spécifiques au mode "descente" sont regroupés ici, cachés en mode abstinence -->
+      <div id="config-taper-only">
+
+      <div class="config-bloc" id="config-bloc-unit">
+        <div class="config-title" data-i18n="addiction.config_unit_label">— Quel type de consommation tu suis ?</div>
+        <div class="unit-grid" id="unit-grid"></div>
+      </div>
+
+      <div class="config-bloc">
+        <div class="config-title" data-i18n="addiction.config_start_label">— Définis ton point de départ</div>
+        <div class="config-grid">
+          <div class="config-field">
+            <label class="config-label" for="config-start-dose">
+              <span id="config-start-label">Dose actuelle</span>
+              <small id="config-start-hint">combien tu consommes par jour aujourd'hui</small>
+            </label>
+            <div class="config-input-row">
+              <input type="number" id="config-start-dose" step="0.1" min="0.1" value="5">
+              <span id="config-start-unit">g/jour</span>
+            </div>
+          </div>
+          <div class="config-field">
+            <label class="config-label" for="config-end-dose">
+              <span id="config-end-label">Dose finale visée</span>
+              <small id="config-end-hint">0 pour arrêt complet, ou un palier bas stabilisé</small>
+            </label>
+            <div class="config-input-row">
+              <input type="number" id="config-end-dose" step="0.05" min="0" value="0">
+              <span id="config-end-unit">g/jour</span>
+            </div>
+          </div>
+        </div>
+        <div class="config-error" id="config-error"></div>
+      </div>
+
+      <div class="config-bloc">
+        <div class="config-title" data-i18n="addiction.config_duration_label">— Sur combien de semaines ?</div>
+        <div class="duration-row">
+          <input type="range" id="config-duration" min="1" max="52" value="8" class="duration-slider">
+          <div class="duration-value-wrap">
+            <input type="number" id="config-duration-input" min="1" max="52" value="8" class="duration-input">
+            <span class="duration-suffix" data-i18n="addiction.duration_suffix">semaine<span id="duration-plural">s</span></span>
+          </div>
+        </div>
+        <div class="duration-presets" id="duration-presets">
+          <button type="button" class="preset-btn" data-weeks="2">2 sem</button>
+          <button type="button" class="preset-btn" data-weeks="4">4 sem</button>
+          <button type="button" class="preset-btn active" data-weeks="8">8 sem</button>
+          <button type="button" class="preset-btn" data-weeks="12">12 sem</button>
+          <button type="button" class="preset-btn" data-weeks="26">6 mois</button>
+          <button type="button" class="preset-btn" data-weeks="52">1 an</button>
+        </div>
+
+      </div>
+
+      <div class="config-bloc">
+        <div class="config-title" data-i18n="addiction.config_curve_label">— Forme de la descente</div>
+        <div class="curve-grid" id="curve-grid"></div>
+        <div class="preview-paliers" id="preview-paliers"></div>
+      </div>
+
+      </div><!-- /#config-taper-only -->
+
+      <!-- Bloc d'intro spécifique au mode abstinence (caché en mode taper) -->
+      <div id="config-abstain-only" class="hidden">
+        <div class="config-bloc">
+          <div class="config-title" data-i18n="addiction.config_abstain_label">— De quoi tu t'abstiens ?</div>
+          <input type="text" class="name-input" id="config-abstain-label" maxlength="80" data-i18n-placeholder="addiction.config_abstain_placeholder" placeholder="ex. porn, jeux d'argent, sucre, alcool fort...">
+          <div class="config-hint" style="font-family:var(--sans); font-size:12px; color:var(--ink-mute); font-style:italic; margin-top:8px;" data-i18n="addiction.config_abstain_hint">
+            Juste pour étiqueter — c'est ce qui apparaîtra dans tes notes et ton historique.
+          </div>
+        </div>
+
+        <div class="config-bloc">
+          <div class="config-title" data-i18n="addiction.config_how_it_works">— Comment ça marche</div>
+          <div class="abstain-intro">
+            <p data-i18n="addiction.abstain_intro_p1">Pas de palier hebdomadaire, pas de dose à respecter. Une seule chose : tenir.</p>
+            <p data-i18n-html="addiction.abstain_intro_p2">Chaque jour, tu marques <strong>« journée tenue  »</strong> ou <strong>« j'ai consommé  »</strong>. Le compteur monte. En cas de rechute, il repart à zéro — mais ton record précédent reste affiché. Le travail accompli ne disparaît pas.</p>
+            <p data-i18n="addiction.abstain_intro_p3">Des paliers symboliques se franchissent automatiquement : 24h, 72h, 7j, 14j, 30j, 60j, 90j, 6 mois, 1 an—…</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="welcome-summary" id="welcome-summary-taper">
+        <div class="welcome-summary-row">
+          <span class="welcome-summary-label" data-i18n="addiction.summary_start_label">Démarrage</span>
+          <span class="welcome-summary-value" id="welcome-today-date">—</span>
+        </div>
+        <div class="welcome-summary-row">
+          <span class="welcome-summary-label" data-i18n="addiction.summary_first_palier_label">Premier palier</span>
+          <span class="welcome-summary-value" id="welcome-first-palier">—</span>
+        </div>
+        <div class="welcome-summary-row">
+          <span class="welcome-summary-label" data-i18n="addiction.summary_end_date_label">Fin estimée du plan</span>
+          <span class="welcome-summary-value" id="welcome-end-date">—</span>
+        </div>
+      </div>
+
+      <div class="welcome-summary hidden" id="welcome-summary-abstain">
+        <div class="welcome-summary-row">
+          <span class="welcome-summary-label" data-i18n="addiction.summary_start_label">Démarrage</span>
+          <span class="welcome-summary-value" id="welcome-today-date-abstain">—</span>
+        </div>
+        <div class="welcome-summary-row">
+          <span class="welcome-summary-label" data-i18n="addiction.summary_next_palier_label">Prochain palier</span>
+          <span class="welcome-summary-value" data-i18n="addiction.summary_next_palier_value">24 heures sans consommer</span>
+        </div>
+      </div>
+
+      <div class="start-row">
+        <button class="btn btn-start" id="start-btn" data-i18n="addiction.btn_start">Commencer aujourd'hui</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MAIN APP (après démarrage) ============ -->
+  <div id="main-app" class="hidden">
+
+  <!-- STATUS BAR — palier en cours, hors onglets (mode descente) -->
+  <div class="status-bar" id="status-bar-taper">
+    <div class="status-palier">
+      <div class="status-palier-label" data-i18n="addiction.status_palier_label">Palier en cours</div>
+      <div class="status-palier-value" id="status-palier">—</div>
+    </div>
+    <div class="status-divider"></div>
+    <div class="status-streak">
+      <div class="status-streak-label" data-i18n="addiction.status_streak_label">Jours tenus</div>
+      <div class="status-streak-value" id="status-streak">0<small>/7</small></div>
+    </div>
+    <button class="btn-advance" id="advance-btn" disabled data-i18n="addiction.btn_advance" data-i18n-title="addiction.btn_advance_title_locked">Avancer au palier suivant</button>
+    <div class="status-reason hidden" id="status-reason-taper"></div>
+  </div>
+
+  <!-- STATUS BAR — mode abstinence : streak en cours / record / prochain palier -->
+  <div class="status-bar hidden" id="status-bar-abstain">
+    <div class="status-palier">
+      <div class="status-palier-label" data-i18n="addiction.status_abstain_streak_label">Streak en cours</div>
+      <div class="status-palier-value" id="status-abstain-current">—</div>
+    </div>
+    <div class="status-divider"></div>
+    <div class="status-streak">
+      <div class="status-streak-label" data-i18n="addiction.status_abstain_record_label">Record</div>
+      <div class="status-streak-value" id="status-abstain-record">—</div>
+    </div>
+    <div class="status-divider"></div>
+    <div class="status-palier">
+      <div class="status-palier-label" data-i18n="addiction.status_abstain_next_label">Prochain palier</div>
+      <div class="status-palier-value" id="status-abstain-next">—</div>
+    </div>
+    <div class="status-reason hidden" id="status-reason-abstain"></div>
+  </div>
+
+  <!-- DEBUG BAR — visible uniquement avec ?debug=1 dans l'URL -->
+  <div class="debug-bar hidden" id="debug-bar">
+    <div class="debug-bar-label">debug</div>
+    <button type="button" class="debug-btn" data-debug="day-plus-1" title="Ajoute un log 'réussi' à hier (recule palierStartDate d'1 jour pour que ça compte dans le palier en cours)">+1 jour</button>
+    <button type="button" class="debug-btn" data-debug="day-plus-7" title="Fast-forward 7 jours réussis : recule palierStartDate de 7 jours et crée 7 logs">+7 jours réussis</button>
+    <button type="button" class="debug-btn" data-debug="day-miss" title="Ajoute un log 'raté' (dose > cible) à hier — reset le streak">+1 jour raté</button>
+    <button type="button" class="debug-btn" data-debug="day-empty" title="Recule palierStartDate d'1 jour SANS poser de log → hier devient pending (pour tester la modale de rattrapage)">+1 jour vide</button>
+    <button type="button" class="debug-btn" data-debug="skip-palier" title="Avance au palier suivant sans le verrou 7/7">Skip palier →</button>
+    <button type="button" class="debug-btn debug-btn-danger" data-debug="reset" title="Reset le journal : currentWeek=1, logs vides (garde la config)">Reset journal</button>
+    <span class="debug-stats" id="debug-stats"></span>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab active" data-view="today" data-i18n="addiction.nav_today">Aujourd'hui</button>
+    <button class="tab" data-view="overview" id="tab-overview" data-i18n="addiction.nav_overview">Plan complet</button>
+    <button class="tab" data-view="history" data-i18n="addiction.nav_history">Historique</button>
+    <button class="tab" data-view="reasons" data-i18n="addiction.nav_reasons">Raisons</button>
+    <button class="tab" data-view="rules" id="tab-rules" data-i18n="addiction.nav_rules">Règles</button>
+    <button class="tab tab-quit" data-view="quit" data-i18n="addiction.nav_quit">Arrêter le programme</button>
+  </nav>
+
+  <!-- ============ TODAY VIEW — mode descente ============ -->
+  <section id="view-today">
+    <div id="today-taper-view">
+      <!-- Hero palier en cours -->
+      <div class="palier-hero">
+        <div class="palier-hero-inner">
+          <div class="palier-phase" id="hero-phase" data-i18n="addiction.hero_phase">— Réduction de dose</div>
+
+          <div class="today-objectives" id="today-objectives"></div>
+
+          <div class="progress-bar"><div class="progress-fill" id="overall-progress" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <!-- Logging d'aujourd'hui -->
+      <div class="card">
+        <div class="card-label" style="display:flex; align-items:baseline; flex-wrap:wrap; gap:4px;">Log du jour — <span id="log-effective-date" style="font-weight:400;"></span><span id="log-next-day" style="font-weight:400; font-size:0.85em; color:var(--ink-mute); margin-left:auto; white-space:nowrap;"></span></div>
+
+        <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+          <div class="today-row-label"><span data-i18n="addiction.today_title_label">Titre du jour</span> <em style="color:var(--ink-mute); font-style:italic;" data-i18n="addiction.today_title_hint">— un mot, une phrase pour résumer</em></div>
+          <input type="text" class="title-input" id="today-title" maxlength="80" data-i18n-placeholder="addiction.today_title_placeholder" placeholder="ex. Journée calme, La grosse envie, Premier jour sans...">
+        </div>
+
+        <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+          <div class="today-row-label" id="today-input-label"><span data-i18n="addiction.today_input_label">Consommation du jour</span> <span style="color:var(--warn); font-weight:500;" title="Au moins une entrée requise">*</span> <span class="dose-target" id="today-target" style="margin-left:8px;"></span></div>
+          <div class="dose-add-row">
+            <div class="dose-input">
+              <input type="number" id="today-dose" step="0.25" min="0" placeholder="0">
+              <span id="today-unit">g</span>
+            </div>
+            <button type="button" class="btn btn-ghost" id="add-dose-btn" style="font-size:13px; white-space:nowrap;" data-i18n="addiction.btn_add_dose">+ Ajouter</button>
+          </div>
+          <div class="dose-list" id="dose-list-taper"></div>
+          <div class="dose-total-row hidden" id="dose-total-row">Total : <span id="dose-total-value">0</span></div>
+        </div>
+
+        <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+          <div class="today-row-label"><span data-i18n="addiction.today_notes_label">Notes du jour</span> <em style="color:var(--ink-mute); font-style:italic;" data-i18n="addiction.today_notes_hint">— ce qui s'est passé, comment tu te sens</em></div>
+          <div class="text-note-zone">
+            <div class="text-note-add-row">
+              <textarea class="note" id="today-note" data-i18n-placeholder="addiction.today_notes_placeholder" placeholder="Le manque, l'envie, ce qui aide, ce qui pèse..." rows="2"></textarea>
+              <button type="button" class="btn btn-ghost" id="add-note-btn" style="font-size:13px; white-space:nowrap; align-self:flex-end;" data-i18n="addiction.btn_add_note">+ Ajouter</button>
+            </div>
+            <div class="text-note-list" id="text-note-list-taper"></div>
+          </div>
+        </div>
+
+        <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+          <div class="today-row-label" data-i18n="addiction.today_vocal_label">Note vocale</div>
+          <div class="vocal-note-zone" id="vocal-zone-taper">
+            <button type="button" class="btn btn-vocal" id="vocal-rec-btn-taper" data-i18n="addiction.btn_record">🎙 Enregistrer</button>
+            <span class="vocal-status" id="vocal-status-taper"></span>
+            <div class="vocal-list" id="vocal-list-taper"></div>
+          </div>
+        </div>
+
+        <div class="save-row">
+          <span class="save-status" id="save-status" data-i18n="addiction.save_status_empty">— Pas encore enregistré aujourd'hui</span>
+          <button class="btn" id="save-btn" data-i18n="addiction.btn_save_day">Enregistrer le jour</button>
+        </div>
+      </div>
+    </div><!-- /#today-taper-view -->
+
+    <!-- ============ TODAY VIEW — mode abstinence ============ -->
+    <div id="today-abstain-view" class="hidden">
+      <!-- Hero compteur principal -->
+      <div class="abstain-hero">
+        <div class="abstain-hero-inner">
+          <div class="abstain-eyebrow" id="abstain-eyebrow" data-i18n="addiction.abstain_eyebrow">— Streak en cours</div>
+          <div class="abstain-counter">
+            <div class="abstain-counter-value" id="abstain-counter-value">0</div>
+            <div class="abstain-counter-unit" id="abstain-counter-unit">jour sans consommer</div>
+          </div>
+          <div class="abstain-since" id="abstain-since"></div>
+
+          <!-- Record précédent, toujours affiché -->
+          <div class="abstain-record-row" id="abstain-record-row">
+            <div class="abstain-record-label" data-i18n="addiction.abstain_record_label">Record précédent</div>
+            <div class="abstain-record-value" id="abstain-record-value">—</div>
+          </div>
+
+          <!-- Prochain palier -->
+          <div class="abstain-milestone-row" id="abstain-milestone-row">
+            <div class="abstain-milestone-label" data-i18n="addiction.abstain_milestone_label">Prochain palier</div>
+            <div class="abstain-milestone-bar">
+              <div class="abstain-milestone-fill" id="abstain-milestone-fill" style="width:0%"></div>
+            </div>
+            <div class="abstain-milestone-target" id="abstain-milestone-target">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action du jour : tenu ou rechute -->
+      <div class="card">
+        <div class="card-label" data-i18n="addiction.today_label">Aujourd'hui</div>
+        <div class="abstain-action-status" id="abstain-action-status" data-i18n="addiction.abstain_action_status_empty">— Pas encore marqué pour aujourd'hui</div>
+
+        <div class="abstain-action-row">
+          <button class="btn-abstain-hold" id="abstain-hold-btn">
+            <span class="abstain-action-main" data-i18n="addiction.btn_hold_main">Journée tenue</span>
+            <span class="abstain-action-sub" data-i18n="addiction.btn_hold_sub">je n'ai pas consommé aujourd'hui</span>
+          </button>
+          <button class="btn-abstain-relapse" id="abstain-relapse-btn">
+            <span class="abstain-action-main" data-i18n="addiction.btn_relapse_main">J'ai consommé</span>
+            <span class="abstain-action-sub" data-i18n="addiction.btn_relapse_sub">le compteur repart à zéro — sans jugement</span>
+          </button>
+        </div>
+
+        <!-- Notes du jour (commune aux deux actions) -->
+        <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px; margin-top:18px;">
+          <div class="today-row-label"><span data-i18n="addiction.today_abstain_note_label">Ajoute une note</span> <em style="color:var(--ink-mute); font-style:italic;" data-i18n="addiction.today_abstain_note_hint">— ce qui s'est passé, comment tu te sens</em></div>
+          <div class="text-note-zone">
+            <div class="text-note-add-row">
+              <textarea class="note" id="abstain-note" data-i18n-placeholder="addiction.today_abstain_note_placeholder" placeholder="L'envie, le déclencheur, ce qui aide, ce qui pèse..." rows="2"></textarea>
+              <button type="button" class="btn btn-ghost" id="add-note-btn-abstain" style="font-size:13px; white-space:nowrap; align-self:flex-end;" data-i18n="addiction.btn_add_note">+ Ajouter</button>
+            </div>
+            <div class="text-note-list" id="text-note-list-abstain"></div>
+          </div>
+        </div>
+
+        <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+          <div class="today-row-label" data-i18n="addiction.today_vocal_label">Note vocale</div>
+          <div class="vocal-note-zone" id="vocal-zone-abstain">
+            <button type="button" class="btn btn-vocal" id="vocal-rec-btn-abstain" data-i18n="addiction.btn_record">🎙 Enregistrer</button>
+            <span class="vocal-status" id="vocal-status-abstain"></span>
+            <div class="vocal-list" id="vocal-list-abstain"></div>
+          </div>
+        </div>
+
+        <div class="today-row" style="flex-direction:column; align-items:stretch; gap:0;">
+          <div class="save-row" style="justify-content:flex-end;">
+            <button class="btn btn-ghost" id="abstain-note-save-btn" style="font-size:13px;" data-i18n="addiction.btn_save_note">Enregistrer la note</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Liste des paliers symboliques -->
+      <div class="card" id="abstain-milestones-card">
+        <div class="card-label" data-i18n="addiction.card_milestones_label">Paliers symboliques</div>
+        <div class="abstain-milestones-list" id="abstain-milestones-list"></div>
+      </div>
+    </div><!-- /#today-abstain-view -->
+  </section><!-- /#view-today -->
+
+  <!-- ============ OVERVIEW VIEW ============ -->
+  <section id="view-overview" class="hidden">
+    <div class="card">
+      <div class="card-label">Plan d'arrêt — 8 semaines + libre</div>
+      <table class="overview-table" id="overview-table"></table>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY VIEW ============ -->
+  <section id="view-history" class="hidden">
+    <div class="card">
+      <div class="card-label" data-i18n="addiction.history_card_label">Tes derniers jours</div>
+      <div id="history-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ REASONS VIEW ============ -->
+  <section id="view-reasons" class="hidden">
+    <div class="rules-card">
+      <div class="card-label" style="margin-bottom:18px;" data-i18n="addiction.reasons_card_label">Tes raisons</div>
+      <div id="reasons-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ RULES VIEW ============ -->
+  <section id="view-rules" class="hidden">
+    <div class="rules-card">
+      <div class="card-label" style="margin-bottom:18px;" data-i18n="addiction.rules_card_label">Tes règles</div>
+      <div id="rules-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIT VIEW ============ -->
+  <section id="view-quit" class="hidden">
+	<div class="card" style="margin-top:20px;">
+      <div class="card-label" data-i18n="addiction.quit_data_label">Données</div>
+      <p style="font-size:13px; color:var(--ink-soft);" data-i18n="addiction.quit_data_text">
+        Tes données sont stockées localement dans ton navigateur et persistent entre les sessions.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="addiction.quit_stop_label">— Arrêter le programme</div>
+      <p style="font-family:var(--serif); font-size:17px; line-height:1.55; color:var(--ink); margin-bottom:14px;" data-i18n-html="addiction.quit_stop_p1">
+        Tu peux arrêter à tout moment. <em style="color:var(--ink-soft);">Sans avoir à te justifier.</em>
+      </p>
+      <p style="font-family:var(--serif); font-size:15px; line-height:1.6; color:var(--ink-soft); margin-bottom:8px;" data-i18n="addiction.quit_stop_p2">
+        Ce que tu as fait jusqu'ici, c'est déjà quelque chose. Que tu reprennes plus tard, demain, dans six mois, ou jamais — c'est à toi.
+      </p>
+      <p style="font-family:var(--serif); font-size:14px; line-height:1.55; color:var(--ink-mute); font-style:italic;" data-i18n="addiction.quit_stop_p3">
+        Une journée ratée n'annule rien.
+      </p>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-label" data-i18n="addiction.quit_delete_label">Supprimer ce journal</div>
+      <p style="font-size:14px; color:var(--ink-soft); line-height:1.55; margin-bottom:14px;" data-i18n-html="addiction.quit_delete_desc">
+        Efface l'historique, les paliers et la configuration de <em>ce journal uniquement</em>. Tes autres journaux ne sont pas touchés. Action irréversible.
+      </p>
+      <button class="btn btn-ghost" id="reset-btn" style="border-color:var(--line); color:var(--ink-mute);" data-i18n="addiction.btn_delete_journal">Supprimer ce journal</button>
+    </div>
+	
+  </section>
+
+  </div><!-- /#main-app -->
+  </div><!-- /.main-content -->
+  </div><!-- /.app-layout -->
+</div>
+
+<!-- ============ MODALE DE RATTRAPAGE — jours pending ============
+     S'ouvre quand l'utilisateur essaie de logger aujourd'hui alors qu'il y a
+     des jours du palier en cours qui n'ont pas été renseignés. Force le
+     rattrapage : tous les jours doivent recevoir une dose pour pouvoir
+     enregistrer. -->
+<div class="catchup-modal hidden" id="catchup-modal" role="dialog" aria-modal="true" aria-labelledby="catchup-title">
+  <div class="catchup-backdrop" id="catchup-backdrop"></div>
+  <div class="catchup-dialog">
+    <div class="catchup-head">
+      <div class="catchup-title" id="catchup-title" data-i18n="addiction.catchup_title">Jours à rattraper</div>
+      <div class="catchup-sub" id="catchup-sub" data-i18n="addiction.catchup_subtitle">
+        Quelques jours du palier en cours n'ont pas été renseignés. Indique la dose pour chacun — c'est important pour les statistiques du palier.
+      </div>
+    </div>
+    <div class="catchup-body" id="catchup-body">
+      <!-- Les lignes de rattrapage sont injectées ici par renderCatchupModal() -->
+    </div>
+    <div class="catchup-foot">
+      <span class="catchup-status" id="catchup-status"></span>
+      <div class="catchup-actions">
+        <button type="button" class="btn btn-ghost" id="catchup-cancel-btn" data-i18n="addiction.btn_catchup_cancel">Annuler</button>
+        <button type="button" class="btn" id="catchup-save-btn" data-i18n="addiction.btn_catchup_save">Tout enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="idx-footer" data-i18n="index.footer_license">© 2026 Vital C. — Code source disponible sous licence MIT. </p>
+<p class="idx-footer"> <a href="https://github.com/Vital-Co/JournalVital" target="Sur GitHub">GitHub</a></p>
+
+<script src="../js/common.js"></script>
+<script src="../js/journal_addiction.js"></script>
+</body>
+</html>
