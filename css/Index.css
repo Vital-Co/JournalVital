@@ -1,7 +1,7 @@
 ﻿  /* ==========================================================================
      Styles spécifiques à la page d'accueil.
      Les classes sont préfixées `idx-` pour éviter toute collision avec
-     shared.css (qui définit déjà .home-title, .home-hero, etc., utilisés
+     Shared.css (qui définit déjà .home-title, .home-hero, etc., utilisés
      ailleurs dans le journal).
      ========================================================================== */
 
@@ -13,7 +13,7 @@
     min-height: 100vh;
   }
 
-  /* Conteneur central — on garde la même largeur max que .app dans shared.css
+  /* Conteneur central — on garde la même largeur max que .app dans Shared.css
      pour que le header s'aligne visuellement entre les deux pages. */
   .idx-app {
     max-width: 880px;

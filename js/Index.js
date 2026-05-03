@@ -1,5 +1,5 @@
 ﻿// ============ INDEX PAGE ============
-// Common logic (lang, theme, date, constants) is in js/common.js
+// Common logic (lang, theme, date, constants) is in js/Common.js
 
 const _langReady = initLanguage();
 initTheme();

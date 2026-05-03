@@ -1,5 +1,5 @@
   // ============ LOCALISATION & THEME ============
-  // Common logic (lang, theme, date, constants) is in js/common.js
+  // Common logic (lang, theme, date, constants) is in js/Common.js
 
   _onLangApplied = function() {
     if (typeof render === 'function') render();
