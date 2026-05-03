@@ -83,6 +83,7 @@ const SLEEP_DURATIONS = ['6h','6h30','7h','7h30','8h','8h30','9h','9h30','10h','
 // ============ STATE ============
 let plannings = [];
 let currentEdit = null;
+let editingIdx = null;
 let currentBrush = 0;
 let isMouseDown = false;
 let currentShowIdx = null;
@@ -227,6 +228,7 @@ function renderList(){
           <button class="btn-move" data-action="move-up" data-idx="${i}" title="${i18n.t('common.move_up')}"${i === 0 ? ' disabled' : ''}>▲</button>
           <button class="btn-move" data-action="move-down" data-idx="${i}" title="${i18n.t('common.move_down')}"${i === plannings.length - 1 ? ' disabled' : ''}>▼</button>
         </span>` : ''}
+        <button class="btn-edit" data-idx="${i}" title="${i18n.t('common.edit')}">${i18n.t('common.edit')}</button>
         <button class="btn-export-json" data-idx="${i}" title="${i18n.t('common.export')}">${i18n.t('common.export')}</button>
         <button class="btn-del" data-idx="${i}" title="${i18n.t('common.delete')}">${i18n.t('common.delete')}</button>
       </div>
@@ -250,6 +252,10 @@ function renderList(){
       else if(oldMain!==null && oldMain>idx) setMainPlanning(oldMain-1);
       savePlannings();renderList();
     }
+  }));
+  el.querySelectorAll('.btn-edit').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    editPlanning(+b.dataset.idx);
   }));
   el.querySelectorAll('.btn-export-json').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
@@ -376,7 +382,57 @@ function makeEmptyWeek(){
   };
 }
 
+function editPlanning(idx){
+  const p = plannings[idx];
+  if(!p) return;
+  editingIdx = idx;
+
+  // Strip sleep and free activities, remap grid indices
+  const sleepTitle = (getSleepActivity().title);
+  const freeTitle = (getFreeActivity().title);
+  const keepIndices = [];
+  const editActivities = [];
+  p.activities.forEach((a, i) => {
+    if(a.title !== sleepTitle && a.title !== freeTitle){
+      keepIndices.push(i);
+      editActivities.push({...a});
+    }
+  });
+  const indexMap = {};
+  keepIndices.forEach((oldIdx, newIdx) => { indexMap[oldIdx] = newIdx; });
+  const sleepIdx = p.activities.findIndex(a => a.title === sleepTitle);
+
+  const weeks = getWeeks(p);
+  const editWeeks = weeks.map(w => {
+    const newGrid = Array.from({length:96}, () => Array(7).fill(null));
+    for(let s=0; s<96; s++) for(let d=0; d<7; d++){
+      const v = w.grid[s][d];
+      if(v === sleepIdx) newGrid[s][d] = 'sleep';
+      else if(v in indexMap) newGrid[s][d] = indexMap[v];
+      else newGrid[s][d] = null;
+    }
+    return { grid: newGrid, sleepConfig: w.sleepConfig.map(sc => ({...sc})) };
+  });
+
+  colorIdx = editActivities.length;
+  currentEdit = {
+    name: p.name,
+    desc: p.desc || '',
+    activities: editActivities,
+    weeks: editWeeks,
+    activeWeek: 0
+  };
+  document.getElementById('plan-name').value = p.name;
+  document.getElementById('plan-desc').value = p.desc || '';
+  document.getElementById('err-save-palette').textContent = '';
+  document.getElementById('err-activities').textContent = '';
+  showView('view-create');
+  renderWeekTabs();
+  buildFullPage();
+}
+
 function startNewPlanning(){
+  editingIdx = null;
   currentEdit = {
     name:'',
     desc:'',
@@ -816,7 +872,7 @@ function savePlanning(){
   });
 
   // For backward compat, grid/sleepConfig = first week
-  plannings.push({
+  const planObj = {
     name: currentEdit.name,
     desc: currentEdit.desc,
     activities: currentEdit.activities,
@@ -824,7 +880,14 @@ function savePlanning(){
     sleepConfig: savedWeeks[0].sleepConfig,
     weeks: savedWeeks,
     created: new Date().toISOString()
-  });
+  };
+  if(editingIdx !== null && editingIdx >= 0 && editingIdx < plannings.length){
+    planObj.created = plannings[editingIdx].created || planObj.created;
+    plannings[editingIdx] = planObj;
+  } else {
+    plannings.push(planObj);
+  }
+  editingIdx = null;
   savePlannings();
   currentEdit = null;
   showView('view-list');
