@@ -1,6 +1,6 @@
 ﻿  html { overflow-y: scroll; }
 
-  /* Bouton "Mes outils" — lien vers Index.html.
+  /* Bouton "Mes outils" — lien vers index.html.
      Visuellement distinct de .btn-home (qui, lui, ramène à la liste des
      journaux) pour ne pas confondre les deux niveaux de navigation.
      Plus discret : pas de fond, juste du texte avec une icône maison. */
