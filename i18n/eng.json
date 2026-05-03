@@ -48,12 +48,15 @@
     "footer_license": "© 2026 Vital C. — Source code available under the MIT License.",
     "card_perso_name": "Personal Journal",
     "card_perso_desc": "Your space to write, record, and keep track.",
+    "card_mindmap_name": "Mindmap",
+    "card_mindmap_desc": "Organize your ideas visually.",
+    "card_taskmanager_name": "Task Manager",
+    "card_taskmanager_desc": "Manage and organize your tasks and events.",
     "under_construction": "🚧 This site is under construction — new features coming soon!"
   },
 
   "planning": {
     "page_title": "Planning Journal",
-    "header_title": "Weekly schedule",
     "hero_title": "My schedules",
     "hero_subtitle": "Organize your typical week. Create as many schedule as you want — one for each rhythm of life.",
     "btn_new": "+ New schedule",
@@ -128,9 +131,6 @@
   },
 
   "addiction": {
-    "page_title": "The Vital Journal",
-    "header_title": "Planning Journal",
-
     "nav_today": "Today",
     "nav_overview": "Full plan",
     "nav_history": "History",

@@ -10,7 +10,7 @@
 
 <!--
   Application IMMÉDIATE du thème AVANT le premier rendu pour éviter le flash
-  blanc-puis-dark. On lit la même clé localStorage que Addiction.html
+  blanc-puis-dark. On lit la même clé localStorage que Addictions.html
   ('vital_theme'), donc le choix est partagé entre les deux pages.
 -->
 <script>
@@ -31,7 +31,7 @@
 
 <div class="idx-app">
 
-  <!-- ============ HEADER (mêmes classes que Addiction.html, donc
+  <!-- ============ HEADER (mêmes classes que Addictions.html, donc
                     stylé par Shared.css à l'identique) ============ -->
   <header class="header">
     <div class="header-left">
@@ -77,11 +77,21 @@
         <h2 class="idx-card-name" data-i18n="index.card_perso_name">Journal Personnel</h2>
         <p class="idx-card-desc" data-i18n="index.card_perso_desc">Ton espace pour écrire, enregistrer, garder une trace.</p>
       </a>
-      <a href="pages/Addiction.html" class="idx-card">
+      <a href="pages/Mindmap.html" class="idx-card">
+        <h2 class="idx-card-name" data-i18n="index.card_mindmap_name">Mindmap</h2>
+        <p class="idx-card-desc" data-i18n="index.card_mindmap_desc">Organise tes idées visuellement.</p>
+      </a>
+    </div>
+
+    <div class="idx-grid">
+      <a href="pages/TaskManager.html" class="idx-card">
+        <h2 class="idx-card-name" data-i18n="index.card_taskmanager_name">TaskManager</h2>
+        <p class="idx-card-desc" data-i18n="index.card_taskmanager_desc">Organise tes taches et événements</p>
+      </a>
+      <a href="pages/Addictions.html" class="idx-card">
         <h2 class="idx-card-name" data-i18n="index.card_addiction_name">Aide Addictions</h2>
         <p class="idx-card-desc" data-i18n="index.card_addiction_desc">Suivi, plan de descente et outils pour gérer tes addictions.</p>
       </a>
-      <!-- Ajouter de nouvelles apps ici, simplement en dupliquant le bloc <a class="idx-card"> ci-dessus -->
     </div>
 
     <p class="idx-footer" data-i18n="index.footer_privacy">Vos données personnelles restent sur votre appareil. Cette application fonctionne sans compte, sans serveur de synchronisation

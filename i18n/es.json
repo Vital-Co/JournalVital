@@ -48,12 +48,15 @@
     "footer_license": "© 2026 Vital C. — Código fuente disponible bajo la licencia MIT.",
     "card_perso_name": "Diario Personal",
     "card_perso_desc": "Tu espacio para escribir, grabar y guardar un registro.",
+    "card_mindmap_name": "Mindmap",
+    "card_mindmap_desc": "Organiza tus ideas visualmente.",
+    "card_taskmanager_name": "Gestor de tareas",
+    "card_taskmanager_desc": "Gestiona y organiza tus tareas y eventos.",
     "under_construction": "🚧 Este sitio está en construcción — ¡nuevas funciones próximamente!"
   },
 
   "planning": {
     "page_title": "Diario de Planificación",
-    "header_title": "Diario de Planificación",
     "hero_title": "Mis planificaciones",
     "hero_subtitle": "Organiza tu semana tipo. Crea tantas planificaciones como quieras — una para cada ritmo de vida.",
     "btn_new": "+ Nueva planificación",
@@ -128,7 +131,6 @@
   },
 
   "addiction": {
-    "page_title": "El Diario Vital",
     "header_title": "Diario de Planificación",
 
     "nav_today": "Hoy",

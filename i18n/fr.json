@@ -48,12 +48,15 @@
     "footer_license": "© 2026 Vital C. — Code source disponible sous licence MIT.",
     "card_perso_name": "Journal Personnel",
     "card_perso_desc": "Ton espace pour écrire, enregistrer, garder une trace.",
+    "card_mindmap_name": "Mindmap",
+    "card_mindmap_desc": "Organise tes idées visuellement.",
+    "card_taskmanager_name": "Tâches et événements",
+    "card_taskmanager_desc": "Gère et organise tes tâches et événements.",
     "under_construction": "🚧 Ce site est en construction — de nouvelles fonctionnalités arrivent bientôt !"
   },
 
   "planning": {
     "page_title": "Journal Planning",
-    "header_title": "Planning de la semaine",
     "hero_title": "Mes plannings",
     "hero_subtitle": "Organise ta semaine type. Crée autant de plannings que tu veux — un pour chaque rythme de vie.",
     "btn_new": "+ Nouveau planning",
@@ -128,7 +131,6 @@
   },
 
   "addiction": {
-    "page_title": "Le Journal Vital",
     "header_title": "Journal Planning",
 
     "nav_today": "Aujourd'hui",
@@ -497,7 +499,6 @@
   },
 
   "perso": {
-    "header_title": "Journal Personnel",
     "home_title": "Mes journaux personnels",
     "home_subtitle": "Un espace pour écrire, enregistrer ta voix, garder des images. Chaque journal est un fil — ouvres-en un pour continuer, ou crées-en un nouveau.",
     "section_existing_journals": "— Journaux existants",
