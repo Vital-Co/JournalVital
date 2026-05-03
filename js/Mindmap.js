@@ -1,0 +1,1 @@
+/* Mindmap — logique spécifique */
