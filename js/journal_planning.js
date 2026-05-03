@@ -127,6 +127,10 @@ function renderList(){
         ${p.desc?`<div class="plan-card-desc">${esc(p.desc)}</div>`:''}
       </div>
       <div class="journal-card-actions">
+        ${plannings.length > 1 ? `<span class="journal-card-reorder">
+          <button class="btn-move" data-action="move-up" data-idx="${i}" title="${i18n.t('common.move_up')}"${i === 0 ? ' disabled' : ''}>▲</button>
+          <button class="btn-move" data-action="move-down" data-idx="${i}" title="${i18n.t('common.move_down')}"${i === plannings.length - 1 ? ' disabled' : ''}>▼</button>
+        </span>` : ''}
         <button class="btn-export-pdf" data-idx="${i}" title="${i18n.t('planning.btn_export_pdf_title')}">${i18n.t('planning.btn_export_pdf')}</button>
         <button class="btn-export-json" data-idx="${i}" title="${i18n.t('common.export')}">${i18n.t('common.export')}</button>
         <button class="btn-del" data-idx="${i}" title="${i18n.t('common.delete')}">${i18n.t('common.delete')}</button>
@@ -159,6 +163,26 @@ function renderList(){
   el.querySelectorAll('.btn-export-pdf').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
     exportPlanningPDF(+b.dataset.idx);
+  }));
+  el.querySelectorAll('[data-action="move-up"]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    const idx = +b.dataset.idx;
+    const mainIdx = getMainPlanning();
+    if (VitalStore.moveItem(plannings, idx, -1)) {
+      if (mainIdx === idx) setMainPlanning(idx - 1);
+      else if (mainIdx === idx - 1) setMainPlanning(idx);
+      savePlannings(); renderList();
+    }
+  }));
+  el.querySelectorAll('[data-action="move-down"]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    const idx = +b.dataset.idx;
+    const mainIdx = getMainPlanning();
+    if (VitalStore.moveItem(plannings, idx, 1)) {
+      if (mainIdx === idx) setMainPlanning(idx + 1);
+      else if (mainIdx === idx + 1) setMainPlanning(idx);
+      savePlannings(); renderList();
+    }
   }));
   el.querySelectorAll('.plan-card').forEach(c=>c.addEventListener('click',()=>{
     openPlanning(+c.dataset.idx);

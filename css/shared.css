@@ -2022,6 +2022,30 @@
     border-color: var(--warn, #c0392b);
     color: var(--warn, #c0392b);
   }
+  .journal-card-reorder {
+    display: inline-flex;
+    gap: 3px;
+    margin-right: 4px;
+  }
+  .btn-move {
+    padding: 3px 7px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink-mute);
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+    line-height: 1;
+  }
+  .btn-move:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--ink);
+  }
+  .btn-move:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
 
   .journals-empty {
     text-align: center;

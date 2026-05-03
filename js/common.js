@@ -215,6 +215,16 @@ const VitalStore = {
   },
 
   // ---- Import JSON file (returns Promise<object>, verifies integrity) ----
+  // ---- Reorder an array in-place (swap item at idx with neighbour) ----
+  moveItem(arr, idx, direction) {
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= arr.length) return false;
+    const tmp = arr[idx];
+    arr[idx] = arr[newIdx];
+    arr[newIdx] = tmp;
+    return true;
+  },
+
   importJSON(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();

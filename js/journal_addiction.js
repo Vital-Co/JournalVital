@@ -1170,7 +1170,7 @@
 
     // Trier : journal actif (au sens du dernier ouvert) en premier ? Non — on garde l'ordre de création.
     let html = '';
-    journals.forEach(j => {
+    journals.forEach((j, idx) => {
       const preview = getJournalPreview(j.id);
       let metaHtml;
       let statusHtml;
@@ -1213,6 +1213,10 @@
         </div>
         ${statusHtml}
         <div class="journal-card-actions">
+          ${journals.length > 1 ? `<span class="journal-card-reorder">
+            <button class="btn-move" data-action="move-up" data-journal-id="${j.id}" title="${i18n.t('common.move_up')}"${idx === 0 ? ' disabled' : ''}>▲</button>
+            <button class="btn-move" data-action="move-down" data-journal-id="${j.id}" title="${i18n.t('common.move_down')}"${idx === journals.length - 1 ? ' disabled' : ''}>▼</button>
+          </span>` : ''}
           <button class="btn-export-json" data-action="export" data-journal-id="${j.id}" title="${i18n.t('addiction.btn_export_journal_title')}">${i18n.t('common.export')}</button>
           <button class="btn-del" data-action="delete" data-journal-id="${j.id}" title="${i18n.t('addiction.btn_delete_journal_title')}">${i18n.t('common.delete')}</button>
         </div>
@@ -1249,6 +1253,30 @@
         if (!confirm(i18n.t('addiction.confirm_delete_journal', {name}))) return;
         deleteJournal(id);
         renderHome();
+      });
+    });
+    list.querySelectorAll('[data-action="move-up"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.journalId;
+        const journals = loadJournalsIndex();
+        const idx = journals.findIndex(j => j.id === id);
+        if (VitalStore.moveItem(journals, idx, -1)) {
+          saveJournalsIndex(journals);
+          renderHome();
+        }
+      });
+    });
+    list.querySelectorAll('[data-action="move-down"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.journalId;
+        const journals = loadJournalsIndex();
+        const idx = journals.findIndex(j => j.id === id);
+        if (VitalStore.moveItem(journals, idx, 1)) {
+          saveJournalsIndex(journals);
+          renderHome();
+        }
       });
     });
   }
@@ -2123,7 +2151,18 @@
       </div>`;
 
     // Widget conso restante
-    const consoTotal = currentDoses.reduce((s, d) => s + d.value, 0);
+    // Si currentDoses n'est pas encore peuplé (premier render), lire depuis le log
+    let consoTotal = currentDoses.reduce((s, d) => s + d.value, 0);
+    if (currentDoses.length === 0) {
+      const log = state.logs[todayISO()];
+      if (log) {
+        if (Array.isArray(log.doses)) {
+          consoTotal = log.doses.reduce((s, d) => s + (typeof d === 'object' ? d.value : d), 0);
+        } else if (log.dose != null) {
+          consoTotal = parseFloat(log.dose) || 0;
+        }
+      }
+    }
     const consoRestante = todayDose - consoTotal;
     const consoNegative = consoRestante <= 0;
     objHTML += `

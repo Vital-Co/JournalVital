@@ -24,7 +24,9 @@
     "theme_blue": "Blue theme",
     "theme_orange": "Orange theme",
     "theme_rose": "Pink theme",
-    "theme_dark": "Dark theme"
+    "theme_dark": "Dark theme",
+    "move_up": "Move up",
+    "move_down": "Move down"
   },
 
   "index": {

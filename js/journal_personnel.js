@@ -87,7 +87,7 @@
         i18n.t('perso.empty_journals') + '</div></div>';
       return;
     }
-    journals.forEach(j => {
+    journals.forEach((j, idx) => {
       const card = document.createElement('div');
       card.className = 'journal-card';
       const count = j.entries ? j.entries.length : 0;
@@ -102,6 +102,10 @@
           '</div>' +
         '</div>' +
         '<div class="journal-card-actions">' +
+          (journals.length > 1 ? '<span class="journal-card-reorder">' +
+            '<button class="btn-move" data-action="move-up" data-id="' + j.id + '" title="' + i18n.t('common.move_up') + '"' + (idx === 0 ? ' disabled' : '') + '>▲</button>' +
+            '<button class="btn-move" data-action="move-down" data-id="' + j.id + '" title="' + i18n.t('common.move_down') + '"' + (idx === journals.length - 1 ? ' disabled' : '') + '>▼</button>' +
+          '</span>' : '') +
           '<button class="btn-export-json" data-action="export" data-id="' + j.id + '" title="' + i18n.t('common.export') + '">' + i18n.t('common.export') + '</button>' +
           '<button class="btn-del" data-action="delete" data-id="' + j.id + '" title="' + i18n.t('common.delete') + '">' + i18n.t('common.delete') + '</button>' +
         '</div>';
@@ -125,6 +129,29 @@
         deleteJournal(btn.dataset.id);
       });
     });
+    list.querySelectorAll('[data-action="move-up"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        moveJournal(btn.dataset.id, -1);
+      });
+    });
+    list.querySelectorAll('[data-action="move-down"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        moveJournal(btn.dataset.id, 1);
+      });
+    });
+  }
+
+  // ---- Move journal ----
+  function moveJournal(id, direction) {
+    const idx = journals.findIndex(j => j.id === id);
+    if (idx < 0) return;
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= journals.length) return;
+    VitalStore.moveItem(journals, idx, direction);
+    saveAll();
+    renderHome();
   }
 
   // ---- Create journal ----
