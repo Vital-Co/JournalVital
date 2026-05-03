@@ -22,13 +22,11 @@
 
   // ---- Persistence ----
   function loadAll() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      journals = raw ? JSON.parse(raw) : [];
-    } catch (e) { journals = []; }
+    journals = VitalStore.get(STORAGE_KEY, []);
+    if (!Array.isArray(journals)) journals = [];
   }
   function saveAll() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(journals)); } catch (e) {}
+    VitalStore.set(STORAGE_KEY, journals);
   }
   function getJournal(id) { return journals.find(j => j.id === id); }
 
@@ -104,8 +102,8 @@
           '</div>' +
         '</div>' +
         '<div class="journal-card-actions">' +
-          '<button class="btn-icon" data-action="export" data-id="' + j.id + '" title="' + i18n.t('common.export') + '">⬇</button>' +
-          '<button class="btn-icon danger" data-action="delete" data-id="' + j.id + '" title="' + i18n.t('common.delete') + '">✕</button>' +
+          '<button class="btn-export-json" data-action="export" data-id="' + j.id + '" title="' + i18n.t('common.export') + '">' + i18n.t('common.export') + '</button>' +
+          '<button class="btn-del" data-action="delete" data-id="' + j.id + '" title="' + i18n.t('common.delete') + '">' + i18n.t('common.delete') + '</button>' +
         '</div>';
       card.addEventListener('click', e => {
         if (e.target.closest('[data-action]')) return;
@@ -170,32 +168,22 @@
   function exportJournal(id) {
     const j = getJournal(id);
     if (!j) return;
-    const blob = new Blob([JSON.stringify(j, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (j.name || 'journal') + '.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
+    VitalStore.exportJSON(j, (j.name || 'journal') + '.json');
   }
 
   function importJournal(file) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-        if (!data.name || !Array.isArray(data.entries)) {
-          alert(i18n.t('perso.alert_import_invalid'));
-          return;
-        }
-        data.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        journals.push(data);
-        saveAll();
-        renderHome();
-      } catch (e) {
+    VitalStore.importJSON(file).then(data => {
+      if (!data.name || !Array.isArray(data.entries)) {
         alert(i18n.t('perso.alert_import_invalid'));
+        return;
       }
-    };
-    reader.readAsText(file);
+      data.id = VitalStore.newId('');
+      journals.push(data);
+      saveAll();
+      renderHome();
+    }).catch(() => {
+      alert(i18n.t('perso.alert_import_invalid'));
+    });
   }
 
   // ---- Add entry ----
@@ -227,12 +215,10 @@
       mediaRecorder.onstop = () => {
         stream.getTracks().forEach(t => t.stop());
         const blob = new Blob(audioChunks, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.onload = () => {
-          pendingAudios.push(reader.result);
+        VitalStore.blobToDataURL(blob).then(dataUrl => {
+          pendingAudios.push(dataUrl);
           renderPendingAudios();
-        };
-        reader.readAsDataURL(blob);
+        });
       };
       mediaRecorder.start();
       btn.textContent = i18n.t('perso.btn_stop');
@@ -262,12 +248,10 @@
   // ---- Images ----
   function handleImageInput(files) {
     Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        pendingImages.push(reader.result);
+      VitalStore.blobToDataURL(file).then(dataUrl => {
+        pendingImages.push(dataUrl);
         renderPendingImages();
-      };
-      reader.readAsDataURL(file);
+      });
     });
   }
 

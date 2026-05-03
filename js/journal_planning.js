@@ -1,4 +1,4 @@
-// ============ PLANNING PAGE ============
+﻿// ============ PLANNING PAGE ============
 // Common logic (lang, theme, date, constants) is in js/common.js
 
 let _oldPresetTitles = [];
@@ -85,16 +85,16 @@ let currentBrush = 0;
 let isMouseDown = false;
 let currentShowIdx = null;
 
-function loadPlannings(){try{plannings=JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch(e){plannings=[];}}
-function savePlannings(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(plannings));}catch(e){}}
+function loadPlannings(){plannings=VitalStore.get(STORAGE_KEY,[]); if(!Array.isArray(plannings)) plannings=[];}
+function savePlannings(){VitalStore.set(STORAGE_KEY,plannings);}
 
 function getMainPlanning(){
   if(plannings.length===0) return null;
   if(plannings.length===1) return 0;
-  try{ const v=parseInt(localStorage.getItem(MAIN_KEY)); return (v>=0&&v<plannings.length)?v:null; }catch(e){return null;}
+  const v=parseInt(VitalStore.getRaw(MAIN_KEY)); return (v>=0&&v<plannings.length)?v:null;
 }
 function setMainPlanning(idx){
-  try{if(idx===null||idx===undefined) localStorage.removeItem(MAIN_KEY); else localStorage.setItem(MAIN_KEY,String(idx));}catch(e){}
+  if(idx===null||idx===undefined) VitalStore.remove(MAIN_KEY); else VitalStore.setRaw(MAIN_KEY,String(idx));
 }
 
 // ============ VIEWS ============
@@ -126,10 +126,10 @@ function renderList(){
         <div class="plan-card-name">${esc(p.name)}</div>
         ${p.desc?`<div class="plan-card-desc">${esc(p.desc)}</div>`:''}
       </div>
-      <div class="plan-card-actions">
+      <div class="journal-card-actions">
         <button class="btn-export-pdf" data-idx="${i}" title="${i18n.t('planning.btn_export_pdf_title')}">${i18n.t('planning.btn_export_pdf')}</button>
-        <button class="btn-export-json" data-idx="${i}" title="${i18n.t('planning.btn_export_json_title')}">${i18n.t('planning.btn_export_json')}</button>
-        <button class="btn-del" data-idx="${i}" title="${i18n.t('common.delete')}">â⬢</button>
+        <button class="btn-export-json" data-idx="${i}" title="${i18n.t('common.export')}">${i18n.t('common.export')}</button>
+        <button class="btn-del" data-idx="${i}" title="${i18n.t('common.delete')}">${i18n.t('common.delete')}</button>
       </div>
     </div>
   `).join('');
@@ -613,15 +613,7 @@ document.getElementById('btn-save-planning-palette').addEventListener('click', s
 // ============ EXPORT JSON ============
 function exportPlanningJSON(idx) {
   const p = plannings[idx];
-  const blob = new Blob([JSON.stringify(p, null, 2)], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'Planning_' + p.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_') + '.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  VitalStore.exportJSON(p, 'Planning_' + p.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_') + '.json');
 }
 
 // ============ EXPORT PDF ============
@@ -692,23 +684,18 @@ document.getElementById('btn-import-planning').addEventListener('click',()=>{
 document.getElementById('import-file-input').addEventListener('change',function(e){
   const file = e.target.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev){
-    try{
-      const data = JSON.parse(ev.target.result);
-      if(!data.name||!Array.isArray(data.activities)||!Array.isArray(data.grid)){
-        alert(i18n.t('planning.alert_json_invalid'));
-        return;
-      }
-      plannings.push(data);
-      savePlannings();
-      renderList();
-    } catch(err){
-      alert(i18n.t('planning.alert_json_error'));
+  VitalStore.importJSON(file).then(data => {
+    if(!data.name||!Array.isArray(data.activities)||!Array.isArray(data.grid)){
+      alert(i18n.t('planning.alert_json_invalid'));
+      return;
     }
-    e.target.value='';
-  };
-  reader.readAsText(file);
+    plannings.push(data);
+    savePlannings();
+    renderList();
+  }).catch(() => {
+    alert(i18n.t('planning.alert_json_error'));
+  });
+  e.target.value='';
 });
 
 // ============ NAVIGATION ============

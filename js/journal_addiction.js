@@ -530,29 +530,15 @@
   }
 
   function newJournalId() {
-    // ID court, lisible, suffisamment unique pour un usage local solo
-    return 'j_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+    return VitalStore.newId('j_');
   }
 
   function loadJournalsIndex() {
-    try {
-      const raw = localStorage.getItem(INDEX_KEY);
-      if (!raw) return [];
-      const arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr : [];
-    } catch (e) {
-      return [];
-    }
+    return VitalStore.loadIndex(INDEX_KEY);
   }
 
   function saveJournalsIndex(index) {
-    try {
-      localStorage.setItem(INDEX_KEY, JSON.stringify(index));
-      return true;
-    } catch (e) {
-      console.error('Save index failed', e);
-      return false;
-    }
+    return VitalStore.saveIndex(INDEX_KEY, index);
   }
 
   // ID du journal actuellement ouvert. null = aucun (on est sur la page d'accueil).
@@ -597,12 +583,7 @@
   // ============ VOCAL NOTE — helpers ============
 
   function blobToDataURL(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    return VitalStore.blobToDataURL(blob);
   }
 
   function stopRecording() {
@@ -850,36 +831,17 @@
 
   function loadState() {
     if (!activeJournalId) {
-      // Reset à un état neuf "non démarré" pour éviter de polluer si un journal a été ouvert puis on revient à l'accueil
       state = defaultState();
       PALIERS = buildPaliers(state.startDose, state.endDose, state.totalWeeks, state.curveType);
       return;
     }
-    try {
-      const raw = localStorage.getItem(journalStorageKey(activeJournalId));
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        state = Object.assign(defaultState(), parsed);
-      } else {
-        // Journal sans state encore : valeurs par défaut
-        state = defaultState();
-      }
-    } catch (e) {
-      console.log('Corrupted state, starting fresh');
-      state = defaultState();
-    }
+    state = VitalStore.loadItem(journalStorageKey(activeJournalId), defaultState());
     PALIERS = buildPaliers(state.startDose, state.endDose, state.totalWeeks, state.curveType);
   }
 
   function saveState() {
     if (!activeJournalId) return false;
-    try {
-      localStorage.setItem(journalStorageKey(activeJournalId), JSON.stringify(state));
-      return true;
-    } catch (e) {
-      console.error('Save failed', e);
-      return false;
-    }
+    return VitalStore.saveItem(journalStorageKey(activeJournalId), state);
   }
 
   // ============ MULTI-JOURNAUX — opérations ============
@@ -905,15 +867,15 @@
   function deleteJournal(id) {
     const index = loadJournalsIndex().filter(j => j.id !== id);
     saveJournalsIndex(index);
-    try { localStorage.removeItem(journalStorageKey(id)); } catch (e) {}
-    if (localStorage.getItem(ACTIVE_KEY) === id) {
-      try { localStorage.removeItem(ACTIVE_KEY); } catch (e) {}
+    VitalStore.removeItem(journalStorageKey(id));
+    if (VitalStore.getRaw(ACTIVE_KEY) === id) {
+      VitalStore.remove(ACTIVE_KEY);
     }
   }
 
   function openJournal(id) {
     activeJournalId = id;
-    try { localStorage.setItem(ACTIVE_KEY, id); } catch (e) {}
+    VitalStore.setRaw(ACTIVE_KEY, id);
     loadState();
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -921,7 +883,7 @@
 
   function goHome() {
     activeJournalId = null;
-    try { localStorage.removeItem(ACTIVE_KEY); } catch (e) {}
+    VitalStore.remove(ACTIVE_KEY);
     // Reset l'onglet actif sur "Aujourd'hui" pour la prochaine ouverture
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     const todayTab = document.querySelector('.tab[data-view="today"]');
@@ -938,9 +900,8 @@
   // Donne un aperçu rapide d'un journal pour la home (sans toucher à `state`)
   function getJournalPreview(id) {
     try {
-      const raw = localStorage.getItem(journalStorageKey(id));
-      if (!raw) return { started: false };
-      const s = JSON.parse(raw);
+      const s = VitalStore.get(journalStorageKey(id));
+      if (!s) return { started: false };
       const unitId = (s.unitType && UNIT_TYPES[s.unitType]) ? s.unitType : 'grams';
       const unit = UNIT_TYPES[unitId];
       const logsCount = s.logs ? Object.keys(s.logs).length : 0;
@@ -1252,8 +1213,8 @@
         </div>
         ${statusHtml}
         <div class="journal-card-actions">
-          <button class="btn-icon" data-action="export" data-journal-id="${j.id}" title="${i18n.t('addiction.btn_export_journal_title')}">${i18n.t('common.export')}</button>
-          <button class="btn-icon danger" data-action="delete" data-journal-id="${j.id}" title="${i18n.t('addiction.btn_delete_journal_title')}">${i18n.t('common.delete')}</button>
+          <button class="btn-export-json" data-action="export" data-journal-id="${j.id}" title="${i18n.t('addiction.btn_export_journal_title')}">${i18n.t('common.export')}</button>
+          <button class="btn-del" data-action="delete" data-journal-id="${j.id}" title="${i18n.t('addiction.btn_delete_journal_title')}">${i18n.t('common.delete')}</button>
         </div>
       </div>`;
     });
@@ -1274,18 +1235,9 @@
         const id = btn.dataset.journalId;
         const j = getJournalById(id);
         const journalName = j ? j.name : 'journal';
-        const raw = localStorage.getItem(journalStorageKey(id));
-        const stateData = raw ? JSON.parse(raw) : {};
+        const stateData = VitalStore.get(journalStorageKey(id)) || {};
         const exportData = Object.assign({ _meta: j }, stateData);
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = journalName.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüÿç&Sæ _-]/g, '_') + '.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        VitalStore.exportJSON(exportData, journalName.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüÿç&Sæ _-]/g, '_') + '.json');
       });
     });
     list.querySelectorAll('button[data-action="delete"]').forEach(btn => {
@@ -2734,33 +2686,29 @@
       importFile.addEventListener('change', e => {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = evt => {
-          try {
-            const data = JSON.parse(evt.target.result);
-            const meta = data._meta || {};
-            const name = (meta.name || file.name.replace(/\.json$/i, '')).trim() || 'Import';
-            const id = newJournalId();
-            const journal = {
-              id,
-              name,
-              createdAt: meta.createdAt || new Date().toISOString()
-            };
-            const index = loadJournalsIndex();
-            index.push(journal);
-            saveJournalsIndex(index);
-            // Sauvegarder le state (tout sauf _meta)
-            const stateData = Object.assign({}, data);
-            delete stateData._meta;
-            localStorage.setItem(journalStorageKey(id), JSON.stringify(stateData));
-            renderHome();
-          } catch (err) {
-            alert(i18n.t('addiction.alert_import_invalid'));
-            console.error('Import error:', err);
-          }
+        VitalStore.importJSON(file).then(data => {
+          const meta = data._meta || {};
+          const name = (meta.name || file.name.replace(/\.json$/i, '')).trim() || 'Import';
+          const id = newJournalId();
+          const journal = {
+            id,
+            name,
+            createdAt: meta.createdAt || new Date().toISOString()
+          };
+          const index = loadJournalsIndex();
+          index.push(journal);
+          saveJournalsIndex(index);
+          // Sauvegarder le state (tout sauf _meta)
+          const stateData = Object.assign({}, data);
+          delete stateData._meta;
+          VitalStore.saveItem(journalStorageKey(id), stateData);
+          renderHome();
+        }).catch(err => {
+          alert(i18n.t('addiction.alert_import_invalid'));
+          console.error('Import error:', err);
+        }).finally(() => {
           importFile.value = '';
-        };
-        reader.readAsText(file);
+        });
       });
     }
 

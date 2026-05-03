@@ -57,31 +57,6 @@
     color: var(--ink-soft);
     margin-top: 2px;
   }
-  .plan-card-actions {
-    margin-left: auto;
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-  .plan-card-actions button {
-    padding: 5px 10px;
-    border: 1px solid var(--line);
-    background: var(--paper);
-    color: var(--ink-mute);
-    border-radius: 3px;
-    font-family: var(--sans), sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all .15s;
-  }
-  .plan-card-actions button:hover {
-    border-color: var(--accent);
-    color: var(--ink);
-  }
-  .plan-card-actions .btn-del:hover {
-    border-color: var(--warn, #c0392b);
-    color: var(--warn, #c0392b);
-  }
 
   /* ============ MAIN PLANNING CHECKBOX ============ */
   .plan-card-main {

@@ -1998,28 +1998,29 @@
     color: var(--good);
   }
   .journal-card-actions {
+    margin-left: auto;
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-shrink: 0;
   }
-  .btn-icon {
-    padding: 8px 12px;
+  .journal-card-actions button {
+    padding: 5px 10px;
     border: 1px solid var(--line);
-    background: transparent;
+    background: var(--paper);
     color: var(--ink-mute);
     border-radius: 3px;
-    font-family: var(--sans);
+    font-family: var(--sans), sans-serif;
     font-size: 12px;
     cursor: pointer;
     transition: all .15s;
   }
-  .btn-icon:hover {
-    border-color: var(--ink-soft);
+  .journal-card-actions button:hover {
+    border-color: var(--accent);
     color: var(--ink);
   }
-  .btn-icon.danger:hover {
-    border-color: var(--accent-warm);
-    color: var(--accent-warm);
+  .journal-card-actions .btn-del:hover {
+    border-color: var(--warn, #c0392b);
+    color: var(--warn, #c0392b);
   }
 
   .journals-empty {
