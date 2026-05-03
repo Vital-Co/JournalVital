@@ -108,8 +108,8 @@ function _vsXor(str, key) {
     out += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
   return out;
 }
-function _vsEnc(str) { return btoa(unescape(encodeURIComponent(_vsXor(str, _VS_KEY)))); }
-function _vsDec(b64) { return _vsXor(decodeURIComponent(escape(atob(b64))), _VS_KEY); }
+function _vsEnc(str) { return btoa(String.fromCharCode(...new TextEncoder().encode(_vsXor(str, _VS_KEY)))); }
+function _vsDec(b64) { return _vsXor(new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0))), _VS_KEY); }
 
 // Simple FNV-1a 32-bit hash for sanity checks
 function _vsHash(str) {
