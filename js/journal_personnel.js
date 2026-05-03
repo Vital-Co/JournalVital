@@ -473,7 +473,7 @@
   }
 
   // ---- i18n hooks ----
-  _onLangApplied = function (lang) {
+  _onLangApplied = function () {
     setTodayDate();
     // Re-translate select options
     const sel = $('filter-mode');

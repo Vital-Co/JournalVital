@@ -3,12 +3,12 @@
 
 let _oldPresetTitles = [];
 
-_beforeLangSwitch = function(lang) {
+_beforeLangSwitch = function() {
   // Capture old preset titles before loading new language
   _oldPresetTitles = getAllPresetActivities().map(p => p.title);
 };
 
-_onLangApplied = function(lang) {
+_onLangApplied = function() {
   renderList();
   // Re-render creation view if currently open
   if (!viewCreate.classList.contains('hidden') && currentEdit) {

@@ -1,7 +1,7 @@
   // ============ LOCALISATION & THEME ============
   // Common logic (lang, theme, date, constants) is in js/common.js
 
-  _onLangApplied = function(lang) {
+  _onLangApplied = function() {
     if (typeof render === 'function') render();
   };
 
@@ -324,7 +324,6 @@
   // Construit les paliers : N paliers de descente + 1 palier "phase libre" final
   // totalWeeks et curveId sont optionnels (fallback aux valeurs du state)
   function buildPaliers(startDose, endDose, totalWeeks, curveId) {
-    const u = getUnit();
     const N = totalWeeks || (state && state.totalWeeks) || DEFAULT_TOTAL_WEEKS;
     const cId = curveId || (state && state.curveType) || DEFAULT_CURVE;
     const range = startDose - endDose;
@@ -491,7 +490,6 @@
 
     // Archiver le streak en cours (s'il existe et a au moins 1 jour)
     if (state.currentStreakStart) {
-      const days = currentStreakDays();
       // Le dernier jour "tenu" est celui d'avant aujourd'hui (puisqu'aujourd'hui est rechute).
       // Mais si on rechute le jour même où on a démarré le streak, days = 1 et endDate = startDate.
       // On n'archive un streak que s'il a fait au moins 1 jour entier passé (i.e. days >= 2 OU le streak a démarré avant aujourd'hui).
@@ -984,8 +982,7 @@
     const today = todayISO();
     for (const d of days) {
       if (d.date > today) break;
-      const dayPalier = palier;
-      const status = dayStatus(d.date, d.log, dayPalier);
+      const status = dayStatus(d.date, d.log, palier);
       if (status === 'done') {
         count++;
       } else if (status === 'miss') {
@@ -3157,7 +3154,6 @@
       const today = todayISO();
       const p = currentPalier();
       const todayTarget = p.dose;
-      const u = getUnit();
       const statusEl = document.getElementById('save-status');
       const doseWrap = document.querySelector('.dose-input');
 
@@ -3328,9 +3324,8 @@
       const name = j ? j.name : 'ce journal';
       if (!confirm(i18n.t('addiction.confirm_delete_journal', {name}))) return;
 
-      const idToDelete = activeJournalId;
       // Supprime le journal de l'index et le state localStorage
-      deleteJournal(idToDelete);
+      deleteJournal(activeJournalId);
       // Retour à l'accueil
       goHome();
     });
