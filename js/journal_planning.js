@@ -503,7 +503,7 @@ function renderActivities(){
     <div class="act-item">
       <span class="act-color" style="background:${a.color}"></span>
       <span class="act-title">${esc(a.title)}</span>
-      <button class="act-remove" data-idx="${i}" title="${i18n.t('common.delete')}">â⬢</button>
+      <button class="act-remove" data-idx="${i}" title="${i18n.t('common.delete')}">✕</button>
     </div>
   `).join('');
   el.querySelectorAll('.act-remove').forEach(b=>b.addEventListener('click',()=>{
