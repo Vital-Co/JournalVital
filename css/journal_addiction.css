@@ -179,13 +179,92 @@
     }
   }
 
+  /* ============ TIMER BANNER ============ */
+  .timer-banner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 20px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent-warm);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    margin-bottom: 0;
+    transition: all .25s ease;
+  }
+  .timer-banner.active {
+    border-left-color: var(--accent-warm);
+  }
+  .timer-banner.done {
+    border-left-color: var(--good);
+  }
+  .timer-banner-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .timer-banner-title {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 2px;
+    letter-spacing: -0.01em;
+  }
+  .timer-banner-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .timer-display {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    min-width: 80px;
+    text-align: center;
+  }
+  .timer-display.active { color: var(--accent-warm); }
+  .btn-timer {
+    padding: 9px 18px;
+    border: 1px solid var(--accent-warm);
+    background: var(--accent-warm);
+    color: var(--paper);
+    border-radius: 3px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all .15s;
+    min-width: 90px;
+  }
+  .btn-timer:hover {
+    background: var(--accent-warm-hover);
+    border-color: var(--accent-warm-hover);
+  }
+  .btn-timer.running {
+    background: transparent;
+    color: var(--accent-warm);
+  }
+  @media (max-width: 540px) {
+    .sidebar-aide .timer-banner,
+    .sidebar-aide .urge-banner {
+      flex: 1 1 100%;
+    }
+  }
+
   /* ============ URGE SURFING WIDGET ============ */
   .urge-banner {
     display: flex;
     align-items: center;
     gap: 18px;
     padding: 14px 20px;
-    background: linear-gradient(90deg, var(--paper) 0%, var(--accent) 100%);
+    background: var(--paper);
     border: 1px solid var(--line);
     border-left: 3px solid var(--accent);
     border-radius: 4px;
@@ -377,6 +456,245 @@
   .urge-foot .btn-urge-next:hover {
     opacity: .85;
   }
+  /* ============ MOOD LOG WIDGET ============ */
+  .mood-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    transition: all .25s ease;
+  }
+  .mood-banner-text { flex: 1 1 100%; min-width: 0; }
+  .mood-banner-title {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 2px;
+    letter-spacing: -0.01em;
+  }
+  .mood-banner-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .btn-mood {
+    width: 100%;
+    text-align: center;
+    padding: 9px 18px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--paper);
+    border-radius: 3px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-mood:hover { opacity: .85; }
+  .btn-mood-history {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .btn-mood-history:hover {
+    background: var(--accent);
+    color: var(--paper);
+    opacity: 1;
+  }
+
+  /* ============ MOOD MODALS ============ */
+  .mood-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .mood-modal.hidden { display: none; }
+  .mood-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(26, 24, 21, 0.55);
+    backdrop-filter: blur(2px);
+  }
+  .mood-dialog {
+    position: relative;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.10);
+    max-width: 440px;
+    width: 100%;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mood-dialog-wide { max-width: 640px; }
+  .mood-head {
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .mood-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .mood-head-sub {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .mood-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+    position: relative;
+  }
+  .mood-foot {
+    padding: 16px 24px;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .mood-reset-btn {
+    margin-right: auto;
+    border-color: #c0392b;
+    color: #c0392b;
+  }
+  .mood-reset-btn:hover {
+    background: #c0392b;
+    color: #fff;
+  }
+  .mood-score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .mood-score-label-min, .mood-score-label-max {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-mute);
+    flex-shrink: 0;
+  }
+  .mood-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--line);
+    outline: none;
+  }
+  .mood-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  }
+  .mood-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  }
+  .mood-score-display {
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 36px;
+    font-weight: 500;
+    margin: 8px 0 16px;
+    transition: color .2s;
+  }
+  .mood-comment {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  .mood-comment:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  #mood-chart-canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .mood-tooltip {
+    position: absolute;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    white-space: pre-line;
+    max-width: 220px;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .mood-tooltip.hidden { display: none; }
+  .mood-history-empty {
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--ink-mute);
+    font-style: italic;
+    padding: 40px 0;
+  }
+  .mood-history-empty.hidden { display: none; }
+
+  @media (max-width: 900px) {
+    .sidebar-aide .mood-banner {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+  }
+  @media (max-width: 540px) {
+    .mood-banner {
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 14px;
+    }
+    .mood-banner-text { flex: 1 1 100%; }
+    .btn-mood { flex: 1; }
+  }
+
 /* ---- Reasons list (config) ---- */
 .reasons-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
 .reason-item { display:flex; align-items:center; gap:8px; }
