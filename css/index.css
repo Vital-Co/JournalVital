@@ -101,3 +101,48 @@
     line-height: 1.5;
     margin: 0;
   }
+
+  /* Now-widget inside planning card */
+  .idx-now-widget {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 4px;
+  }
+  .idx-now-body {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 2px 0;
+  }
+  .idx-now-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .idx-now-act-label {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .idx-now-act-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .idx-now-until {
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-left: 4px;
+  }
+  .idx-now-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }

@@ -42,9 +42,11 @@ function getDays() { return i18n.t('planning.days') || ['Lun','Mar','Mer','Jeu',
 const SLOTS = 96;
 
 const ACTIVITY_COLORS = [
-  '#2c3e50','#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
+  '#ac3260','#e74c3c','#3498db','#00ffa7','#f39c12','#9b59b6',
   '#1abc9c','#e67e22','#34495e','#d35400','#16a085','#c0392b',
   '#8e44ad','#27ae60','#2980b9','#f1c40f','#7f8c8d','#e84393',
+  '#67ff00','#00d9ff','#ff00c3','#ff0000','#7f8c8d','#e84393',
+  '#fdf1a8','#27ae60','#0034ff','#f1c40f','#7f8c8d','#e84393',
   '#00b894','#6c5ce7','#fd79a8','#a29bfe'
 ];
 
@@ -85,6 +87,11 @@ let currentBrush = 0;
 let isMouseDown = false;
 let currentShowIdx = null;
 
+// Active week helpers
+function activeWeekData(){ return currentEdit.weeks[currentEdit.activeWeek]; }
+function getActiveGrid(){ return activeWeekData().grid; }
+function getActiveSleepConfig(){ return activeWeekData().sleepConfig; }
+
 function loadPlannings(){plannings=VitalStore.get(STORAGE_KEY,[]); if(!Array.isArray(plannings)) plannings=[];}
 function savePlannings(){VitalStore.set(STORAGE_KEY,plannings);}
 
@@ -108,8 +115,97 @@ function showView(id){
   window.scrollTo(0,0);
 }
 
+// ============ NOW WIDGET ============
+let _nowWidgetTimer = null;
+
+function renderNowWidget(){
+  const el = document.getElementById('now-widget');
+  if(!el) return;
+  const mainIdx = getMainPlanning();
+  if(mainIdx === null || !plannings[mainIdx]){
+    el.innerHTML = '';
+    return;
+  }
+  const p = plannings[mainIdx];
+  const now = new Date();
+  // JS: 0=Sun,1=Mon..6=Sat -> planning: 0=Mon..6=Sun
+  const jsDay = now.getDay();
+  const dayIdx = jsDay === 0 ? 6 : jsDay - 1;
+  const hour = now.getHours();
+  const min = now.getMinutes();
+  const slot = hour * 4 + Math.floor(min / 15);
+
+  const weeks = getWeeks(p);
+  // Determine which week to use (cycle based on ISO week number)
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
+  const isoWeek = Math.ceil((dayOfYear + startOfYear.getDay()) / 7);
+  const weekIdx = weeks.length > 1 ? (isoWeek - 1) % weeks.length : 0;
+  const grid = weeks[weekIdx].grid;
+
+  const isQuarter = grid.length === 96;
+  const ai = isQuarter ? grid[slot][dayIdx] : grid[hour][dayIdx];
+  const act = (ai !== null && ai !== undefined) ? p.activities[ai] : null;
+
+  // Find end of current activity block
+  let endLabel = '';
+  let nextAct = null;
+  if(act && isQuarter){
+    let endSlot = slot;
+    while(endSlot < 96 && grid[endSlot][dayIdx] === ai) endSlot++;
+    if(endSlot < 96){
+      const eH = Math.floor(endSlot / 4);
+      const eM = (endSlot % 4) * 15;
+      endLabel = `${String(eH).padStart(2,'0')}:${String(eM).padStart(2,'0')}`;
+      // Next activity
+      const nai = grid[endSlot][dayIdx];
+      if(nai !== null && nai !== undefined) nextAct = p.activities[nai];
+    }
+  }
+
+  const title = i18n.t('planning.now_widget_title') || '📍 En ce moment';
+  const actLabel = i18n.t('planning.now_widget_activity') || 'Activité en cours :';
+  const untilLabel = i18n.t('planning.now_widget_until') || "jusqu'à";
+  const nextLabel = i18n.t('planning.now_widget_next') || 'Ensuite :';
+  const weekLabel = weeks.length > 1 ? (i18n.t('planning.now_widget_week') || 'Semaine {n}').replace('{n}', weekIdx + 1) : '';
+
+  let actName = '—';
+  let actColor = 'var(--ink-mute)';
+  if(act){
+    actName = esc(act.title);
+    actColor = act.color;
+  }
+
+  const timeNow = `${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+  const untilHtml = endLabel ? `<span class="now-until">${untilLabel} ${endLabel}</span>` : '';
+  const nextHtml = nextAct ? `<span class="now-next"><span class="now-widget-dot" style="background:${nextAct.color}"></span>${nextLabel} ${esc(nextAct.title)}</span>` : '';
+  const weekHtml = weekLabel ? `<span class="now-week-label">${esc(weekLabel)}</span>` : '';
+
+  el.innerHTML = `
+    <div class="now-widget-box">
+      <div class="now-widget-header">
+        <span class="now-widget-title">${title}</span>
+        <span class="now-widget-time">${timeNow}</span>
+        ${weekHtml}
+      </div>
+      <div class="now-widget-body">
+        <span class="now-widget-dot" style="background:${actColor}"></span>
+        <span class="now-widget-act-label">${actLabel}</span>
+        <span class="now-widget-act-name">${actName}</span>
+        ${untilHtml}
+        ${nextHtml}
+      </div>
+    </div>
+  `;
+
+  // Auto-refresh every 60s
+  if(_nowWidgetTimer) clearInterval(_nowWidgetTimer);
+  _nowWidgetTimer = setInterval(renderNowWidget, 60000);
+}
+
 // ============ LIST VIEW ============
 function renderList(){
+  renderNowWidget();
   const el = document.getElementById('plannings-list');
   if(plannings.length===0){
     el.innerHTML=`<p style="font-family:var(--sans), sans-serif;font-size:14px;color:var(--ink-mute);text-align:center;padding:20px 0;">${i18n.t('planning.empty_list')}</p>`;
@@ -131,7 +227,6 @@ function renderList(){
           <button class="btn-move" data-action="move-up" data-idx="${i}" title="${i18n.t('common.move_up')}"${i === 0 ? ' disabled' : ''}>▲</button>
           <button class="btn-move" data-action="move-down" data-idx="${i}" title="${i18n.t('common.move_down')}"${i === plannings.length - 1 ? ' disabled' : ''}>▼</button>
         </span>` : ''}
-        <button class="btn-export-pdf" data-idx="${i}" title="${i18n.t('planning.btn_export_pdf_title')}">${i18n.t('planning.btn_export_pdf')}</button>
         <button class="btn-export-json" data-idx="${i}" title="${i18n.t('common.export')}">${i18n.t('common.export')}</button>
         <button class="btn-del" data-idx="${i}" title="${i18n.t('common.delete')}">${i18n.t('common.delete')}</button>
       </div>
@@ -159,10 +254,6 @@ function renderList(){
   el.querySelectorAll('.btn-export-json').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
     exportPlanningJSON(+b.dataset.idx);
-  }));
-  el.querySelectorAll('.btn-export-pdf').forEach(b=>b.addEventListener('click',e=>{
-    e.stopPropagation();
-    exportPlanningPDF(+b.dataset.idx);
   }));
   el.querySelectorAll('[data-action="move-up"]').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
@@ -192,10 +283,13 @@ function renderList(){
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ============ OPEN PLANNING (read-only) ============
+let currentShowWeek = 0;
+
 function openPlanning(idx){
   const p = plannings[idx];
   if(!p) return;
   currentShowIdx = idx;
+  currentShowWeek = 0;
   document.getElementById('show-plan-name').textContent = p.name;
   document.getElementById('show-plan-desc').textContent = p.desc||'';
 
@@ -204,18 +298,49 @@ function openPlanning(idx){
     <div class="legend-item"><span class="legend-dot" style="background:${a.color}"></span>${esc(a.title)}</div>
   `).join('');
 
+  renderShowWeekTabs(p);
+  renderShowGrid(p, 0);
+  showView('view-show');
+}
+
+function getWeeks(p){
+  if(p.weeks && p.weeks.length) return p.weeks;
+  return [{ grid: p.grid, sleepConfig: p.sleepConfig }];
+}
+
+function renderShowWeekTabs(p){
+  const weeks = getWeeks(p);
+  const bar = document.getElementById('show-week-tabs-bar');
+  if(weeks.length <= 1){ bar.innerHTML = ''; return; }
+  let html = '';
+  weeks.forEach((_,i)=>{
+    const active = i === currentShowWeek ? ' active' : '';
+    const label = (i18n.t('planning.week_tab_label') || 'Semaine') + ' ' + (i+1);
+    html += `<div class="week-tab${active}" data-week="${i}"><span class="week-tab-label">${esc(label)}</span></div>`;
+  });
+  bar.innerHTML = html;
+  bar.querySelectorAll('.week-tab').forEach(el=>el.addEventListener('click',()=>{
+    currentShowWeek = +el.dataset.week;
+    renderShowWeekTabs(p);
+    renderShowGrid(p, currentShowWeek);
+  }));
+}
+
+function renderShowGrid(p, weekIdx){
+  const weeks = getWeeks(p);
+  const grid = weeks[weekIdx].grid;
   const gridEl = document.getElementById('show-grid');
   let html = '<div class="vwg-header"></div>';
   getDays().forEach(d=>{html+=`<div class="vwg-header" style="grid-column:span 4">${d}</div>`;});
 
-  const isQuarter = p.grid.length === 96;
+  const isQuarter = grid.length === 96;
   for(let h=0;h<24;h++){
     html+=`<div class="vwg-hour">${String(h).padStart(2,'0')}h</div>`;
     for(let d=0;d<7;d++){
       if(isQuarter){
         for(let q=0;q<4;q++){
           const s = h*4+q;
-          const ai = p.grid[s][d];
+          const ai = grid[s][d];
           const act = ai!==null&&ai!==undefined ? p.activities[ai] : null;
           const isLast = q===3 ? ' qtr-last' : '';
           const qMin = q*15;
@@ -228,7 +353,7 @@ function openPlanning(idx){
           }
         }
       } else {
-        const ai = p.grid[h][d];
+        const ai = grid[h][d];
         const act = ai!==null&&ai!==undefined ? p.activities[ai] : null;
         if(act){
           html+=`<div class="vwg-cell qtr-last" style="background:${act.color};grid-column:span 4" title="${esc(act.title)}">${esc(act.title)}</div>`;
@@ -239,19 +364,25 @@ function openPlanning(idx){
     }
   }
   gridEl.innerHTML = html;
-  showView('view-show');
 }
 
 // ============ CREATE / EDIT ============
 let colorIdx = 0;
 
+function makeEmptyWeek(){
+  return {
+    sleepConfig: getDays().map(()=>({bedtime:'23:00', duration:'8h'})),
+    grid: Array.from({length:96},()=>Array(7).fill(null))
+  };
+}
+
 function startNewPlanning(){
   currentEdit = {
     name:'',
     desc:'',
-    sleepConfig: getDays().map(()=>({bedtime:'23:00', duration:'8h'})),
     activities:[...getDefaultActivities().map((p,i)=>({...p, color:ACTIVITY_COLORS[i%ACTIVITY_COLORS.length]}))],
-    grid: Array.from({length:96},()=>Array(7).fill(null))
+    weeks: [makeEmptyWeek()],
+    activeWeek: 0
   };
   colorIdx = getDefaultActivities().length;
   document.getElementById('plan-name').value='';
@@ -259,6 +390,7 @@ function startNewPlanning(){
   document.getElementById('err-save-palette').textContent='';
   document.getElementById('err-activities').textContent='';
   showView('view-create');
+  renderWeekTabs();
   buildFullPage();
 }
 
@@ -267,6 +399,59 @@ function buildFullPage(){
   buildGrid();
   renderActivities();
   buildBrushSelector();
+}
+
+// ============ WEEK TABS ============
+function renderWeekTabs(){
+  const bar = document.getElementById('week-tabs-bar');
+  const weeks = currentEdit.weeks;
+  let html = '';
+  weeks.forEach((_,i)=>{
+    const active = i === currentEdit.activeWeek ? ' active' : '';
+    const label = (i18n.t('planning.week_tab_label') || 'Semaine') + ' ' + (i+1);
+    html += `<div class="week-tab${active}" data-week="${i}">`;
+    html += `<span class="week-tab-label">${esc(label)}</span>`;
+    if(weeks.length > 1) html += `<button class="week-tab-remove" data-week="${i}" title="${i18n.t('common.delete') || 'Supprimer'}">✕</button>`;
+    html += `</div>`;
+  });
+  html += `<button class="week-tab-add" id="btn-add-week" title="${i18n.t('planning.add_week_title') || 'Ajouter une semaine'}">+</button>`;
+  bar.innerHTML = html;
+
+  bar.querySelectorAll('.week-tab-label').forEach(el=>el.addEventListener('click',()=>{
+    const idx = +el.parentElement.dataset.week;
+    switchToWeek(idx);
+  }));
+  bar.querySelectorAll('.week-tab-remove').forEach(btn=>btn.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    removeWeek(+btn.dataset.week);
+  }));
+  document.getElementById('btn-add-week').addEventListener('click', addWeek);
+}
+
+function switchToWeek(idx){
+  if(idx === currentEdit.activeWeek) return;
+  readSleepFromInputs();
+  currentEdit.activeWeek = idx;
+  renderWeekTabs();
+  buildFullPage();
+}
+
+function addWeek(){
+  readSleepFromInputs();
+  currentEdit.weeks.push(makeEmptyWeek());
+  currentEdit.activeWeek = currentEdit.weeks.length - 1;
+  renderWeekTabs();
+  buildFullPage();
+}
+
+function removeWeek(idx){
+  if(currentEdit.weeks.length <= 1) return;
+  if(!confirm((i18n.t('planning.confirm_delete_week') || 'Supprimer cette semaine ?'))) return;
+  currentEdit.weeks.splice(idx, 1);
+  if(currentEdit.activeWeek >= currentEdit.weeks.length) currentEdit.activeWeek = currentEdit.weeks.length - 1;
+  else if(currentEdit.activeWeek > idx) currentEdit.activeWeek--;
+  renderWeekTabs();
+  buildFullPage();
 }
 
 // ============ SLEEP ============
@@ -283,8 +468,9 @@ function computeSleepSlots(){
   // - Si bedtime >= 12:00 : on se couche le soir du jour d -> sommeil démarre sur d, déborde sur (d+1)
   // - Si bedtime <  12:00 : on s'endort après minuit -> sommeil démarre directement sur (d+1)
   const slots = [];
+  const sc_arr = getActiveSleepConfig();
   for(let d=0;d<7;d++){
-    const sc = currentEdit.sleepConfig[d];
+    const sc = sc_arr[d];
     const [hh,mm] = sc.bedtime.split(':').map(Number);
     const startSlot = hh*4 + Math.floor(mm/15);
     const dur = parseDuration(sc.duration);
@@ -320,24 +506,26 @@ function generateBedtimeOptions(selected){
 }
 
 function readSleepFromInputs(){
+  const sc = getActiveSleepConfig();
   document.querySelectorAll('.sleep-bedtime').forEach(sel=>{
-    currentEdit.sleepConfig[+sel.dataset.day].bedtime = sel.value;
+    sc[+sel.dataset.day].bedtime = sel.value;
   });
   document.querySelectorAll('.sleep-duration').forEach(sel=>{
-    currentEdit.sleepConfig[+sel.dataset.day].duration = sel.value;
+    sc[+sel.dataset.day].duration = sel.value;
   });
 }
 
 function onSleepChange(){
   readSleepFromInputs();
+  const grid = getActiveGrid();
   // Clear sleep markers, recompute
   for(let s=0;s<96;s++) for(let d=0;d<7;d++){
-    if(currentEdit.grid[s][d]==='sleep') currentEdit.grid[s][d]=null;
+    if(grid[s][d]==='sleep') grid[s][d]=null;
   }
   const sleepSlots = computeSleepSlots();
   currentEdit._sleepSet = new Set(sleepSlots.map(x=>x.slot+','+x.day));
   for(const {day,slot} of sleepSlots){
-    currentEdit.grid[slot][day]='sleep';
+    grid[slot][day]='sleep';
   }
   buildSleepWidget();
   buildGrid();
@@ -350,7 +538,7 @@ function buildSleepWidget(){
   html += `<div class="sleep-widget-title">${i18n.t('planning.sleep_widget_title')}</div>`;
   html += `<div class="sleep-grid">`;
   for(let d=0;d<7;d++){
-    const sc = currentEdit.sleepConfig[d];
+    const sc = getActiveSleepConfig()[d];
     html += `<div class="sleep-day">`;
     html += `<div class="sleep-day-label">${getDays()[d]}</div>`;
     html += `<span class="sleep-field-label">${i18n.t('planning.sleep_bedtime_label')}</span>`;
@@ -372,10 +560,11 @@ function buildGrid(){
   const gridEl = document.getElementById('week-grid');
   const sleepSlots = computeSleepSlots();
   currentEdit._sleepSet = new Set(sleepSlots.map(x=>x.slot+','+x.day));
+  const grid = getActiveGrid();
   // Mark sleep in grid
   for(let s=0;s<96;s++) for(let d=0;d<7;d++){
-    if(currentEdit._sleepSet.has(s+','+d)) currentEdit.grid[s][d]='sleep';
-    else if(currentEdit.grid[s][d]==='sleep') currentEdit.grid[s][d]=null;
+    if(currentEdit._sleepSet.has(s+','+d)) grid[s][d]='sleep';
+    else if(grid[s][d]==='sleep') grid[s][d]=null;
   }
 
   let html = '<div class="week-columns">';
@@ -389,7 +578,7 @@ function buildGrid(){
       const qMin = q*15;
       const timeStr = `${String(h).padStart(2,'0')}:${String(qMin).padStart(2,'0')}`;
       const isSleep = currentEdit._sleepSet.has(s+','+d);
-      const ai = currentEdit.grid[s][d];
+      const ai = grid[s][d];
       const act = (ai!==null && ai!=='sleep') ? currentEdit.activities[ai] : null;
       const hourStart = q===0 ? ' hour-start' : '';
       let cellClass = 'wg-cell' + hourStart;
@@ -428,13 +617,14 @@ function buildGrid(){
 }
 
 function updateAllLabels(){
+  const grid = getActiveGrid();
   for(let d=0;d<7;d++){
     let prevAct = null;
     for(let s=0;s<96;s++){
       const cell = document.querySelector(`.wg-cell[data-s="${s}"][data-d="${d}"]`);
       if(!cell) continue;
       if(cell.classList.contains('sleep-cell')){ prevAct=null; continue; }
-      const ai = currentEdit.grid[s][d];
+      const ai = grid[s][d];
       const act = (ai!==null && ai!=='sleep') ? currentEdit.activities[ai] : null;
       const h = Math.floor(s/4), q = s%4;
       const tl = q===0 ? `<span class="wg-time-label">${String(h).padStart(2,'0')}h</span>` : '';
@@ -466,13 +656,14 @@ function paintCell(cell){
   if(isSleepSlot(s,d)) return;
   const actIdx = currentBrush;
   const act = currentEdit.activities[actIdx];
-  if(currentEdit.grid[s][d]==='sleep') return;
-  if(currentEdit.grid[s][d] === actIdx){
-    currentEdit.grid[s][d] = null;
+  const grid = getActiveGrid();
+  if(grid[s][d]==='sleep') return;
+  if(grid[s][d] === actIdx){
+    grid[s][d] = null;
     cell.style.background = '';
     cell.classList.add('empty');
   } else {
-    currentEdit.grid[s][d] = actIdx;
+    grid[s][d] = actIdx;
     cell.style.background = act.color;
     cell.classList.remove('empty');
   }
@@ -480,12 +671,13 @@ function paintCell(cell){
 }
 
 function updateDayLabels(d){
+  const grid = getActiveGrid();
   let prevAct = null;
   for(let s=0;s<96;s++){
     const cell = document.querySelector(`.wg-cell[data-s="${s}"][data-d="${d}"]`);
     if(!cell) continue;
     if(cell.classList.contains('sleep-cell')){ prevAct=null; continue; }
-    const ai = currentEdit.grid[s][d];
+    const ai = grid[s][d];
     const act = (ai!==null && ai!=='sleep') ? currentEdit.activities[ai] : null;
     const h = Math.floor(s/4), q = s%4;
     const tl = q===0 ? `<span class="wg-time-label">${String(h).padStart(2,'0')}h</span>` : '';
@@ -532,10 +724,13 @@ function renderActivities(){
   `).join('');
   el.querySelectorAll('.act-remove').forEach(b=>b.addEventListener('click',()=>{
     const idx = +b.dataset.idx;
-    for(let s=0;s<96;s++) for(let d=0;d<7;d++){
-      if(currentEdit.grid[s][d]===idx) currentEdit.grid[s][d]=null;
-      else if(currentEdit.grid[s][d]>idx && currentEdit.grid[s][d]!=='sleep') currentEdit.grid[s][d]--;
-    }
+    // Update all weeks' grids
+    currentEdit.weeks.forEach(w=>{
+      for(let s=0;s<96;s++) for(let d=0;d<7;d++){
+        if(w.grid[s][d]===idx) w.grid[s][d]=null;
+        else if(w.grid[s][d]>idx && w.grid[s][d]!=='sleep') w.grid[s][d]--;
+      }
+    });
     currentEdit.activities.splice(idx,1);
     if(currentBrush >= currentEdit.activities.length) currentBrush = Math.max(0, currentEdit.activities.length-1);
     renderActivities();
@@ -602,11 +797,6 @@ function savePlanning(){
   const sleepIdx = currentEdit.activities.length;
   currentEdit.activities.push({...getSleepActivity()});
 
-  // Convert 'sleep' markers to sleepIdx
-  for(let s=0;s<96;s++) for(let d=0;d<7;d++){
-    if(currentEdit.grid[s][d]==='sleep') currentEdit.grid[s][d]=sleepIdx;
-  }
-
   // Fill empty slots with "Temps Libre"
   const freeTitle = getFreeActivity().title;
   let freeIdx = currentEdit.activities.findIndex(a=>a.title===freeTitle);
@@ -614,16 +804,25 @@ function savePlanning(){
     currentEdit.activities.push({...getFreeActivity()});
     freeIdx = currentEdit.activities.length-1;
   }
-  for(let s=0;s<96;s++) for(let d=0;d<7;d++){
-    if(currentEdit.grid[s][d]===null) currentEdit.grid[s][d]=freeIdx;
-  }
 
+  // Process all weeks
+  const savedWeeks = currentEdit.weeks.map(w=>{
+    const grid = w.grid;
+    for(let s=0;s<96;s++) for(let d=0;d<7;d++){
+      if(grid[s][d]==='sleep') grid[s][d]=sleepIdx;
+      else if(grid[s][d]===null) grid[s][d]=freeIdx;
+    }
+    return { grid: grid, sleepConfig: w.sleepConfig };
+  });
+
+  // For backward compat, grid/sleepConfig = first week
   plannings.push({
     name: currentEdit.name,
     desc: currentEdit.desc,
     activities: currentEdit.activities,
-    grid: currentEdit.grid,
-    sleepConfig: currentEdit.sleepConfig,
+    grid: savedWeeks[0].grid,
+    sleepConfig: savedWeeks[0].sleepConfig,
+    weeks: savedWeeks,
     created: new Date().toISOString()
   });
   savePlannings();
@@ -640,66 +839,6 @@ function exportPlanningJSON(idx) {
   VitalStore.exportJSON(p, 'Planning_' + p.name.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_') + '.json');
 }
 
-// ============ EXPORT PDF ============
-function exportPlanningPDF(idx) {
-  const p = plannings[idx];
-  const DAYS_SHORT = getDays();
-  function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-  const legend = p.activities.map(a=>
-    `<div class="leg-item"><span class="leg-dot" style="background:${a.color}"></span><span>${escHtml(a.title)}</span></div>`
-  ).join('');
-
-  let tableRows = '';
-  for(let h=0;h<24;h++){
-    for(let q=0;q<4;q++){
-      const s = h*4+q;
-      const timeLabel = q===0 ? `${String(h).padStart(2,'0')}h` : '';
-      let cells = `<td class="tc">${timeLabel}</td>`;
-      for(let d=0;d<7;d++){
-        const ai = p.grid[s][d];
-        const act = (ai!==null&&ai!==undefined) ? p.activities[ai] : null;
-        cells += `<td class="dc" style="background:${act?act.color:'#eeeeee'}"></td>`;
-      }
-      tableRows += `<tr${q===0?' class="hs"':''}>${cells}</tr>`;
-    }
-  }
-
-  const html = `<!DOCTYPE html>
-<html lang="fr"><head><meta charset="UTF-8"><title>${escHtml(p.name)}</title>
-<style>
-  @page{size:A4 portrait;margin:12mm}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,Arial,sans-serif;font-size:11px;color:#222}
-  h1{font-size:17px;font-weight:500;margin-bottom:3px;letter-spacing:-.01em}
-  .desc{font-size:11px;color:#777;font-style:italic;margin-bottom:8px}
-  .legend{display:flex;flex-wrap:wrap;gap:5px 12px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #ddd}
-  .leg-item{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#333}
-  .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-  table{border-collapse:collapse;width:100%;table-layout:fixed}
-  thead th{padding:4px 2px;font-size:10px;font-weight:600;text-align:center;border-bottom:2px solid #aaa;background:#f8f8f8}
-  th.tc-head{width:26px}
-  td.tc{width:26px;padding:0 4px 0 0;font-size:8px;color:#999;text-align:right;vertical-align:top;border-right:1px solid #ddd;line-height:5px}
-  td.dc{height:5px;border-right:1px solid rgba(255,255,255,.25)}
-  tr.hs td{border-top:1px solid #ccc}
-  tr.hs td.tc{font-size:9px;color:#555}
-</style></head><body>
-  <h1>${escHtml(p.name)}</h1>
-  ${p.desc?`<p class="desc">${escHtml(p.desc)}</p>`:''}
-  <div class="legend">${legend}</div>
-  <table>
-    <thead><tr><th class="tc-head"></th>${DAYS_SHORT.map(d=>`<th>${d}</th>`).join('')}</tr></thead>
-    <tbody>${tableRows}</tbody>
-  </table>
-</body></html>`;
-
-  const win = window.open('','_blank','width=820,height=700');
-  if(!win){ alert(i18n.t('planning.alert_popup_blocked')); return; }
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  setTimeout(()=>{ win.print(); }, 400);
-}
 
 // ============ IMPORT JSON ============
 document.getElementById('btn-import-planning').addEventListener('click',()=>{
@@ -729,4 +868,4 @@ document.getElementById('btn-back-list2').addEventListener('click',()=>{showView
 
 // ============ INIT ============
 loadPlannings();
-renderList();
+// renderList() is called by _onLangApplied after i18n.load() resolves
