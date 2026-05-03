@@ -209,6 +209,7 @@
 
 /* ---- Item cards in lists ---- */
 .tm-item {
+  position: relative;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -218,6 +219,9 @@
   align-items: center;
   gap: 14px;
   transition: all .15s;
+  height: 82px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .tm-item:hover {
   border-color: var(--ink-soft);
@@ -225,13 +229,17 @@
 .tm-item-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
 }
 .tm-item-name {
   font-family: var(--serif);
   font-size: 17px;
   font-weight: 500;
   color: var(--ink);
-  margin-bottom: 3px;
   word-break: break-word;
 }
 .tm-item-name.done {
@@ -246,6 +254,7 @@
   font-size: 10px;
   color: var(--ink-mute);
   letter-spacing: 0.04em;
+  width: 100%;
 }
 .tm-item-type {
   text-transform: uppercase;
@@ -300,6 +309,99 @@
 /* Margin below creation buttons */
 .home-create-row {
   margin-bottom: 28px;
+}
+
+/* Item name row (name + rename btn) */
+.tm-item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.tm-item-name-row .btn-rename {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  opacity: 0.5;
+  transition: opacity .15s;
+}
+/* Time info (center of card) */
+.tm-item-timeinfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  min-width: 0;
+}
+.tm-timeinfo-deadline,
+.tm-timeinfo-repeat,
+.tm-timeinfo-timer {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm-timeinfo-timer {
+  font-size: 11px;
+  color: var(--ink-mute);
+}
+.tm-timeinfo-remaining {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+/* Importance badge (bottom right corner) */
+.tm-item-importance {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+}
+
+/* Description: hover tooltip (follows cursor, above-right) */
+.tm-item-desc-hover {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  word-break: break-word;
+  max-width: 300px;
+  pointer-events: none;
+}
+
+.tm-item-name-row .btn-rename:hover {
+  opacity: 1;
+}
+
+
+/* Mode toggle buttons */
+.tm-mode-btns {
+  display: flex;
+  gap: 6px;
+}
+
+/* Datetime row */
+.tm-datetime-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 4px;
 }
 
 @media (max-width: 600px) {

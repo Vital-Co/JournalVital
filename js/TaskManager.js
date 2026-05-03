@@ -71,26 +71,32 @@
   document.getElementById('task-importance').addEventListener('input', e => {
     document.getElementById('task-importance-val').textContent = e.target.value;
   });
-  document.getElementById('event-importance').addEventListener('input', e => {
-    document.getElementById('event-importance-val').textContent = e.target.value;
-  });
 
-  // ---- Deadline toggle ----
-  const dlToggle = document.getElementById('task-deadline-toggle');
-  const dlFields = document.getElementById('task-deadline-fields');
-  let deadlineOn = false;
+  // ---- Task mode toggle (repeat vs deadline) ----
+  const modeRepeatBtn = document.getElementById('task-mode-repeat');
+  const modeDeadlineBtn = document.getElementById('task-mode-deadline');
+  const repeatFields = document.getElementById('task-repeat-fields');
+  const deadlineOnlyFields = document.getElementById('task-deadline-only-fields');
+  let taskMode = 'repeat'; // 'repeat' or 'deadline'
 
-  dlToggle.addEventListener('click', () => {
-    deadlineOn = !deadlineOn;
-    dlToggle.classList.toggle('active', deadlineOn);
-    dlToggle.textContent = deadlineOn ? t('task.toggle_on', 'Oui') : t('task.toggle_off', 'Non');
-    dlFields.classList.toggle('hidden', !deadlineOn);
-  });
+  function setTaskMode(mode) {
+    taskMode = mode;
+    modeRepeatBtn.classList.toggle('active', mode === 'repeat');
+    modeDeadlineBtn.classList.toggle('active', mode === 'deadline');
+    repeatFields.classList.toggle('hidden', mode !== 'repeat');
+    deadlineOnlyFields.classList.toggle('hidden', mode !== 'deadline');
+  }
+
+  modeRepeatBtn.addEventListener('click', () => setTaskMode('repeat'));
+  modeDeadlineBtn.addEventListener('click', () => setTaskMode('deadline'));
 
   // ---- Day toggles ----
   document.querySelectorAll('#task-days .tm-day').forEach(btn => {
     btn.addEventListener('click', () => btn.classList.toggle('active'));
   });
+
+  // ---- Helper: today's date as YYYY-MM-DD ----
+  function todayDate() { return new Date().toISOString().slice(0, 10); }
 
   // ---- Reset modal fields ----
   function resetTaskModal(data) {
@@ -100,7 +106,7 @@
     document.getElementById('task-description').value = data ? data.description : '';
     document.getElementById('task-importance').value = data ? data.importance : 50;
     document.getElementById('task-importance-val').textContent = data ? data.importance : 50;
-    document.getElementById('task-deadline-date').value = data && data.deadlineDate ? data.deadlineDate : '';
+    document.getElementById('task-deadline-date').value = data && data.deadlineDate ? data.deadlineDate : todayDate();
     document.getElementById('task-deadline-time').value = data && data.deadlineTime ? data.deadlineTime : '';
     document.getElementById('task-error').classList.add('hidden');
 
@@ -112,21 +118,16 @@
     // tags
     taskTags.set(data && data.tags ? data.tags : []);
 
-    // deadline
-    deadlineOn = data ? !!data.deadlineOn : false;
-    dlToggle.classList.toggle('active', deadlineOn);
-    dlToggle.textContent = deadlineOn ? t('task.toggle_on', 'Oui') : t('task.toggle_off', 'Non');
-    dlFields.classList.toggle('hidden', !deadlineOn);
+    // mode
+    setTaskMode(data && data.taskMode === 'deadline' ? 'deadline' : 'repeat');
   }
 
   function resetEventModal(data) {
     document.getElementById('event-name').value = data ? data.name : '';
     document.getElementById('event-duration').value = data ? data.duration : '';
-    document.getElementById('event-date').value = data ? data.date || '' : '';
+    document.getElementById('event-date').value = data ? data.date || '' : todayDate();
     document.getElementById('event-time').value = data ? data.time || '' : '';
     document.getElementById('event-description').value = data ? data.description : '';
-    document.getElementById('event-importance').value = data ? data.importance : 50;
-    document.getElementById('event-importance-val').textContent = data ? data.importance : 50;
     document.getElementById('event-error').classList.add('hidden');
     eventTags.set(data && data.tags ? data.tags : []);
   }
@@ -134,17 +135,17 @@
   // ---- Collect form data ----
   function collectTask() {
     const days = [];
-    document.querySelectorAll('#task-days .tm-day.active').forEach(b => days.push(b.dataset.day));
+    document.querySelectorAll('#task-days .tm-day.active').forEach(b => days.push(+b.dataset.day));
     return {
       name: document.getElementById('task-name').value.trim(),
       duration: document.getElementById('task-duration').value.trim(),
-      time: document.getElementById('task-time').value,
-      days,
+      time: taskMode === 'repeat' ? document.getElementById('task-time').value : '',
+      days: taskMode === 'repeat' ? days : [],
       tags: taskTags.get(),
       importance: +document.getElementById('task-importance').value,
-      deadlineOn,
-      deadlineDate: deadlineOn ? document.getElementById('task-deadline-date').value : '',
-      deadlineTime: deadlineOn ? document.getElementById('task-deadline-time').value : '',
+      taskMode,
+      deadlineDate: taskMode === 'deadline' ? document.getElementById('task-deadline-date').value : '',
+      deadlineTime: taskMode === 'deadline' ? document.getElementById('task-deadline-time').value : '',
       description: document.getElementById('task-description').value.trim()
     };
   }
@@ -156,7 +157,6 @@
       date: document.getElementById('event-date').value,
       time: document.getElementById('event-time').value,
       tags: eventTags.get(),
-      importance: +document.getElementById('event-importance').value,
       description: document.getElementById('event-description').value.trim()
     };
   }
@@ -239,8 +239,8 @@
     const active = tasks.filter(t => !t.done);
     empty.classList.toggle('hidden', active.length > 0);
 
-    active.forEach(task => {
-      list.appendChild(buildTaskCard(task));
+    active.forEach((task, idx) => {
+      list.appendChild(buildTaskCard(task, idx, active.length));
     });
   }
 
@@ -251,40 +251,193 @@
     list.innerHTML = '';
     empty.classList.toggle('hidden', events.length > 0);
 
-    events.forEach(ev => {
-      list.appendChild(buildEventCard(ev));
+    events.forEach((ev, idx) => {
+      list.appendChild(buildEventCard(ev, idx, events.length));
     });
   }
 
-  function buildTaskCard(task) {
+  function buildTaskCard(task, idx, total) {
     const div = document.createElement('div');
     div.className = 'tm-item';
 
     const main = document.createElement('div');
     main.className = 'tm-item-main';
 
-    const name = document.createElement('div');
+    const nameRow = document.createElement('div');
+    nameRow.className = 'tm-item-name-row';
+    const name = document.createElement('span');
     name.className = 'tm-item-name' + (task.done ? ' done' : '');
     name.textContent = task.name;
-    main.appendChild(name);
+    nameRow.appendChild(name);
+    // Rename button next to title
+    const btnRen = document.createElement('button');
+    btnRen.className = 'btn-rename';
+    btnRen.textContent = '✏️';
+    btnRen.title = t('common.rename', 'Renommer');
+    btnRen.onclick = (e) => {
+      e.stopPropagation();
+      const newName = prompt(t('task.prompt_rename', 'Nouveau nom :'), task.name);
+      if (newName && newName.trim()) {
+        const tasks = loadTasks();
+        const item = tasks.find(t => t.id === task.id);
+        if (item) { item.name = newName.trim(); saveTasks(tasks); renderTasks(); }
+      }
+    };
+    nameRow.appendChild(btnRen);
+    main.appendChild(nameRow);
 
-    const meta = document.createElement('div');
-    meta.className = 'tm-item-meta';
-    const typeSpan = document.createElement('span');
-    typeSpan.className = 'tm-item-type';
-    typeSpan.textContent = t('task.type_task', 'Tâche');
-    meta.appendChild(typeSpan);
-    (task.tags || []).forEach(tag => {
-      const s = document.createElement('span');
-      s.className = 'tm-item-tag';
-      s.textContent = tag;
-      meta.appendChild(s);
-    });
-    main.appendChild(meta);
+    // Time info (center)
+    const timeInfo = document.createElement('div');
+    timeInfo.className = 'tm-item-timeinfo';
+    if (task.taskMode === 'deadline') {
+      const dlDate = task.deadlineDate || '';
+      const dlTime = task.deadlineTime || '';
+      if (dlDate) {
+        const deadlineMs = new Date(dlDate + 'T' + (dlTime || '23:59')).getTime();
+        const nowMs = Date.now();
+        const diffMs = deadlineMs - nowMs;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        // Urgency color: green (>7d) -> yellow (3-7d) -> orange (1-3d) -> red (<1d)
+        let urgencyColor = '#4caf50';
+        if (diffDays < 0) urgencyColor = '#b71c1c';
+        else if (diffDays < 1) urgencyColor = '#e53935';
+        else if (diffDays < 3) urgencyColor = '#ff9800';
+        else if (diffDays < 7) urgencyColor = '#fdd835';
+        const dlLabel = document.createElement('span');
+        dlLabel.className = 'tm-timeinfo-deadline';
+        dlLabel.style.borderLeft = '4px solid ' + urgencyColor;
+        dlLabel.style.paddingLeft = '6px';
+        const dateStr = new Date(dlDate + 'T' + (dlTime || '00:00')).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+        dlLabel.textContent = '⏰ ' + dateStr + (dlTime ? ' ' + dlTime : '');
+        timeInfo.appendChild(dlLabel);
+        const remaining = document.createElement('span');
+        remaining.className = 'tm-timeinfo-remaining';
+        remaining.style.color = urgencyColor;
+        if (diffDays < 0) {
+          remaining.textContent = '⚠ ' + t('task.overdue', 'en retard');
+        } else {
+          let timeStr;
+          if (diffDays < 1) {
+            const h = Math.floor(diffMs / 3600000);
+            const m = Math.floor((diffMs % 3600000) / 60000);
+            timeStr = h + 'h' + (m < 10 ? '0' : '') + m;
+          } else {
+            const d = Math.floor(diffDays);
+            const remH = Math.floor((diffMs % 86400000) / 3600000);
+            timeStr = d + 'j' + (remH > 0 ? remH + 'h' : '');
+          }
+          remaining.textContent = t('task.deadline_in', 'Deadline dans {time}').replace('{time}', timeStr);
+        }
+        timeInfo.appendChild(remaining);
+      }
+      if (task.duration) {
+        const durSpan = document.createElement('span');
+        durSpan.className = 'tm-timeinfo-timer';
+        durSpan.textContent = '⏱ ' + t('task.field_duration', 'Durée') + ': ' + task.duration;
+        timeInfo.appendChild(durSpan);
+      }
+    } else {
+      // Repeat mode
+      const dayNames = [t('task.day_sun','Dim'), t('task.day_mon','Lun'), t('task.day_tue','Mar'), t('task.day_wed','Mer'), t('task.day_thu','Jeu'), t('task.day_fri','Ven'), t('task.day_sat','Sam')];
+      if (task.days && task.days.length) {
+        const daysStr = task.days.map(d => dayNames[d]).join(', ');
+        const repSpan = document.createElement('span');
+        repSpan.className = 'tm-timeinfo-repeat';
+        repSpan.textContent = '🔁 ' + daysStr;
+        timeInfo.appendChild(repSpan);
+        if (task.time) {
+          const timeSpan = document.createElement('span');
+          timeSpan.className = 'tm-timeinfo-repeat';
+          timeSpan.textContent = '🕐 ' + task.time + (task.duration ? '  ⏱ ' + t('task.field_duration', 'Durée') + ': ' + task.duration : '');
+          timeInfo.appendChild(timeSpan);
+        } else if (task.duration) {
+          const durSpan = document.createElement('span');
+          durSpan.className = 'tm-timeinfo-timer';
+          durSpan.textContent = '⏱ ' + t('task.field_duration', 'Durée') + ': ' + task.duration;
+          timeInfo.appendChild(durSpan);
+        }
+        // Next occurrence
+        const now = new Date();
+        let nextOccurrence = null;
+        for (let offset = 0; offset < 8; offset++) {
+          const candidate = new Date(now);
+          candidate.setDate(candidate.getDate() + offset);
+          const dayOfWeek = candidate.getDay();
+          if (task.days.includes(dayOfWeek)) {
+            if (task.time) {
+              const [hh, mm] = task.time.split(':').map(Number);
+              candidate.setHours(hh, mm, 0, 0);
+            } else {
+              candidate.setHours(23, 59, 0, 0);
+            }
+            if (candidate > now) { nextOccurrence = candidate; break; }
+          }
+        }
+        if (nextOccurrence) {
+          const diffH = Math.floor((nextOccurrence - now) / 3600000);
+          const diffM = Math.floor(((nextOccurrence - now) % 3600000) / 60000);
+          let timeStr;
+          if (diffH >= 24) {
+            timeStr = Math.floor(diffH / 24) + 'j' + ((diffH % 24) > 0 ? (diffH % 24) + 'h' : '');
+          } else {
+            timeStr = diffH + 'h' + (diffM < 10 ? '0' : '') + diffM;
+          }
+          const timerSpan = document.createElement('span');
+          timerSpan.className = 'tm-timeinfo-timer';
+          timerSpan.textContent = t('task.next_in', 'Prochaine fois dans {time}').replace('{time}', timeStr);
+          timeInfo.appendChild(timerSpan);
+        }
+      }
+    }
+    main.appendChild(timeInfo);
+
+    // Importance (bottom right)
+    if (task.importance !== undefined && task.importance !== null) {
+      const imp = document.createElement('div');
+      imp.className = 'tm-item-importance';
+      imp.textContent = task.importance + '/100';
+      main.appendChild(imp);
+    }
+
+    // Description (hover tooltip – follows cursor, above-right)
+    if (task.description) {
+      const desc = document.createElement('div');
+      desc.className = 'tm-item-desc-hover';
+      desc.textContent = task.description;
+      div.appendChild(desc);
+      div.addEventListener('mousemove', (e) => {
+        desc.style.display = 'block';
+        desc.style.left = (e.clientX + 12) + 'px';
+        desc.style.top = (e.clientY - desc.offsetHeight - 8) + 'px';
+      });
+      div.addEventListener('mouseleave', () => { desc.style.display = 'none'; });
+    }
+
     div.appendChild(main);
 
     const actions = document.createElement('div');
     actions.className = 'tm-item-actions';
+
+    // Reorder arrows
+    if (total > 1) {
+      const reorder = document.createElement('span');
+      reorder.className = 'journal-card-reorder';
+      const btnUp = document.createElement('button');
+      btnUp.className = 'btn-move';
+      btnUp.textContent = '▲';
+      btnUp.title = t('common.move_up', 'Monter');
+      btnUp.disabled = idx === 0;
+      btnUp.onclick = () => { moveTask(task.id, -1); };
+      const btnDown = document.createElement('button');
+      btnDown.className = 'btn-move';
+      btnDown.textContent = '▼';
+      btnDown.title = t('common.move_down', 'Descendre');
+      btnDown.disabled = idx === total - 1;
+      btnDown.onclick = () => { moveTask(task.id, 1); };
+      reorder.appendChild(btnUp);
+      reorder.appendChild(btnDown);
+      actions.appendChild(reorder);
+    }
 
     // Template
     const btnTpl = document.createElement('button');
@@ -300,26 +453,13 @@
     };
     actions.appendChild(btnTpl);
 
-    // Rename
-    const btnRen = document.createElement('button');
-    btnRen.textContent = t('task.btn_rename', '✎');
-    btnRen.title = t('common.rename', 'Renommer');
-    btnRen.onclick = () => {
-      const newName = prompt(t('task.prompt_rename', 'Nouveau nom :'), task.name);
-      if (newName && newName.trim()) {
-        const tasks = loadTasks();
-        const item = tasks.find(t => t.id === task.id);
-        if (item) { item.name = newName.trim(); saveTasks(tasks); renderTasks(); }
-      }
-    };
-    actions.appendChild(btnRen);
-
     // Done
     const btnDone = document.createElement('button');
     btnDone.className = 'btn-done';
     btnDone.textContent = '✓';
     btnDone.title = t('task.btn_done_title', 'Marquer comme achevée');
     btnDone.onclick = () => {
+      if (!confirm(t('task.confirm_done', 'Marquer cette tâche comme achevée ?'))) return;
       const tasks = loadTasks();
       const item = tasks.find(t => t.id === task.id);
       if (item) { item.done = true; saveTasks(tasks); renderTasks(); }
@@ -343,35 +483,121 @@
     return div;
   }
 
-  function buildEventCard(ev) {
+  function buildEventCard(ev, idx, total) {
     const div = document.createElement('div');
     div.className = 'tm-item';
 
     const main = document.createElement('div');
     main.className = 'tm-item-main';
 
-    const name = document.createElement('div');
+    const nameRow = document.createElement('div');
+    nameRow.className = 'tm-item-name-row';
+    const name = document.createElement('span');
     name.className = 'tm-item-name';
     name.textContent = ev.name;
-    main.appendChild(name);
+    nameRow.appendChild(name);
+    // Rename button next to title
+    const btnRen = document.createElement('button');
+    btnRen.className = 'btn-rename';
+    btnRen.textContent = '✏️';
+    btnRen.title = t('common.rename', 'Renommer');
+    btnRen.onclick = (e) => {
+      e.stopPropagation();
+      const newName = prompt(t('task.prompt_rename', 'Nouveau nom :'), ev.name);
+      if (newName && newName.trim()) {
+        const events = loadEvents();
+        const item = events.find(e => e.id === ev.id);
+        if (item) { item.name = newName.trim(); saveEvents(events); renderEvents(); }
+      }
+    };
+    nameRow.appendChild(btnRen);
+    main.appendChild(nameRow);
 
-    const meta = document.createElement('div');
-    meta.className = 'tm-item-meta';
-    const typeSpan = document.createElement('span');
-    typeSpan.className = 'tm-item-type';
-    typeSpan.textContent = t('task.type_event', 'Événement');
-    meta.appendChild(typeSpan);
-    (ev.tags || []).forEach(tag => {
-      const s = document.createElement('span');
-      s.className = 'tm-item-tag';
-      s.textContent = tag;
-      meta.appendChild(s);
-    });
-    main.appendChild(meta);
+    // Time info
+    const timeInfo = document.createElement('div');
+    timeInfo.className = 'tm-item-timeinfo';
+    if (ev.date) {
+      const evDate = new Date(ev.date + (ev.time ? 'T' + ev.time : 'T00:00'));
+      const now = new Date();
+      const diffMs = evDate - now;
+      const dateStr = ev.date + (ev.time ? ' 🕐 ' + ev.time : '');
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'tm-timeinfo-deadline';
+      dateSpan.textContent = '📅 ' + dateStr;
+      timeInfo.appendChild(dateSpan);
+
+      const remaining = document.createElement('span');
+      remaining.className = 'tm-timeinfo-remaining';
+      if (diffMs < 0) {
+        remaining.textContent = t('task.overdue', 'en retard');
+        remaining.style.color = '#e74c3c';
+      } else {
+        const diffH = Math.floor(diffMs / 3600000);
+        const diffM = Math.floor((diffMs % 3600000) / 60000);
+        let timeStr;
+        if (diffH >= 24) {
+          timeStr = Math.floor(diffH / 24) + 'j' + ((diffH % 24) > 0 ? (diffH % 24) + 'h' : '');
+        } else {
+          timeStr = diffH + 'h' + (diffM < 10 ? '0' : '') + diffM;
+        }
+        remaining.textContent = t('task.event_in', 'Dans {time}').replace('{time}', timeStr);
+        // Color from green to red based on proximity (7 days = green, 0 = red)
+        const hoursLeft = diffMs / 3600000;
+        const ratio = Math.max(0, Math.min(1, 1 - hoursLeft / 168));
+        const r = Math.round(46 + ratio * (231 - 46));
+        const g = Math.round(204 - ratio * (204 - 76));
+        const b = Math.round(113 - ratio * (113 - 60));
+        remaining.style.color = `rgb(${r},${g},${b})`;
+      }
+      timeInfo.appendChild(remaining);
+    }
+    if (ev.duration) {
+      const durSpan = document.createElement('span');
+      durSpan.className = 'tm-timeinfo-timer';
+      durSpan.textContent = '⏱ ' + t('task.field_duration', 'Durée') + ': ' + ev.duration;
+      timeInfo.appendChild(durSpan);
+    }
+    main.appendChild(timeInfo);
+
+    // Description (hover tooltip – follows cursor, above-right)
+    if (ev.description) {
+      const desc = document.createElement('div');
+      desc.className = 'tm-item-desc-hover';
+      desc.textContent = ev.description;
+      div.appendChild(desc);
+      div.addEventListener('mousemove', (e) => {
+        desc.style.display = 'block';
+        desc.style.left = (e.clientX + 12) + 'px';
+        desc.style.top = (e.clientY - desc.offsetHeight - 8) + 'px';
+      });
+      div.addEventListener('mouseleave', () => { desc.style.display = 'none'; });
+    }
+
     div.appendChild(main);
 
     const actions = document.createElement('div');
     actions.className = 'tm-item-actions';
+
+    // Reorder arrows
+    if (total > 1) {
+      const reorder = document.createElement('span');
+      reorder.className = 'journal-card-reorder';
+      const btnUp = document.createElement('button');
+      btnUp.className = 'btn-move';
+      btnUp.textContent = '▲';
+      btnUp.title = t('common.move_up', 'Monter');
+      btnUp.disabled = idx === 0;
+      btnUp.onclick = () => { moveEvent(ev.id, -1); };
+      const btnDown = document.createElement('button');
+      btnDown.className = 'btn-move';
+      btnDown.textContent = '▼';
+      btnDown.title = t('common.move_down', 'Descendre');
+      btnDown.disabled = idx === total - 1;
+      btnDown.onclick = () => { moveEvent(ev.id, 1); };
+      reorder.appendChild(btnUp);
+      reorder.appendChild(btnDown);
+      actions.appendChild(reorder);
+    }
 
     // Template
     const btnTpl = document.createElement('button');
@@ -386,20 +612,6 @@
       openModal('modal-event');
     };
     actions.appendChild(btnTpl);
-
-    // Rename
-    const btnRen = document.createElement('button');
-    btnRen.textContent = t('task.btn_rename', '✎');
-    btnRen.title = t('common.rename', 'Renommer');
-    btnRen.onclick = () => {
-      const newName = prompt(t('task.prompt_rename', 'Nouveau nom :'), ev.name);
-      if (newName && newName.trim()) {
-        const events = loadEvents();
-        const item = events.find(e => e.id === ev.id);
-        if (item) { item.name = newName.trim(); saveEvents(events); renderEvents(); }
-      }
-    };
-    actions.appendChild(btnRen);
 
     // Delete
     const btnDel = document.createElement('button');
@@ -416,6 +628,33 @@
 
     div.appendChild(actions);
     return div;
+  }
+
+  // ---- Move helpers ----
+  function moveTask(id, direction) {
+    const tasks = loadTasks();
+    const idx = tasks.findIndex(t => t.id === id);
+    if (idx < 0) return;
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= tasks.length) return;
+    const tmp = tasks[idx];
+    tasks[idx] = tasks[newIdx];
+    tasks[newIdx] = tmp;
+    saveTasks(tasks);
+    renderTasks();
+  }
+
+  function moveEvent(id, direction) {
+    const events = loadEvents();
+    const idx = events.findIndex(e => e.id === id);
+    if (idx < 0) return;
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= events.length) return;
+    const tmp = events[idx];
+    events[idx] = events[newIdx];
+    events[newIdx] = tmp;
+    saveEvents(events);
+    renderEvents();
   }
 
   // ---- Init ----

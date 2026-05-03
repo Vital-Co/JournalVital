@@ -96,17 +96,35 @@
       <label class="tm-label" data-i18n="task.field_name">Nom</label>
       <input type="text" class="tm-input" id="task-name" maxlength="120" data-i18n-placeholder="task.field_name_ph">
 
-      <label class="tm-label" data-i18n="task.field_schedule">Jour(s) et heure(s)</label>
-      <div class="tm-days-row" id="task-days">
-        <button type="button" class="toggle tm-day" data-day="1" data-i18n="task.day_mon">Lun</button>
-        <button type="button" class="toggle tm-day" data-day="2" data-i18n="task.day_tue">Mar</button>
-        <button type="button" class="toggle tm-day" data-day="3" data-i18n="task.day_wed">Mer</button>
-        <button type="button" class="toggle tm-day" data-day="4" data-i18n="task.day_thu">Jeu</button>
-        <button type="button" class="toggle tm-day" data-day="5" data-i18n="task.day_fri">Ven</button>
-        <button type="button" class="toggle tm-day" data-day="6" data-i18n="task.day_sat">Sam</button>
-        <button type="button" class="toggle tm-day" data-day="0" data-i18n="task.day_sun">Dim</button>
+      <div class="tm-toggle-row">
+        <label class="tm-label" style="margin-bottom:0" data-i18n="task.field_mode">Mode</label>
+        <div class="tm-mode-btns">
+          <button type="button" class="toggle active" id="task-mode-repeat" data-i18n="task.mode_repeat">Répétable</button>
+          <button type="button" class="toggle" id="task-mode-deadline" data-i18n="task.mode_deadline">Deadline</button>
+        </div>
       </div>
-      <input type="time" class="tm-input tm-input-sm" id="task-time">
+
+      <div id="task-repeat-fields">
+        <label class="tm-label" data-i18n="task.field_schedule">Jour(s) et heure(s)</label>
+        <div class="tm-days-row" id="task-days">
+          <button type="button" class="toggle tm-day" data-day="1" data-i18n="task.day_mon">Lun</button>
+          <button type="button" class="toggle tm-day" data-day="2" data-i18n="task.day_tue">Mar</button>
+          <button type="button" class="toggle tm-day" data-day="3" data-i18n="task.day_wed">Mer</button>
+          <button type="button" class="toggle tm-day" data-day="4" data-i18n="task.day_thu">Jeu</button>
+          <button type="button" class="toggle tm-day" data-day="5" data-i18n="task.day_fri">Ven</button>
+          <button type="button" class="toggle tm-day" data-day="6" data-i18n="task.day_sat">Sam</button>
+          <button type="button" class="toggle tm-day" data-day="0" data-i18n="task.day_sun">Dim</button>
+        </div>
+        <input type="time" class="tm-input tm-input-sm" id="task-time">
+      </div>
+
+      <div id="task-deadline-only-fields" class="hidden">
+        <label class="tm-label" data-i18n="task.field_deadline">Deadline</label>
+        <div class="tm-datetime-row">
+          <input type="date" class="tm-input tm-input-sm" id="task-deadline-date">
+          <input type="time" class="tm-input tm-input-sm" id="task-deadline-time">
+        </div>
+      </div>
 
       <label class="tm-label" data-i18n="task.field_duration">Durée</label>
       <input type="time" class="tm-input tm-input-sm" id="task-duration">
@@ -124,15 +142,6 @@
       <div class="tm-range-row">
         <input type="range" min="0" max="100" value="50" class="tm-range" id="task-importance">
         <span class="tm-range-val" id="task-importance-val">50</span>
-      </div>
-
-      <div class="tm-toggle-row">
-        <label class="tm-label" style="margin-bottom:0" data-i18n="task.field_deadline">Deadline</label>
-        <button type="button" class="toggle" id="task-deadline-toggle" data-i18n="task.toggle_off">Non</button>
-      </div>
-      <div class="tm-deadline-fields hidden" id="task-deadline-fields">
-        <input type="date" class="tm-input tm-input-sm" id="task-deadline-date">
-        <input type="time" class="tm-input tm-input-sm" id="task-deadline-time">
       </div>
 
       <label class="tm-label" data-i18n="task.field_description">Description</label>
@@ -174,12 +183,6 @@
           <input type="text" class="tm-input tm-input-sm" id="event-tag-input" maxlength="30" data-i18n-placeholder="task.field_tags_ph">
           <button type="button" class="btn btn-ghost tm-tag-add" id="event-tag-add">+</button>
         </div>
-      </div>
-
-      <label class="tm-label" data-i18n="task.field_importance">Importance (0–100)</label>
-      <div class="tm-range-row">
-        <input type="range" min="0" max="100" value="50" class="tm-range" id="event-importance">
-        <span class="tm-range-val" id="event-importance-val">50</span>
       </div>
 
       <label class="tm-label" data-i18n="task.field_description">Description</label>
