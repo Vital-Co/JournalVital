@@ -26,7 +26,7 @@
     <div class="header-left">
       <a href="../index.html" class="btn-tools" data-i18n-title="common.back_to_tools_title" data-i18n="common.back_to_tools">Mes outils</a>
       <div class="header-title-wrap">
-        <div class="header-title" id="header-title-main">TaskManager</div>
+        <div class="header-title" id="header-title-main" data-i18n="task.header_title">Tâches & Événements</div>
       </div>
     </div>
     <div class="header-right">
@@ -49,7 +49,149 @@
   </header>
 
   <div class="main-content">
+
+    <!-- Hero -->
+    <div class="home-hero">
+      <h1 class="home-title" data-i18n="task.home_title">Mes tâches & événements</h1>
+      <p class="home-subtitle" data-i18n="task.home_subtitle">Organise tes tâches récurrentes et tes événements ponctuels. Tout reste sur ton appareil.</p>
+    </div>
+
+    <div class="tm-lists-row">
+      <!-- Liste des tâches -->
+      <div class="tm-list-col">
+        <div class="home-create-row">
+          <button class="btn btn-create" id="btn-new-task" data-i18n="task.btn_new_task">+ Nouvelle tâche</button>
+        </div>
+        <div class="journals-section-title" data-i18n="task.section_tasks">— Tâches en cours</div>
+        <div class="journals-list" id="task-list"></div>
+        <div class="journals-empty hidden" id="task-empty">
+          <div class="journals-empty-text" data-i18n="task.empty_tasks">Aucune tâche pour l'instant.</div>
+        </div>
+      </div>
+
+      <!-- Liste des événements -->
+      <div class="tm-list-col">
+        <div class="home-create-row">
+          <button class="btn btn-create" id="btn-new-event" data-i18n="task.btn_new_event">+ Nouvel événement</button>
+        </div>
+        <div class="journals-section-title" data-i18n="task.section_events">— Événements</div>
+        <div class="journals-list" id="event-list"></div>
+        <div class="journals-empty hidden" id="event-empty">
+          <div class="journals-empty-text" data-i18n="task.empty_events">Aucun événement pour l'instant.</div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /.main-content -->
+</div>
+
+<!-- ============ MODALE TÂCHE ============ -->
+<div class="tm-modal hidden" id="modal-task" role="dialog" aria-modal="true">
+  <div class="tm-backdrop" data-close="modal-task"></div>
+  <div class="tm-dialog">
+    <div class="tm-head">
+      <div class="tm-title" data-i18n="task.modal_task_title">Nouvelle tâche</div>
+    </div>
+    <div class="tm-body">
+      <label class="tm-label" data-i18n="task.field_name">Nom</label>
+      <input type="text" class="tm-input" id="task-name" maxlength="120" data-i18n-placeholder="task.field_name_ph">
+
+      <label class="tm-label" data-i18n="task.field_schedule">Jour(s) et heure(s)</label>
+      <div class="tm-days-row" id="task-days">
+        <button type="button" class="toggle tm-day" data-day="1" data-i18n="task.day_mon">Lun</button>
+        <button type="button" class="toggle tm-day" data-day="2" data-i18n="task.day_tue">Mar</button>
+        <button type="button" class="toggle tm-day" data-day="3" data-i18n="task.day_wed">Mer</button>
+        <button type="button" class="toggle tm-day" data-day="4" data-i18n="task.day_thu">Jeu</button>
+        <button type="button" class="toggle tm-day" data-day="5" data-i18n="task.day_fri">Ven</button>
+        <button type="button" class="toggle tm-day" data-day="6" data-i18n="task.day_sat">Sam</button>
+        <button type="button" class="toggle tm-day" data-day="0" data-i18n="task.day_sun">Dim</button>
+      </div>
+      <input type="time" class="tm-input tm-input-sm" id="task-time">
+
+      <label class="tm-label" data-i18n="task.field_duration">Durée</label>
+      <input type="text" class="tm-input" id="task-duration" maxlength="40" data-i18n-placeholder="task.field_duration_ph">
+
+      <label class="tm-label" data-i18n="task.field_tags">Tags</label>
+      <div class="tm-tags-wrap">
+        <div class="tm-tags" id="task-tags"></div>
+        <div class="tm-tag-input-row">
+          <input type="text" class="tm-input tm-input-sm" id="task-tag-input" maxlength="30" data-i18n-placeholder="task.field_tags_ph">
+          <button type="button" class="btn btn-ghost tm-tag-add" id="task-tag-add">+</button>
+        </div>
+      </div>
+
+      <label class="tm-label" data-i18n="task.field_importance">Importance (0–100)</label>
+      <div class="tm-range-row">
+        <input type="range" min="0" max="100" value="50" class="tm-range" id="task-importance">
+        <span class="tm-range-val" id="task-importance-val">50</span>
+      </div>
+
+      <div class="tm-toggle-row">
+        <label class="tm-label" style="margin-bottom:0" data-i18n="task.field_deadline">Deadline</label>
+        <button type="button" class="toggle" id="task-deadline-toggle" data-i18n="task.toggle_off">Non</button>
+      </div>
+      <div class="tm-deadline-fields hidden" id="task-deadline-fields">
+        <input type="date" class="tm-input tm-input-sm" id="task-deadline-date">
+        <input type="time" class="tm-input tm-input-sm" id="task-deadline-time">
+      </div>
+
+      <label class="tm-label" data-i18n="task.field_description">Description</label>
+      <textarea class="note tm-textarea" id="task-description" rows="3" data-i18n-placeholder="task.field_description_ph"></textarea>
+
+      <div class="tm-error hidden" id="task-error"></div>
+    </div>
+    <div class="tm-foot">
+      <button class="btn btn-ghost" data-close="modal-task" data-i18n="common.cancel">Annuler</button>
+      <button class="btn" id="task-save-btn" data-i18n="task.btn_save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODALE ÉVÉNEMENT ============ -->
+<div class="tm-modal hidden" id="modal-event" role="dialog" aria-modal="true">
+  <div class="tm-backdrop" data-close="modal-event"></div>
+  <div class="tm-dialog">
+    <div class="tm-head">
+      <div class="tm-title" data-i18n="task.modal_event_title">Nouvel événement</div>
+    </div>
+    <div class="tm-body">
+      <label class="tm-label" data-i18n="task.field_name">Nom</label>
+      <input type="text" class="tm-input" id="event-name" maxlength="120" data-i18n-placeholder="task.field_name_ph">
+
+      <label class="tm-label" data-i18n="task.field_event_datetime">Jour et heure</label>
+      <div class="tm-datetime-row">
+        <input type="date" class="tm-input tm-input-sm" id="event-date">
+        <input type="time" class="tm-input tm-input-sm" id="event-time">
+      </div>
+
+      <label class="tm-label" data-i18n="task.field_duration">Durée</label>
+      <input type="text" class="tm-input" id="event-duration" maxlength="40" data-i18n-placeholder="task.field_duration_ph">
+
+      <label class="tm-label" data-i18n="task.field_tags">Tags</label>
+      <div class="tm-tags-wrap">
+        <div class="tm-tags" id="event-tags"></div>
+        <div class="tm-tag-input-row">
+          <input type="text" class="tm-input tm-input-sm" id="event-tag-input" maxlength="30" data-i18n-placeholder="task.field_tags_ph">
+          <button type="button" class="btn btn-ghost tm-tag-add" id="event-tag-add">+</button>
+        </div>
+      </div>
+
+      <label class="tm-label" data-i18n="task.field_importance">Importance (0–100)</label>
+      <div class="tm-range-row">
+        <input type="range" min="0" max="100" value="50" class="tm-range" id="event-importance">
+        <span class="tm-range-val" id="event-importance-val">50</span>
+      </div>
+
+      <label class="tm-label" data-i18n="task.field_description">Description</label>
+      <textarea class="note tm-textarea" id="event-description" rows="3" data-i18n-placeholder="task.field_description_ph"></textarea>
+
+      <div class="tm-error hidden" id="event-error"></div>
+    </div>
+    <div class="tm-foot">
+      <button class="btn btn-ghost" data-close="modal-event" data-i18n="common.cancel">Annuler</button>
+      <button class="btn" id="event-save-btn" data-i18n="task.btn_save">Enregistrer</button>
+    </div>
+  </div>
 </div>
 
 <p class="idx-footer" data-i18n="index.footer_license">© 2026 Vital C. — Code source disponible sous licence MIT. </p>
