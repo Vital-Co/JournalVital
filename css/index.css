@@ -157,3 +157,263 @@
     color: var(--ink-soft);
     font-weight: 500;
   }
+
+  /* ============ MOOD LOG WIDGET ============ */
+  .mood-banner {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 14px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--accent);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    transition: all .25s ease;
+    max-width: 720px;
+    margin: 0 auto 18px;
+  }
+  .mood-banner-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    flex-shrink: 0;
+    min-width: 140px;
+  }
+  .mood-banner-text { min-width: 0; text-align: left; }
+
+  .mood-banner-title {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 2px;
+    letter-spacing: -0.01em;
+  }
+  .mood-banner-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .mood-banner-btns {
+    display: flex;
+    gap: 6px;
+  }
+  .mood-banner-chart {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mood-banner-chart canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .btn-mood {
+    text-align: center;
+    padding: 7px 14px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--paper);
+    border-radius: 3px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-mood:hover { opacity: .85; }
+  .btn-mood-history {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .btn-mood-history:hover {
+    background: var(--accent);
+    color: var(--paper);
+    opacity: 1;
+  }
+
+  /* ============ MOOD MODALS ============ */
+  .mood-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .mood-modal.hidden { display: none; }
+  .mood-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(26, 24, 21, 0.55);
+    backdrop-filter: blur(2px);
+  }
+  .mood-dialog {
+    position: relative;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.10);
+    max-width: 440px;
+    width: 100%;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mood-dialog-wide { max-width: 640px; }
+  .mood-head {
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .mood-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--ink);
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .mood-head-sub {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .mood-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+    position: relative;
+  }
+  .mood-foot {
+    padding: 16px 24px;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .mood-reset-btn {
+    margin-right: auto;
+    border-color: #c0392b;
+    color: #c0392b;
+  }
+  .mood-reset-btn:hover {
+    background: #c0392b;
+    color: #fff;
+  }
+  .mood-score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .mood-score-label-min, .mood-score-label-max {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-mute);
+    flex-shrink: 0;
+  }
+  .mood-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--line);
+    outline: none;
+  }
+  .mood-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  }
+  .mood-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  }
+  .mood-score-display {
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 36px;
+    font-weight: 500;
+    margin: 8px 0 16px;
+    transition: color .2s;
+  }
+  .mood-comment {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  .mood-comment:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  #mood-chart-canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .mood-tooltip {
+    position: absolute;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    white-space: pre-line;
+    max-width: 220px;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .mood-tooltip.hidden { display: none; }
+  .mood-history-empty {
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--ink-mute);
+    font-style: italic;
+    padding: 40px 0;
+  }
+  .mood-history-empty.hidden { display: none; }
+
+  @media (max-width: 540px) {
+    .mood-banner {
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 14px;
+    }
+    .mood-banner-text { flex: 1 1 100%; }
+    .btn-mood { flex: 1; }
+  }

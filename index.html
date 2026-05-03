@@ -94,6 +94,23 @@
       </a>
     </div>
 
+    <!-- ============ MOOD BANNER ============ -->
+    <div class="mood-banner" id="mood-banner">
+      <div class="mood-banner-left">
+        <div class="mood-banner-text">
+          <div class="mood-banner-title">Log des humeurs 📊</div>
+          <div class="mood-banner-sub">Enregistre ton humeur à travers le temps</div>
+        </div>
+        <div class="mood-banner-btns">
+          <button class="btn-mood" id="mood-log-btn">Logger</button>
+          <button class="btn-mood btn-mood-history" id="mood-history-btn">Historique</button>
+        </div>
+      </div>
+      <div class="mood-banner-chart">
+        <canvas id="mood-mini-chart" width="300" height="80"></canvas>
+      </div>
+    </div>
+
     <p class="idx-footer" data-i18n="index.footer_privacy">Vos données personnelles restent sur votre appareil. Cette application fonctionne sans compte, sans serveur de synchronisation
       et enregistre vos journaux uniquement dans le navigateur. Vous pouvez le vérifier en coupant Internet après le chargement de la page.</p>
     <p class="idx-footer" data-i18n="index.footer_disclaimer">Ceci n'est pas une application médicale, juste une boîte à outils que je me suis créé pour prendre soin de moi, et que je partage avec vous.</p>
@@ -102,6 +119,50 @@
     <p class="idx-footer"> <a href="https://github.com/Vital-Co/JournalVital" target="Sur GitHub">GitHub</a></p>
   </div>
 
+</div>
+
+<!-- ============ MODALE LOG HUMEUR ============ -->
+<div class="mood-modal hidden" id="mood-log-modal" role="dialog" aria-modal="true">
+  <div class="mood-backdrop" id="mood-log-backdrop"></div>
+  <div class="mood-dialog">
+    <div class="mood-head">
+      <div class="mood-title">Logger ton humeur</div>
+      <div class="mood-head-sub">Comment tu te sens en ce moment ?</div>
+    </div>
+    <div class="mood-body">
+      <div class="mood-score-row">
+        <span class="mood-score-label-min">−10</span>
+        <input type="range" id="mood-score-slider" min="-10" max="10" value="0" class="mood-slider">
+        <span class="mood-score-label-max">+10</span>
+      </div>
+      <div class="mood-score-display" id="mood-score-display">0</div>
+      <textarea class="mood-comment" id="mood-comment" placeholder="Un commentaire ? (optionnel)" rows="3"></textarea>
+    </div>
+    <div class="mood-foot">
+      <button class="btn btn-ghost" id="mood-log-cancel-btn">Annuler</button>
+      <button class="btn" id="mood-log-save-btn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODALE HISTORIQUE HUMEURS ============ -->
+<div class="mood-modal hidden" id="mood-history-modal" role="dialog" aria-modal="true">
+  <div class="mood-backdrop" id="mood-history-backdrop"></div>
+  <div class="mood-dialog mood-dialog-wide">
+    <div class="mood-head">
+      <div class="mood-title">Historique des humeurs</div>
+      <div class="mood-head-sub">Ta courbe d'humeur à travers le temps</div>
+    </div>
+    <div class="mood-body">
+      <canvas id="mood-chart-canvas" width="600" height="280"></canvas>
+      <div class="mood-tooltip hidden" id="mood-tooltip"></div>
+      <div class="mood-history-empty hidden" id="mood-history-empty">Aucune humeur enregistrée pour le moment.</div>
+    </div>
+    <div class="mood-foot">
+      <button class="btn btn-ghost mood-reset-btn" id="mood-history-reset-btn">Réinitialiser</button>
+      <button class="btn btn-ghost" id="mood-history-close-btn">Fermer</button>
+    </div>
+  </div>
 </div>
 
 <script src="js/Common.js"></script>
