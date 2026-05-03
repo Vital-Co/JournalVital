@@ -1205,7 +1205,7 @@
 
       html += `<div class="journal-card" data-journal-id="${j.id}">
         <div class="journal-card-main">
-          <div class="journal-card-name">${escapeHtml(j.name)}</div>
+          <div class="journal-card-name">${escapeHtml(j.name)}<button class="btn-rename" data-action="rename" data-journal-id="${j.id}" title="${i18n.t('common.rename')}">✏️</button></div>
           <div class="journal-card-meta">${metaHtml}</div>
         </div>
         ${statusHtml}
@@ -1271,6 +1271,21 @@
         const journals = loadJournalsIndex();
         const idx = journals.findIndex(j => j.id === id);
         if (VitalStore.moveItem(journals, idx, 1)) {
+          saveJournalsIndex(journals);
+          renderHome();
+        }
+      });
+    });
+    list.querySelectorAll('[data-action="rename"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.journalId;
+        const journals = loadJournalsIndex();
+        const j = journals.find(x => x.id === id);
+        if (!j) return;
+        const newName = prompt(i18n.t('common.rename'), j.name);
+        if (newName && newName.trim()) {
+          j.name = newName.trim();
           saveJournalsIndex(journals);
           renderHome();
         }

@@ -2047,6 +2047,22 @@
     cursor: default;
   }
 
+  .btn-rename {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0 0 0 6px;
+    color: var(--ink-mute);
+    opacity: 0.5;
+    transition: opacity .15s;
+    vertical-align: middle;
+    line-height: 1;
+  }
+  .btn-rename:hover {
+    opacity: 1;
+  }
+
   .journals-empty {
     text-align: center;
     padding: 40px 20px;

@@ -96,7 +96,7 @@
         : i18n.t('perso.entries_n', { n: count });
       card.innerHTML =
         '<div class="journal-card-main">' +
-          '<div class="journal-card-name">' + esc(j.name || i18n.t('perso.journal_unnamed')) + '</div>' +
+          '<div class="journal-card-name">' + esc(j.name || i18n.t('perso.journal_unnamed')) + '<button class="btn-rename" data-action="rename" data-id="' + j.id + '" title="' + i18n.t('common.rename') + '">✏️</button></div>' +
           '<div class="journal-card-meta">' +
             '<span class="journal-card-meta-item">' + countLabel + '</span>' +
           '</div>' +
@@ -139,6 +139,20 @@
       btn.addEventListener('click', e => {
         e.stopPropagation();
         moveJournal(btn.dataset.id, 1);
+      });
+    });
+    list.querySelectorAll('[data-action="rename"]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const j = getJournal(id);
+        if (!j) return;
+        const newName = prompt(i18n.t('common.rename'), j.name);
+        if (newName && newName.trim()) {
+          j.name = newName.trim();
+          saveAll();
+          renderHome();
+        }
       });
     });
   }

@@ -220,7 +220,7 @@ function renderList(){
         <span class="plan-card-main-label">${i18n.t('planning.main_planning_label')}</span>
       </label>
       <div>
-        <div class="plan-card-name">${esc(p.name)}</div>
+        <div class="plan-card-name">${esc(p.name)}<button class="btn-rename" data-idx="${i}" title="${i18n.t('common.rename')}">✏️</button></div>
         ${p.desc?`<div class="plan-card-desc">${esc(p.desc)}</div>`:''}
       </div>
       <div class="journal-card-actions">
@@ -251,6 +251,15 @@ function renderList(){
       if(oldMain===idx) setMainPlanning(null);
       else if(oldMain!==null && oldMain>idx) setMainPlanning(oldMain-1);
       savePlannings();renderList();
+    }
+  }));
+  el.querySelectorAll('.btn-rename').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    const idx = +b.dataset.idx;
+    const newName = prompt(i18n.t('common.rename'), plannings[idx].name);
+    if(newName && newName.trim()){
+      plannings[idx].name = newName.trim();
+      savePlannings(); renderList();
     }
   }));
   el.querySelectorAll('.btn-edit').forEach(b=>b.addEventListener('click',e=>{
