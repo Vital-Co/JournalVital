@@ -519,6 +519,7 @@
     "config_name_label": "— Dale un nombre a este diario",
     "config_name_placeholder": "ej. Mi diario, Pensamientos nocturnos, Diario de viaje...",
     "btn_start": "Crear el diario",
+    "btn_cancel": "Cancelar",
     "error_name_required": "Dale un nombre a este diario.",
 
     "nav_add": "Añadir una entrada",

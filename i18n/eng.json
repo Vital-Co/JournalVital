@@ -517,6 +517,7 @@
     "config_name_label": "— Give this journal a name",
     "config_name_placeholder": "e.g. My journal, Evening thoughts, Travel diary...",
     "btn_start": "Create the journal",
+    "btn_cancel": "Cancel",
     "error_name_required": "Give this journal a name.",
 
     "nav_add": "Add an entry",

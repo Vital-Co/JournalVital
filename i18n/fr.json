@@ -518,6 +518,7 @@
     "config_name_label": "— Donne un nom à ce journal",
     "config_name_placeholder": "ex. Mon journal, Pensées du soir, Carnet de voyage...",
     "btn_start": "Créer le journal",
+    "btn_cancel": "Annuler",
     "error_name_required": "Donne un nom à ce journal.",
 
     "nav_add": "Ajouter une entrée",
