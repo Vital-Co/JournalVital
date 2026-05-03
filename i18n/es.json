@@ -40,7 +40,8 @@
     "footer_medical": "Esta herramienta es un diario, no reemplaza un seguimiento. Consulta a un profesional si es necesario. ¡Cuídate!",
     "footer_license": "© 2026 Vital C. — Código fuente disponible bajo la licencia MIT.",
     "card_perso_name": "Diario Personal",
-    "card_perso_desc": "Tu espacio para escribir, grabar y guardar un registro."
+    "card_perso_desc": "Tu espacio para escribir, grabar y guardar un registro.",
+    "under_construction": "🚧 Este sitio está en construcción — ¡nuevas funciones próximamente!"
   },
 
   "planning": {

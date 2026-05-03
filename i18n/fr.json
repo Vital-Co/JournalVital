@@ -40,7 +40,8 @@
     "footer_medical": "Cet outil est un journal, il ne remplace pas un suivi. Consultez un professionnel si nécessaire. Prennez soin de vous!",
     "footer_license": "© 2026 Vital C. — Code source disponible sous licence MIT.",
     "card_perso_name": "Journal Personnel",
-    "card_perso_desc": "Ton espace pour écrire, enregistrer, garder une trace."
+    "card_perso_desc": "Ton espace pour écrire, enregistrer, garder une trace.",
+    "under_construction": "🚧 Ce site est en construction — de nouvelles fonctionnalités arrivent bientôt !"
   },
 
   "planning": {

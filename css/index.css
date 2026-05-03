@@ -45,6 +45,17 @@
     margin: 0 0 56px;
   }
 
+  .idx-notice {
+    background: var(--paper);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 15px;
+    color: var(--ink);
+    margin: -32px auto 32px;
+    max-width: 520px;
+  }
+
   .idx-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
