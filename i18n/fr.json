@@ -390,6 +390,7 @@
 
     "catchup_title": "Jours à rattraper",
     "catchup_subtitle": "Quelques jours du palier en cours n'ont pas été renseignés. Indique la dose pour chacun — c'est important pour les statistiques du palier.",
+    "catchup_subtitle_abstain": "Quelques jours manqués — pour chacun, indique si tu as tenu ou consommé.",
     "catchup_target_prefix": "cible : ",
     "catchup_yesterday": "hier",
     "catchup_days_ago": "il y a {n} jours",

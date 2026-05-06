@@ -1721,6 +1721,24 @@
       }).join('');
     }
 
+    // Mise à jour du sous-titre selon le mode
+    const subEl = document.getElementById('catchup-sub');
+    if (subEl) {
+      subEl.textContent = state.journalMode === 'abstain'
+        ? i18n.t('addiction.catchup_subtitle_abstain')
+        : i18n.t('addiction.catchup_subtitle');
+    }
+
+    // En mode taper : efface l'erreur sur un input dès que l'utilisateur tape
+    if (state.journalMode !== 'abstain') {
+      body.querySelectorAll('.catchup-input').forEach(input => {
+        input.addEventListener('input', () => {
+          const wrap = input.closest('.catchup-row-input');
+          if (wrap) wrap.classList.remove('err');
+        });
+      });
+    }
+
     // Reset l'état d'erreur et le statut
     const status = document.getElementById('catchup-status');
     if (status) {

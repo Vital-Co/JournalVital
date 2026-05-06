@@ -388,6 +388,7 @@
 
     "catchup_title": "Days to catch up",
     "catchup_subtitle": "A few days from the current milestone haven’t been filled in. Enter the dose for each one — it’s important for this milestone’s statistics.",
+    "catchup_subtitle_abstain": "A few missed days — for each one, indicate whether you held or consumed.",
     "catchup_target_prefix": "target: ",
     "catchup_yesterday": "yesterday",
     "catchup_days_ago": "{n} days ago",

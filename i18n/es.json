@@ -390,6 +390,7 @@
 
     "catchup_title": "Días a recuperar",
     "catchup_subtitle": "Algunos días del escalón actual no han sido registrados. Indica la dosis para cada uno — es importante para las estadísticas del escalón.",
+    "catchup_subtitle_abstain": "Algunos días sin registrar — para cada uno, indica si aguantaste o consumiste.",
     "catchup_target_prefix": "objetivo: ",
     "catchup_yesterday": "ayer",
     "catchup_days_ago": "hace {n} días",
