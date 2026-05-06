@@ -52,7 +52,20 @@
     "card_mindmap_desc": "Organiza tus ideas visualmente.",
     "card_taskmanager_name": "Gestor de tareas",
     "card_taskmanager_desc": "Gestiona y organiza tus tareas y eventos.",
-    "under_construction": "🚧 Este sitio está en construcción — ¡nuevas funciones próximamente!"
+    "under_construction": "🚧 Este sitio está en construcción — ¡nuevas funciones próximamente!",
+    "todo": {
+      "title": "Cosas por hacer",
+      "now_title": "Lo que debo hacer ahora",
+      "now_nothing": "Nada especial planeado por ahora.",
+      "day_title": "Mi día:",
+      "tasks_title": "Tareas",
+      "events_title": "Eventos",
+      "planning_activity": "Planificación",
+      "task_label": "Tarea",
+      "event_label": "Evento",
+      "sleep_label": "Sueño",
+      "now_label": "Ahora"
+    }
   },
 
   "planning": {
@@ -528,6 +541,7 @@
     "nav_settings": "Ajustes",
 
     "add_card_label": "Nueva entrada",
+    "add_card_label_edit": "Editar entrada",
     "add_title_label": "Título",
     "add_title_placeholder": "Título de la entrada",
         "save_error_title_required": "El título es obligatorio.",
@@ -539,6 +553,7 @@
     "btn_stop": "⏹ Detener",
     "btn_add_image": "📷 Añadir una imagen",
     "btn_save_entry": "Guardar la entrada",
+    "btn_update_entry": "Actualizar entrada",
     "vocal_recording": "Grabando…",
     "vocal_mic_refused": "Micrófono denegado o no disponible",
     "save_error_empty": "— Añade al menos un mensaje, una nota de voz o una imagen",
@@ -616,6 +631,22 @@
     "day_thu": "Jue",
     "day_fri": "Vie",
     "day_sat": "Sáb",
-    "day_sun": "Dom"
+    "day_sun": "Dom",
+    "field_week_interval": "Cada",
+    "field_week_interval_unit": "semana(s)",
+    "btn_activate": "Activar",
+    "btn_deactivate": "Desactivar",
+    "btn_history": "Historial",
+    "section_tasks_history": "Historial de tareas",
+    "section_events_history": "Historial de eventos",
+    "history_empty_tasks": "Ninguna ocurrencia registrada todavía.",
+    "history_empty_events": "Ningún evento pasado todavía.",
+    "history_completed_at": "Completada el",
+    "history_archived_at": "Archivada el",
+    "confirm_done_repeat": "¿Registrar una ocurrencia completada?",
+    "confirm_done_deadline": "¿Archivar esta tarea como completada?",
+    "history_badge_occurrence": "Ocurrencia",
+    "history_badge_archived": "Archivada",
+    "history_badge_past": "Pasado"
   }
 }

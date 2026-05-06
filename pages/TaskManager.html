@@ -62,7 +62,10 @@
         <div class="home-create-row">
           <button class="btn btn-create" id="btn-new-task" data-i18n="task.btn_new_task">+ Nouvelle tâche</button>
         </div>
-        <div class="journals-section-title" data-i18n="task.section_tasks">— Tâches en cours</div>
+        <div class="tm-section-row">
+          <div class="journals-section-title" data-i18n="task.section_tasks">— Tâches en cours</div>
+          <button class="btn btn-ghost tm-btn-history" id="btn-task-history" data-i18n="task.btn_history">Historique</button>
+        </div>
         <div class="journals-list" id="task-list"></div>
         <div class="journals-empty hidden" id="task-empty">
           <div class="journals-empty-text" data-i18n="task.empty_tasks">Aucune tâche pour l'instant.</div>
@@ -74,7 +77,10 @@
         <div class="home-create-row">
           <button class="btn btn-create" id="btn-new-event" data-i18n="task.btn_new_event">+ Nouvel événement</button>
         </div>
-        <div class="journals-section-title" data-i18n="task.section_events">— Événements</div>
+        <div class="tm-section-row">
+          <div class="journals-section-title" data-i18n="task.section_events">— Événements</div>
+          <button class="btn btn-ghost tm-btn-history" id="btn-event-history" data-i18n="task.btn_history">Historique</button>
+        </div>
         <div class="journals-list" id="event-list"></div>
         <div class="journals-empty hidden" id="event-empty">
           <div class="journals-empty-text" data-i18n="task.empty_events">Aucun événement pour l'instant.</div>
@@ -116,6 +122,11 @@
           <button type="button" class="toggle tm-day" data-day="0" data-i18n="task.day_sun">Dim</button>
         </div>
         <input type="time" class="tm-input tm-input-sm" id="task-time">
+        <div class="tm-week-row">
+          <label class="tm-label" style="margin:0;flex-shrink:0" data-i18n="task.field_week_interval">Toutes les</label>
+          <input type="number" class="tm-input tm-input-sm" id="task-week-interval" min="1" max="52" value="1" style="width:65px">
+          <span class="tm-week-unit" data-i18n="task.field_week_interval_unit">semaine(s)</span>
+        </div>
       </div>
 
       <div id="task-deadline-only-fields" class="hidden">
@@ -193,6 +204,34 @@
     <div class="tm-foot">
       <button class="btn btn-ghost" data-close="modal-event" data-i18n="common.cancel">Annuler</button>
       <button class="btn" id="event-save-btn" data-i18n="task.btn_save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODALE HISTORIQUE TÂCHES ============ -->
+<div class="tm-modal hidden" id="modal-task-history" role="dialog" aria-modal="true">
+  <div class="tm-backdrop" data-close="modal-task-history"></div>
+  <div class="tm-dialog tm-dialog-history">
+    <div class="tm-head">
+      <div class="tm-title" data-i18n="task.section_tasks_history">Historique des tâches</div>
+    </div>
+    <div class="tm-body" id="task-history-body"></div>
+    <div class="tm-foot">
+      <button class="btn btn-ghost" data-close="modal-task-history" data-i18n="common.close">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODALE HISTORIQUE ÉVÉNEMENTS ============ -->
+<div class="tm-modal hidden" id="modal-event-history" role="dialog" aria-modal="true">
+  <div class="tm-backdrop" data-close="modal-event-history"></div>
+  <div class="tm-dialog tm-dialog-history">
+    <div class="tm-head">
+      <div class="tm-title" data-i18n="task.section_events_history">Historique des événements</div>
+    </div>
+    <div class="tm-body" id="event-history-body"></div>
+    <div class="tm-foot">
+      <button class="btn btn-ghost" data-close="modal-event-history" data-i18n="common.close">Fermer</button>
     </div>
   </div>
 </div>

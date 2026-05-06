@@ -12,6 +12,7 @@
   // Pending entry data (add tab)
   let pendingAudios = [];   // base64 data-urls
   let pendingImages = [];   // base64 data-urls
+  let editingEntryId = null;
 
   // Voice recording
   let mediaRecorder = null;
@@ -231,11 +232,33 @@
   function resetAddForm() {
     pendingAudios = [];
     pendingImages = [];
+    editingEntryId = null;
     $('entry-title').value = '';
     $('entry-text').value = '';
     $('vocal-list').innerHTML = '';
     $('image-preview-list').innerHTML = '';
     $('save-status').textContent = '';
+    $('save-entry-btn').textContent = i18n.t('perso.btn_save_entry');
+    const cardLabel = document.querySelector('#view-add .card-label');
+    if (cardLabel) cardLabel.textContent = i18n.t('perso.add_card_label');
+    $('cancel-edit-btn').classList.add('hidden');
+  }
+
+  function startEditEntry(entry) {
+    editingEntryId = entry.id;
+    $('entry-title').value = entry.title || '';
+    $('entry-text').value = entry.text || (entry.texts ? entry.texts.join('\n') : '');
+    pendingAudios = (entry.audios || []).slice();
+    pendingImages = (entry.images || []).slice();
+    renderPendingAudios();
+    renderPendingImages();
+    $('save-status').textContent = '';
+    $('save-entry-btn').textContent = i18n.t('perso.btn_update_entry');
+    const cardLabel = document.querySelector('#view-add .card-label');
+    if (cardLabel) cardLabel.textContent = i18n.t('perso.add_card_label_edit');
+    $('cancel-edit-btn').classList.remove('hidden');
+    openTab('add');
+    $('entry-title').focus();
   }
 
   // ---- Voice recording ----
@@ -317,7 +340,7 @@
     const title = ($('entry-title').value || '').trim();
     if (!title) {
       $('save-status').textContent = i18n.t('perso.save_error_title_required');
-          $('save-status').style.color = '#e53935';
+      $('save-status').style.color = '#e53935';
       $('entry-title').focus();
       return;
     }
@@ -329,15 +352,29 @@
     }
     const j = getJournal(currentJournalId);
     if (!j) return;
-    const entry = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      date: new Date().toISOString(),
-      title: title,
-      text: entryText,
-      audios: pendingAudios.slice(),
-      images: pendingImages.slice()
-    };
-    j.entries.push(entry);
+
+    if (editingEntryId) {
+      const idx = j.entries.findIndex(e => e.id === editingEntryId);
+      if (idx !== -1) {
+        j.entries[idx] = {
+          ...j.entries[idx],
+          title: title,
+          text: entryText,
+          audios: pendingAudios.slice(),
+          images: pendingImages.slice()
+        };
+      }
+    } else {
+      j.entries.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        date: new Date().toISOString(),
+        title: title,
+        text: entryText,
+        audios: pendingAudios.slice(),
+        images: pendingImages.slice()
+      });
+    }
+
     saveAll();
     const t = new Date().toLocaleTimeString(getLangLocale(), { hour: '2-digit', minute: '2-digit' });
     $('save-status').style.color = '';
@@ -415,7 +452,10 @@
         html += '</div>';
       }
 
-      html += '<button class="perso-entry-delete" data-entry-id="' + entry.id + '">' + i18n.t('common.delete') + '</button>';
+      html += '<div class="perso-entry-actions">' +
+        '<button class="perso-entry-edit" data-entry-id="' + entry.id + '">' + i18n.t('common.edit') + '</button>' +
+        '<button class="perso-entry-delete" data-entry-id="' + entry.id + '">' + i18n.t('common.delete') + '</button>' +
+        '</div>';
 
       div.innerHTML = html;
       list.appendChild(div);
@@ -424,6 +464,16 @@
     // Lightbox
     list.querySelectorAll('[data-lightbox]').forEach(img => {
       img.addEventListener('click', () => openLightbox(img.src));
+    });
+
+    // Edit entry
+    list.querySelectorAll('.perso-entry-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const j2 = getJournal(currentJournalId);
+        if (!j2) return;
+        const entry = j2.entries.find(e => e.id === btn.dataset.entryId);
+        if (entry) startEditEntry(entry);
+      });
     });
 
     // Delete entry
@@ -539,6 +589,9 @@
       e.target.value = '';
     });
     $('save-entry-btn').addEventListener('click', saveEntry);
+    $('cancel-edit-btn').addEventListener('click', () => {
+      resetAddForm();
+    });
 
     // Filter
     $('filter-mode').addEventListener('change', () => { updateFilterUI(); renderBrowse(); });

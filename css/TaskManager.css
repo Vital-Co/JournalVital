@@ -404,6 +404,133 @@
   margin-bottom: 4px;
 }
 
+/* Section row (title + history button) */
+.tm-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.tm-section-row .journals-section-title {
+  margin-bottom: 0;
+}
+.tm-btn-history {
+  font-size: 11px !important;
+  padding: 4px 10px !important;
+  opacity: 0.75;
+}
+.tm-btn-history:hover {
+  opacity: 1;
+}
+
+/* History modal wider */
+.tm-dialog-history {
+  width: 560px;
+}
+
+/* History item cards */
+.tm-hist-item {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: var(--bg);
+}
+.tm-hist-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.tm-hist-name {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-hist-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+}
+.tm-hist-badge-repeat {
+  color: var(--accent);
+}
+.tm-hist-badge-deadline,
+.tm-hist-badge-past {
+  color: var(--ink-mute);
+}
+.tm-hist-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-mute);
+}
+.tm-hist-tags {
+  color: var(--ink-soft);
+}
+.tm-history-empty {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-mute);
+  text-align: center;
+  padding: 32px 0;
+}
+
+/* Week interval row */
+.tm-week-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.tm-week-unit {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-mute);
+}
+
+/* Inactive task card */
+.tm-item.inactive {
+  opacity: 0.52;
+}
+.tm-item.inactive .tm-item-name {
+  color: var(--ink-mute);
+}
+
+/* Active toggle button */
+.tm-item-actions .btn-active-toggle {
+  font-size: 14px;
+  padding: 5px 8px;
+}
+.tm-item-actions .btn-active-toggle.is-active {
+  color: var(--good, #4caf50);
+  border-color: var(--good, #4caf50);
+}
+.tm-item-actions .btn-active-toggle.is-inactive {
+  color: var(--ink-mute);
+}
+.tm-item-actions .btn-active-toggle.is-inactive:hover {
+  color: var(--good, #4caf50);
+  border-color: var(--good, #4caf50);
+}
+
 @media (max-width: 600px) {
   .tm-item { flex-direction: column; align-items: stretch; }
   .tm-item-actions { justify-content: flex-end; }

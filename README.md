@@ -8,11 +8,12 @@ Une collection d'applications web locales, simples et souveraines — des outils
 
 Le projet est un site web **statique** (HTML / CSS / JavaScript pur) composé de plusieurs mini-applications :
 
-| Application | Description | Page |
-|---|---|---|
-| **Journal Personnel** | Espace d'écriture et d'enregistrement personnel | `pages/page_journal.html` |
-| **Planning de la semaine** | Création et gestion de plannings hebdomadaires | `pages/page_planning.html` |
-| **Aide Addictions** | Journal de suivi pour les addictions | `pages/page_addiction.html` |
+| Application              | Description | Page |
+|--------------------------|---|---|
+| **Journal Personnel**    | Espace d'écriture et d'enregistrement personnel | `pages/Journal.html` |
+| **Planning**             | Création et gestion de plannings hebdomadaires | `pages/Planning.html` |
+| **Tâches et événements** | Gestion des tâches récurrentes et événements | `pages/TaskManager.html` |
+| **Aide Addictions**      | Journal de suivi pour les addictions | `pages/Addictions.html` |
 
 Toutes les données sont stockées dans le **localStorage** du navigateur — rien n'est envoyé à un serveur.
 
@@ -84,6 +85,23 @@ Un outil visuel pour organiser une semaine type et structurer ses routines.
 
 ---
 
+### 📝 Tâches et événements
+
+Un outil pour organiser ses tâches quotidiennes, qu'elles soient récurrentes ou ponctuelles.
+
+| Fonctionnalité | Description |
+|---|---|
+| 🔄 **Tâches récurrentes** | Planifie des tâches qui reviennent chaque semaine à des jours précis. |
+| ⏳ **Deadlines** | Gère des tâches avec une date et une heure limite de réalisation. |
+| 📅 **Événements** | Enregistre des événements uniques avec leur date et leur durée. |
+| 🏷️ **Tags et Importance** | Catégorise tes activités et définit une priorité de 0 à 100. |
+| 🕰️ **Historique** | Consulte les tâches terminées et les événements passés dans l'historique dédié. |
+| 📝 **Description et Durée** | Ajoute des détails textuels et estime le temps nécessaire pour chaque élément. |
+
+> Garde l'esprit libre en notant tout ce que tu as à faire, des habitudes hebdomadaires aux rendez-vous uniques.
+
+---
+
 ### 🌱 Aide Addictions
 
 Un journal de suivi pour accompagner une démarche de réduction, d’abstinence ou de reprise de contrôle.
@@ -122,7 +140,6 @@ Le site supporte **3 langues** : français (par défaut), anglais et espagnol.
 Le système i18n est un module JavaScript (`i18n/i18n.js`) qui :
 - Charge les fichiers de traduction JSON depuis `i18n/<lang>.json`
 - Traduit les éléments du DOM via les attributs `data-i18n`, `data-i18n-html`, `data-i18n-placeholder`, `data-i18n-title`, `data-i18n-aria-label`
-- Supporte l'interpolation de variables (`{key}`) et le pluriel simplifié (`{s}`)
 
 La langue choisie est stockée dans `localStorage` (clé `vital_lang`).
 

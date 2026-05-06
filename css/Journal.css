@@ -205,8 +205,13 @@
   .perso-entry-images img:hover {
     transform: scale(1.03);
   }
-  .perso-entry-delete {
+  .perso-entry-actions {
+    display: flex;
+    gap: 12px;
     margin-top: 6px;
+  }
+  .perso-entry-edit,
+  .perso-entry-delete {
     font-size: 11px;
     color: var(--ink-mute);
     background: none;
@@ -215,6 +220,7 @@
     font-family: var(--sans);
     padding: 2px 0;
   }
+  .perso-entry-edit:hover { color: var(--accent); }
   .perso-entry-delete:hover { color: var(--warn); }
 
   .perso-browse-empty {

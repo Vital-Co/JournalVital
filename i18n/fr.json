@@ -52,7 +52,20 @@
     "card_mindmap_desc": "Organise tes idées visuellement.",
     "card_taskmanager_name": "Tâches et événements",
     "card_taskmanager_desc": "Gère et organise tes tâches et événements.",
-    "under_construction": "🚧 Ce site est en construction — de nouvelles fonctionnalités arrivent bientôt !"
+    "under_construction": "🚧 Ce site est en construction — de nouvelles fonctionnalités arrivent bientôt !",
+    "todo": {
+      "title": "Choses à faire",
+      "now_title": "Ce que je dois faire maintenant",
+      "now_nothing": "Rien de spécial prévu pour le moment.",
+      "day_title": "Ma journée :",
+      "tasks_title": "Tâches",
+      "events_title": "Événements",
+      "planning_activity": "Planning",
+      "task_label": "Tâche",
+      "event_label": "Événement",
+      "sleep_label": "Sommeil",
+      "now_label": "Maintenant"
+    }
   },
 
   "planning": {
@@ -527,6 +540,7 @@
     "nav_settings": "Paramètres",
 
     "add_card_label": "Nouvelle entrée",
+    "add_card_label_edit": "Modifier l'entrée",
     "add_title_label": "Titre",
     "add_title_placeholder": "Titre de l'entrée",
         "save_error_title_required": "Le titre est obligatoire.",
@@ -538,6 +552,7 @@
     "btn_stop": "⏹ Arrêter",
     "btn_add_image": "📷 Ajouter une image",
     "btn_save_entry": "Enregistrer l'entrée",
+    "btn_update_entry": "Mettre à jour",
     "vocal_recording": "Enregistrement…",
     "vocal_mic_refused": "Micro refusé ou indisponible",
     "save_error_empty": "— Ajoute au moins un message, une note vocale ou une image",
@@ -615,6 +630,22 @@
     "day_thu": "Jeu",
     "day_fri": "Ven",
     "day_sat": "Sam",
-    "day_sun": "Dim"
+    "day_sun": "Dim",
+    "field_week_interval": "Toutes les",
+    "field_week_interval_unit": "semaine(s)",
+    "btn_activate": "Activer",
+    "btn_deactivate": "Désactiver",
+    "btn_history": "Historique",
+    "section_tasks_history": "Historique des tâches",
+    "section_events_history": "Historique des événements",
+    "history_empty_tasks": "Aucune occurrence enregistrée pour l'instant.",
+    "history_empty_events": "Aucun événement passé pour l'instant.",
+    "history_completed_at": "Achevée le",
+    "history_archived_at": "Archivée le",
+    "confirm_done_repeat": "Enregistrer une occurrence accomplie ?",
+    "confirm_done_deadline": "Archiver cette tâche comme achevée ?",
+    "history_badge_occurrence": "Occurrence",
+    "history_badge_archived": "Archivée",
+    "history_badge_past": "Passé"
   }
 }

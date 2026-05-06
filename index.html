@@ -73,17 +73,6 @@
     </div>
 
     <div class="idx-grid">
-      <a href="pages/Journal.html" class="idx-card idx-card-featured">
-        <h2 class="idx-card-name" data-i18n="index.card_perso_name">Journal Personnel</h2>
-        <p class="idx-card-desc" data-i18n="index.card_perso_desc">Ton espace pour écrire, enregistrer, garder une trace.</p>
-      </a>
-      <a href="pages/Mindmap.html" class="idx-card">
-        <h2 class="idx-card-name" data-i18n="index.card_mindmap_name">Mindmap</h2>
-        <p class="idx-card-desc" data-i18n="index.card_mindmap_desc">Organise tes idées visuellement.</p>
-      </a>
-    </div>
-
-    <div class="idx-grid">
       <a href="pages/TaskManager.html" class="idx-card">
         <h2 class="idx-card-name" data-i18n="index.card_taskmanager_name">TaskManager</h2>
         <p class="idx-card-desc" data-i18n="index.card_taskmanager_desc">Organise tes taches et événements</p>
@@ -91,6 +80,17 @@
       <a href="pages/Addictions.html" class="idx-card">
         <h2 class="idx-card-name" data-i18n="index.card_addiction_name">Aide Addictions</h2>
         <p class="idx-card-desc" data-i18n="index.card_addiction_desc">Suivi, plan de descente et outils pour gérer tes addictions.</p>
+      </a>
+    </div>
+
+    <div class="idx-grid">
+      <a href="pages/Journal.html" class="idx-card idx-card-featured">
+        <h2 class="idx-card-name" data-i18n="index.card_perso_name">Journal Personnel</h2>
+        <p class="idx-card-desc" data-i18n="index.card_perso_desc">Ton espace pour écrire, enregistrer, garder une trace.</p>
+      </a>
+      <a href="pages/Mindmap.html" class="idx-card">
+        <h2 class="idx-card-name" data-i18n="index.card_mindmap_name">Mindmap</h2>
+        <p class="idx-card-desc" data-i18n="index.card_mindmap_desc">Organise tes idées visuellement.</p>
       </a>
     </div>
 
@@ -108,6 +108,23 @@
       </div>
       <div class="mood-banner-chart">
         <canvas id="mood-mini-chart" width="300" height="80"></canvas>
+      </div>
+    </div>
+
+    <!-- ============ TODO PANEL ============ -->
+    <div id="todo-panel" class="todo-panel hidden">
+      <h2 class="todo-panel-title" data-i18n="index.todo.title">Choses à faire</h2>
+      
+      <!-- Card "Ce que je dois faire maintenant" -->
+      <div class="card todo-now-card">
+        <div class="card-label" data-i18n="index.todo.now_title">Ce que je dois faire maintenant</div>
+        <div id="todo-now-content"></div>
+      </div>
+
+      <!-- Widget "Ma journée" -->
+      <div class="card todo-day-card">
+        <div class="card-label" data-i18n="index.todo.day_title">Ma journée :</div>
+        <div id="todo-day-content" class="todo-day-grid"></div>
       </div>
     </div>
 

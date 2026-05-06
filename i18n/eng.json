@@ -52,7 +52,20 @@
     "card_mindmap_desc": "Organize your ideas visually.",
     "card_taskmanager_name": "Task Manager",
     "card_taskmanager_desc": "Manage and organize your tasks and events.",
-    "under_construction": "🚧 This site is under construction — new features coming soon!"
+    "under_construction": "🚧 This site is under construction — new features coming soon!",
+    "todo": {
+      "title": "Things to do",
+      "now_title": "What I should do now",
+      "now_nothing": "Nothing special planned for now.",
+      "day_title": "My day:",
+      "tasks_title": "Tasks",
+      "events_title": "Events",
+      "planning_activity": "Schedule",
+      "task_label": "Task",
+      "event_label": "Event",
+      "sleep_label": "Sleep",
+      "now_label": "Now"
+    }
   },
 
   "planning": {
@@ -526,6 +539,7 @@
     "nav_settings": "Settings",
 
     "add_card_label": "New entry",
+    "add_card_label_edit": "Edit entry",
     "add_title_label": "Title",
     "add_title_placeholder": "Entry title",
         "save_error_title_required": "Title is required.",
@@ -537,6 +551,7 @@
     "btn_stop": "⏹ Stop",
     "btn_add_image": "📷 Add an image",
     "btn_save_entry": "Save entry",
+    "btn_update_entry": "Update entry",
     "vocal_recording": "Recording…",
     "vocal_mic_refused": "Microphone refused or unavailable",
     "save_error_empty": "— Add at least one message, voice note, or image",
@@ -614,6 +629,22 @@
     "day_thu": "Thu",
     "day_fri": "Fri",
     "day_sat": "Sat",
-    "day_sun": "Sun"
+    "day_sun": "Sun",
+    "field_week_interval": "Every",
+    "field_week_interval_unit": "week(s)",
+    "btn_activate": "Activate",
+    "btn_deactivate": "Deactivate",
+    "btn_history": "History",
+    "section_tasks_history": "Task history",
+    "section_events_history": "Event history",
+    "history_empty_tasks": "No completed occurrences yet.",
+    "history_empty_events": "No past events yet.",
+    "history_completed_at": "Completed on",
+    "history_archived_at": "Archived on",
+    "confirm_done_repeat": "Log a completed occurrence?",
+    "confirm_done_deadline": "Archive this task as completed?",
+    "history_badge_occurrence": "Occurrence",
+    "history_badge_archived": "Archived",
+    "history_badge_past": "Past"
   }
 }

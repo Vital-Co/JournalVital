@@ -3,14 +3,20 @@
 (function () {
   'use strict';
 
-  const TASKS_KEY = 'vital_tm_tasks';
-  const EVENTS_KEY = 'vital_tm_events';
+  const TASKS_KEY         = 'vital_tm_tasks';
+  const EVENTS_KEY        = 'vital_tm_events';
+  const TASK_HISTORY_KEY  = 'vital_tm_task_history';
+  const EVENT_ARCHIVE_KEY = 'vital_tm_event_archive';
 
   // ---- Helpers ----
-  function loadTasks()  { return VitalStore.get(TASKS_KEY, []); }
-  function saveTasks(a) { VitalStore.set(TASKS_KEY, a); }
-  function loadEvents() { return VitalStore.get(EVENTS_KEY, []); }
-  function saveEvents(a){ VitalStore.set(EVENTS_KEY, a); }
+  function loadTasks()        { return VitalStore.get(TASKS_KEY, []); }
+  function saveTasks(a)       { VitalStore.set(TASKS_KEY, a); }
+  function loadEvents()       { return VitalStore.get(EVENTS_KEY, []); }
+  function saveEvents(a)      { VitalStore.set(EVENTS_KEY, a); }
+  function loadTaskHistory()  { return VitalStore.get(TASK_HISTORY_KEY, []); }
+  function saveTaskHistory(a) { VitalStore.set(TASK_HISTORY_KEY, a); }
+  function loadEventArchive() { return VitalStore.get(EVENT_ARCHIVE_KEY, []); }
+  function saveEventArchive(a){ VitalStore.set(EVENT_ARCHIVE_KEY, a); }
 
   function t(key, fallback) {
     try { return i18n.t(key) || fallback || key; }
@@ -103,6 +109,7 @@
     document.getElementById('task-name').value = data ? data.name : '';
     document.getElementById('task-duration').value = data ? data.duration : '';
     document.getElementById('task-time').value = data ? data.time || '' : '';
+    document.getElementById('task-week-interval').value = data ? (data.weekInterval || 1) : 1;
     document.getElementById('task-description').value = data ? data.description : '';
     document.getElementById('task-importance').value = data ? data.importance : 50;
     document.getElementById('task-importance-val').textContent = data ? data.importance : 50;
@@ -141,6 +148,7 @@
       duration: document.getElementById('task-duration').value.trim(),
       time: taskMode === 'repeat' ? document.getElementById('task-time').value : '',
       days: taskMode === 'repeat' ? days : [],
+      weekInterval: taskMode === 'repeat' ? (parseInt(document.getElementById('task-week-interval').value) || 1) : 1,
       tags: taskTags.get(),
       importance: +document.getElementById('task-importance').value,
       taskMode,
@@ -197,6 +205,8 @@
       data.id = VitalStore.newId('t_');
       data.type = 'task';
       data.done = false;
+      data.active = true;
+      data.activatedAt = new Date().toISOString();
       data.createdAt = new Date().toISOString();
       tasks.push(data);
     }
@@ -256,9 +266,64 @@
     });
   }
 
+  function getNextOccurrence(task) {
+    if (!task.days || !task.days.length) return null;
+    const now = new Date();
+    const useInterval = task.weekInterval && task.weekInterval > 1 && task.activatedAt;
+
+    if (useInterval) {
+      const intervalMs = task.weekInterval * 7 * 24 * 60 * 60 * 1000;
+      const activatedAt = new Date(task.activatedAt);
+      let earliest = null;
+
+      for (const dayOfWeek of task.days) {
+        const activatedDow = activatedAt.getDay();
+        const daysToMonday = activatedDow === 0 ? -6 : 1 - activatedDow;
+        const weekStart = new Date(activatedAt);
+        weekStart.setHours(0, 0, 0, 0);
+        weekStart.setDate(weekStart.getDate() + daysToMonday);
+
+        const dowOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const anchor = new Date(weekStart);
+        anchor.setDate(anchor.getDate() + dowOffset);
+        if (task.time) {
+          const [hh, mm] = task.time.split(':').map(Number);
+          anchor.setHours(hh, mm, 0, 0);
+        } else {
+          anchor.setHours(23, 59, 0, 0);
+        }
+
+        let candidate = new Date(anchor);
+        if (candidate <= now) {
+          const elapsed = now.getTime() - candidate.getTime();
+          const intervalsNeeded = Math.ceil(elapsed / intervalMs);
+          candidate = new Date(candidate.getTime() + intervalsNeeded * intervalMs);
+        }
+        if (!earliest || candidate < earliest) earliest = candidate;
+      }
+      return earliest;
+    } else {
+      for (let offset = 0; offset < 8; offset++) {
+        const candidate = new Date(now);
+        candidate.setDate(candidate.getDate() + offset);
+        const dayOfWeek = candidate.getDay();
+        if (task.days.includes(dayOfWeek)) {
+          if (task.time) {
+            const [hh, mm] = task.time.split(':').map(Number);
+            candidate.setHours(hh, mm, 0, 0);
+          } else {
+            candidate.setHours(23, 59, 0, 0);
+          }
+          if (candidate > now) return candidate;
+        }
+      }
+      return null;
+    }
+  }
+
   function buildTaskCard(task, idx, total) {
     const div = document.createElement('div');
-    div.className = 'tm-item';
+    div.className = 'tm-item' + (task.active === false ? ' inactive' : '');
 
     const main = document.createElement('div');
     main.className = 'tm-item-main';
@@ -358,24 +423,11 @@
         }
         // Next occurrence
         const now = new Date();
-        let nextOccurrence = null;
-        for (let offset = 0; offset < 8; offset++) {
-          const candidate = new Date(now);
-          candidate.setDate(candidate.getDate() + offset);
-          const dayOfWeek = candidate.getDay();
-          if (task.days.includes(dayOfWeek)) {
-            if (task.time) {
-              const [hh, mm] = task.time.split(':').map(Number);
-              candidate.setHours(hh, mm, 0, 0);
-            } else {
-              candidate.setHours(23, 59, 0, 0);
-            }
-            if (candidate > now) { nextOccurrence = candidate; break; }
-          }
-        }
+        const nextOccurrence = getNextOccurrence(task);
         if (nextOccurrence) {
-          const diffH = Math.floor((nextOccurrence - now) / 3600000);
-          const diffM = Math.floor(((nextOccurrence - now) % 3600000) / 60000);
+          const diffMs = nextOccurrence - now;
+          const diffH = Math.floor(diffMs / 3600000);
+          const diffM = Math.floor((diffMs % 3600000) / 60000);
           let timeStr;
           if (diffH >= 24) {
             timeStr = Math.floor(diffH / 24) + 'j' + ((diffH % 24) > 0 ? (diffH % 24) + 'h' : '');
@@ -418,6 +470,26 @@
     const actions = document.createElement('div');
     actions.className = 'tm-item-actions';
 
+    // Active toggle
+    const isActive = task.active !== false;
+    const btnToggle = document.createElement('button');
+    btnToggle.className = 'btn-active-toggle' + (isActive ? ' is-active' : ' is-inactive');
+    btnToggle.textContent = isActive ? '●' : '○';
+    btnToggle.title = isActive
+      ? t('task.btn_deactivate', 'Désactiver')
+      : t('task.btn_activate', 'Activer');
+    btnToggle.onclick = () => {
+      const tasks = loadTasks();
+      const item = tasks.find(t => t.id === task.id);
+      if (item) {
+        item.active = !isActive;
+        if (!isActive) item.activatedAt = new Date().toISOString();
+        saveTasks(tasks);
+        renderTasks();
+      }
+    };
+    actions.appendChild(btnToggle);
+
     // Reorder arrows
     if (total > 1) {
       const reorder = document.createElement('span');
@@ -439,30 +511,38 @@
       actions.appendChild(reorder);
     }
 
-    // Template
-    const btnTpl = document.createElement('button');
-    btnTpl.textContent = t('task.btn_template', '⧉');
-    btnTpl.title = t('task.btn_template_title', 'Utiliser comme template');
-    btnTpl.onclick = () => {
-      editingTaskId = null;
-      const copy = Object.assign({}, task);
-      delete copy.id; delete copy.createdAt; delete copy.done;
-      resetTaskModal(copy);
-      document.querySelector('#modal-task .tm-title').textContent = t('task.modal_task_title', 'Nouvelle tâche');
-      openModal('modal-task');
-    };
-    actions.appendChild(btnTpl);
-
     // Done
     const btnDone = document.createElement('button');
     btnDone.className = 'btn-done';
     btnDone.textContent = '✓';
     btnDone.title = t('task.btn_done_title', 'Marquer comme achevée');
     btnDone.onclick = () => {
-      if (!confirm(t('task.confirm_done', 'Marquer cette tâche comme achevée ?'))) return;
-      const tasks = loadTasks();
-      const item = tasks.find(t => t.id === task.id);
-      if (item) { item.done = true; saveTasks(tasks); renderTasks(); }
+      const isRepeat = task.taskMode !== 'deadline';
+      const confirmMsg = isRepeat
+        ? t('task.confirm_done_repeat', 'Enregistrer une occurrence accomplie ?')
+        : t('task.confirm_done_deadline', 'Archiver cette tâche comme achevée ?');
+      if (!confirm(confirmMsg)) return;
+
+      const histEntry = {
+        id: VitalStore.newId('th_'),
+        taskId: task.id,
+        taskName: task.name,
+        mode: isRepeat ? 'repeat' : 'deadline',
+        completedAt: new Date().toISOString(),
+        tags: task.tags || [],
+        importance: task.importance,
+        description: task.description || ''
+      };
+      const hist = loadTaskHistory();
+      hist.push(histEntry);
+      saveTaskHistory(hist);
+
+      if (!isRepeat) {
+        const tasks = loadTasks();
+        const item = tasks.find(t => t.id === task.id);
+        if (item) { item.done = true; saveTasks(tasks); }
+      }
+      renderTasks();
     };
     actions.appendChild(btnDone);
 
@@ -599,20 +679,6 @@
       actions.appendChild(reorder);
     }
 
-    // Template
-    const btnTpl = document.createElement('button');
-    btnTpl.textContent = t('task.btn_template', '⧉');
-    btnTpl.title = t('task.btn_template_title', 'Utiliser comme template');
-    btnTpl.onclick = () => {
-      editingEventId = null;
-      const copy = Object.assign({}, ev);
-      delete copy.id; delete copy.createdAt;
-      resetEventModal(copy);
-      document.querySelector('#modal-event .tm-title').textContent = t('task.modal_event_title', 'Nouvel événement');
-      openModal('modal-event');
-    };
-    actions.appendChild(btnTpl);
-
     // Delete
     const btnDel = document.createElement('button');
     btnDel.className = 'btn-del';
@@ -629,6 +695,160 @@
     div.appendChild(actions);
     return div;
   }
+
+  // ---- Auto-archive past events ----
+  function autoArchiveEvents() {
+    const events = loadEvents();
+    const archive = loadEventArchive();
+    const now = new Date();
+    const remaining = [];
+    let changed = false;
+
+    events.forEach(ev => {
+      if (ev.date) {
+        const evDate = new Date(ev.date + (ev.time ? 'T' + ev.time : 'T23:59'));
+        if (evDate < now) {
+          archive.push(Object.assign({}, ev, { archivedAt: new Date().toISOString() }));
+          changed = true;
+          return;
+        }
+      }
+      remaining.push(ev);
+    });
+
+    if (changed) {
+      saveEvents(remaining);
+      saveEventArchive(archive);
+    }
+  }
+
+  // ---- Render history modals ----
+  function renderTaskHistory() {
+    const body = document.getElementById('task-history-body');
+    const history = loadTaskHistory().slice().reverse();
+    body.innerHTML = '';
+
+    if (!history.length) {
+      const empty = document.createElement('div');
+      empty.className = 'tm-history-empty';
+      empty.textContent = t('task.history_empty_tasks', "Aucune occurrence enregistrée pour l'instant.");
+      body.appendChild(empty);
+      return;
+    }
+
+    history.forEach(entry => {
+      const card = document.createElement('div');
+      card.className = 'tm-hist-item';
+
+      const top = document.createElement('div');
+      top.className = 'tm-hist-top';
+
+      const badge = document.createElement('span');
+      badge.className = 'tm-hist-badge tm-hist-badge-' + entry.mode;
+      badge.textContent = entry.mode === 'repeat'
+        ? t('task.history_badge_occurrence', 'Occurrence')
+        : t('task.history_badge_archived', 'Archivée');
+      top.appendChild(badge);
+
+      const name = document.createElement('span');
+      name.className = 'tm-hist-name';
+      name.textContent = entry.taskName;
+      top.appendChild(name);
+
+      card.appendChild(top);
+
+      const meta = document.createElement('div');
+      meta.className = 'tm-hist-meta';
+
+      const dateLabel = entry.mode === 'repeat'
+        ? t('task.history_completed_at', 'Achevée le')
+        : t('task.history_archived_at', 'Archivée le');
+      const dateStr = new Date(entry.completedAt).toLocaleString(undefined, {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+      const dateSpan = document.createElement('span');
+      dateSpan.textContent = dateLabel + ' ' + dateStr;
+      meta.appendChild(dateSpan);
+
+      if (entry.tags && entry.tags.length) {
+        const tagsSpan = document.createElement('span');
+        tagsSpan.className = 'tm-hist-tags';
+        tagsSpan.textContent = entry.tags.join(', ');
+        meta.appendChild(tagsSpan);
+      }
+
+      card.appendChild(meta);
+      body.appendChild(card);
+    });
+  }
+
+  function renderEventHistory() {
+    const body = document.getElementById('event-history-body');
+    const archive = loadEventArchive().slice().reverse();
+    body.innerHTML = '';
+
+    if (!archive.length) {
+      const empty = document.createElement('div');
+      empty.className = 'tm-history-empty';
+      empty.textContent = t('task.history_empty_events', 'Aucun événement passé pour l\'instant.');
+      body.appendChild(empty);
+      return;
+    }
+
+    archive.forEach(ev => {
+      const card = document.createElement('div');
+      card.className = 'tm-hist-item';
+
+      const top = document.createElement('div');
+      top.className = 'tm-hist-top';
+
+      const badge = document.createElement('span');
+      badge.className = 'tm-hist-badge tm-hist-badge-past';
+      badge.textContent = t('task.history_badge_past', 'Passé');
+      top.appendChild(badge);
+
+      const name = document.createElement('span');
+      name.className = 'tm-hist-name';
+      name.textContent = ev.name;
+      top.appendChild(name);
+
+      card.appendChild(top);
+
+      const meta = document.createElement('div');
+      meta.className = 'tm-hist-meta';
+
+      if (ev.date) {
+        const dateSpan = document.createElement('span');
+        dateSpan.textContent = '📅 ' + ev.date + (ev.time ? ' ' + ev.time : '');
+        meta.appendChild(dateSpan);
+      }
+      if (ev.duration) {
+        const durSpan = document.createElement('span');
+        durSpan.textContent = '⏱ ' + ev.duration;
+        meta.appendChild(durSpan);
+      }
+      if (ev.tags && ev.tags.length) {
+        const tagsSpan = document.createElement('span');
+        tagsSpan.className = 'tm-hist-tags';
+        tagsSpan.textContent = ev.tags.join(', ');
+        meta.appendChild(tagsSpan);
+      }
+
+      card.appendChild(meta);
+      body.appendChild(card);
+    });
+  }
+
+  // ---- History button listeners ----
+  document.getElementById('btn-task-history').addEventListener('click', () => {
+    renderTaskHistory();
+    openModal('modal-task-history');
+  });
+
+  document.getElementById('btn-event-history').addEventListener('click', () => {
+    renderEventHistory();
+    openModal('modal-event-history');
+  });
 
   // ---- Move helpers ----
   function moveTask(id, direction) {
@@ -663,6 +883,7 @@
   initLanguage().then(() => {
     initTheme();
     setTodayDate();
+    autoArchiveEvents();
     renderTasks();
     renderEvents();
   });

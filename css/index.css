@@ -417,3 +417,311 @@
     .mood-banner-text { flex: 1 1 100%; }
     .btn-mood { flex: 1; }
   }
+
+  /* ============ TODO PANEL ============ */
+  .todo-panel {
+    max-width: 720px;
+    margin: 32px auto 0;
+    text-align: left;
+  }
+  .todo-panel-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-mute);
+    margin: 0 4px 12px;
+  }
+  .todo-now-card {
+    border-left: 4px solid var(--accent);
+    padding: 20px 24px;
+  }
+  /* Now card — multi-slot layout */
+  .todo-now-slots {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2px;
+  }
+  .todo-now-slot {
+    padding: 14px 0 12px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .todo-now-slot:last-child { border-bottom: none; }
+  .todo-now-slot.is-next { opacity: 0.80; }
+
+  /* Slot header line */
+  .todo-now-slot-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+  .todo-now-slot-marker {
+    font-size: 14px;
+    color: var(--accent);
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .is-next .todo-now-slot-marker {
+    font-size: 12px;
+    color: var(--ink-mute);
+  }
+  .todo-now-slot-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    color: var(--accent);
+  }
+  .is-next .todo-now-slot-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .todo-now-slot-timeinfo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    margin-left: auto;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* Progress bar */
+  .todo-now-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .todo-now-progress-bar {
+    flex: 1;
+    height: 5px;
+    background: var(--line-soft);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .todo-now-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+  .todo-now-progress-pct {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    flex-shrink: 0;
+    min-width: 28px;
+    text-align: right;
+  }
+
+  /* Slot item rows */
+  .todo-now-slot-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .todo-now-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .todo-now-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .todo-now-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .tnb-planning { background: var(--bg-2); color: var(--ink-soft); }
+  .tnb-task     { background: rgba(52,152,219,.15); color: #3498db; }
+  .tnb-event    { background: rgba(231,76,60,.15);  color: #e74c3c; }
+  .todo-now-item-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    flex-shrink: 0;
+  }
+  .todo-now-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .is-now .todo-now-item-name {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 500;
+  }
+  .todo-now-nothing {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-mute);
+    font-size: 14px;
+  }
+  .todo-now-nothing-full {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-mute);
+    font-size: 15px;
+    padding: 8px 0;
+  }
+
+  /* ---- Timeline ---- */
+  .todo-day-grid {
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--line-soft);
+  }
+  .todo-day-timeline {
+    display: flex;
+    flex-direction: column;
+  }
+  .todo-day-segment {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--paper);
+    transition: opacity .2s;
+  }
+  .todo-day-segment:last-child { border-bottom: none; }
+  .todo-day-segment.is-past { opacity: 0.42; }
+  .todo-day-segment.is-current {
+    background: var(--bg-2);
+    border-left: 3px solid var(--accent);
+  }
+  .todo-day-seg-time {
+    flex-shrink: 0;
+    min-width: 72px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    padding-top: 4px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .todo-day-seg-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .todo-day-activity-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,.25);
+    align-self: flex-start;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Now marker */
+  .todo-day-now-marker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 1px;
+  }
+  .todo-day-now-bar {
+    flex: 1;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+  .todo-day-now-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  /* Task / Event items */
+  .todo-day-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    min-width: 0;
+  }
+  .todo-day-item-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .todo-day-item-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .badge-task  { background: rgba(52,152,219,.15); color: #3498db; }
+  .badge-event { background: rgba(231, 76, 60,.15); color: #e74c3c; }
+  .todo-day-item-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    flex-shrink: 0;
+  }
+  .todo-day-item-name {
+    color: var(--ink);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Standalone now marker between segments */
+  .todo-day-between-now {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .todo-day-empty {
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--ink-mute);
+    font-style: italic;
+    padding: 32px 0;
+  }
+  @media (max-width: 480px) {
+    .todo-day-seg-time { min-width: 52px; font-size: 10px; }
+    .todo-day-segment  { gap: 10px; padding: 8px 10px; }
+    .todo-day-segment.is-current { border-left-width: 2px; }
+    .todo-now-slot-timeinfo { font-size: 10px; }
+    .is-now .todo-now-item-name { font-size: 17px; }
+    .todo-now-badge { display: none; }
+  }
