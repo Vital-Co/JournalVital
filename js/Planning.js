@@ -894,7 +894,9 @@ function savePlanning(){
     planObj.created = plannings[editingIdx].created || planObj.created;
     plannings[editingIdx] = planObj;
   } else {
+    const noMainBefore = plannings.length > 0 && getMainPlanning() === null;
     plannings.push(planObj);
+    if (noMainBefore) setMainPlanning(plannings.length - 1);
   }
   editingIdx = null;
   savePlannings();

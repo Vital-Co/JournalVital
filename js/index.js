@@ -465,7 +465,7 @@ setTodayDate();
     const mm = now.getMinutes();
     const nowMinutes = hh * 60 + mm;
 
-    const mainIdx = parseInt(VitalStore.getRaw(MAIN_PL_KEY));
+    let mainIdx = plannings.length === 1 ? 0 : parseInt(VitalStore.getRaw(MAIN_PL_KEY));
     const p = (!isNaN(mainIdx) && plannings[mainIdx]) ? plannings[mainIdx] : null;
     let grid = null, isQuarter = false;
     if (p) {
@@ -480,6 +480,8 @@ setTodayDate();
 
     const freeTitle  = i18n.t('planning.free_activity_title')  || 'Temps Libre';
     const sleepTitle = i18n.t('planning.sleep_activity_title') || 'Sommeil';
+    const stepMin = grid ? (isQuarter ? 15 : 60) : 60;
+    const gridMax = grid ? (isQuarter ? 96 : 24) : 24;
 
     function fmtDur(totalMin) {
       if (totalMin <= 0) return '0 min';
@@ -493,51 +495,67 @@ setTodayDate();
     function fmtClock(totalMin) {
       const h = Math.floor(totalMin / 60) % 24;
       const m = totalMin % 60;
-      return `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}`;
+      return m === 0
+        ? `${String(h).padStart(2, '0')}h`
+        : `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}`;
     }
 
-    function getPlanAct(refMin) {
-      if (!grid) return null;
-      const h = Math.floor(refMin / 60);
-      const m = refMin % 60;
-      if (h >= 24) return null;
-      const idx = isQuarter ? grid[h * 4 + Math.floor(m / 15)]?.[dayIdx] : grid[h]?.[dayIdx];
-      if (idx === null || idx === undefined) return { isFree: true, title: freeTitle, color: '#bdc3c7' };
-      const act = p.activities[idx];
-      if (!act || act.title === sleepTitle) return null;
-      return { ai: idx, title: act.title, color: act.color };
-    }
-
-    function getBlockBounds(ai, refMin) {
-      const h = Math.floor(refMin / 60);
-      const m = refMin % 60;
-      const cur = isQuarter ? h * 4 + Math.floor(m / 15) : h;
-      const max = isQuarter ? 96 : 24;
+    // Returns the contiguous-same-cell block at refMin: { startMin, endMin, cell }
+    // cell is null/undefined (free), an activity index, or 'sleep'.
+    function getCellBlockAt(refMin) {
+      if (!grid || refMin < 0 || refMin >= 24 * 60) return null;
+      const cur = Math.floor(refMin / stepMin);
+      if (cur >= gridMax) return null;
+      const cell = grid[cur]?.[dayIdx];
       let end = cur + 1;
-      while (end < max && grid[end]?.[dayIdx] === ai) end++;
+      while (end < gridMax && grid[end]?.[dayIdx] === cell) end++;
       let start = cur;
-      while (start > 0 && grid[start - 1]?.[dayIdx] === ai) start--;
-      return {
-        startMin: isQuarter ? Math.floor(start / 4) * 60 + (start % 4) * 15 : start * 60,
-        endMin:   isQuarter ? Math.floor(end   / 4) * 60 + (end   % 4) * 15 : end   * 60
-      };
+      while (start > 0 && grid[start - 1]?.[dayIdx] === cell) start--;
+      return { startMin: start * stepMin, endMin: end * stepMin, cell };
     }
 
-    // Build data for now + 2 upcoming hours
+    function cellToPlanAct(cell) {
+      if (cell === null || cell === undefined) return { isFree: true, title: freeTitle, color: '#bdc3c7' };
+      if (!p) return null;
+      const act = p.activities[cell];
+      if (!act || act.title === sleepTitle) return null;
+      return { ai: cell, title: act.title, color: act.color };
+    }
+
+    // Walk forward from now through activity blocks (quarter-aware), collecting
+    // slots until we reach the 2-hour horizon or have enough material to show.
     const slots = [];
-    for (let offset = 0; offset <= 2; offset++) {
-      const slotH = hh + offset;
-      if (slotH >= 24) break;
+    const horizonMin = Math.min(nowMinutes + 120, 24 * 60);
+    let cursor = nowMinutes;
 
-      const fromMin = offset === 0 ? nowMinutes : slotH * 60;
-      const toMin   = (slotH + 1) * 60;
+    while (cursor < horizonMin && slots.length < 4) {
+      let blockStart, blockEnd, planAct;
 
-      const planAct = getPlanAct(fromMin);
-      let blockEnd = null, blockStart = null, progress = null;
-      if (offset === 0 && planAct && !planAct.isFree) {
-        const b = getBlockBounds(planAct.ai, nowMinutes);
-        blockEnd   = b.endMin;
-        blockStart = b.startMin;
+      if (grid) {
+        const block = getCellBlockAt(cursor);
+        if (!block) break;
+        const cellAct = (block.cell !== null && block.cell !== undefined) ? p.activities[block.cell] : null;
+        if (cellAct && cellAct.title === sleepTitle) {
+          if (block.endMin <= cursor) break;
+          cursor = block.endMin;
+          continue;
+        }
+        blockStart = block.startMin;
+        blockEnd   = block.endMin;
+        planAct    = cellToPlanAct(block.cell);
+      } else {
+        const slotH = Math.floor(cursor / 60);
+        blockStart = slotH * 60;
+        blockEnd   = (slotH + 1) * 60;
+        planAct    = null;
+      }
+
+      const isNow = nowMinutes >= blockStart && nowMinutes < blockEnd;
+      const slotStart = isNow ? nowMinutes : blockStart;
+      const slotEnd   = blockEnd;
+
+      let progress = null;
+      if (isNow && planAct && !planAct.isFree) {
         const dur = blockEnd - blockStart;
         if (dur > 0) progress = Math.max(0, Math.min(1, (nowMinutes - blockStart) / dur));
       }
@@ -546,7 +564,7 @@ setTodayDate();
         if (e.date !== todayStr || !e.time) return false;
         const [eh, em] = e.time.split(':').map(Number);
         const evStart = eh * 60 + em;
-        return evStart + (parseDuration(e.duration) || 60) > fromMin && evStart < toMin;
+        return evStart + (parseDuration(e.duration) || 60) > slotStart && evStart < slotEnd;
       }).sort((a, b) => (b.importance || 0) - (a.importance || 0));
 
       const slotTasks = tasks.filter(t => {
@@ -561,16 +579,26 @@ setTodayDate();
           const [th, tm] = t.time.split(':').map(Number);
           taskStart = th * 60 + tm;
         }
-        return taskStart + (parseDuration(t.duration) || 60) > fromMin && taskStart < toMin;
+        return taskStart + (parseDuration(t.duration) || 60) > slotStart && taskStart < slotEnd;
       }).sort((a, b) => (b.importance || 0) - (a.importance || 0));
 
       const hasContent = !!(planAct || slotEvents.length || slotTasks.length);
-      if (offset > 0 && !hasContent) continue;
 
-      slots.push({ offset, slotH, planAct, blockEnd, blockStart, progress, tasks: slotTasks, events: slotEvents, hasContent });
+      // Always include the first non-sleep slot (so the user sees their current
+      // state); for subsequent slots, only include those with something to show.
+      if (slots.length === 0 || hasContent) {
+        slots.push({
+          isNow, slotStart, slotEnd,
+          planAct, blockStart, blockEnd, progress,
+          tasks: slotTasks, events: slotEvents, hasContent
+        });
+      }
+
+      if (slotEnd <= cursor) break;
+      cursor = slotEnd;
     }
 
-    // Nothing at all for current + next 2 hours
+    // Nothing at all for current + upcoming horizon
     if (!slots.some(s => s.hasContent)) {
       nowContent.innerHTML = `<div class="todo-now-nothing-full">${i18n.t('index.todo.now_nothing')}</div>`;
       return;
@@ -584,22 +612,22 @@ setTodayDate();
     let html = '<div class="todo-now-slots">';
 
     for (const slot of slots) {
-      const isNow = slot.offset === 0;
+      const isNow = slot.isNow;
 
       let timeInfo = '';
       if (isNow) {
-        const endMin = slot.blockEnd || (hh + 1) * 60;
+        const endMin = slot.blockEnd || slot.slotEnd;
         const remaining = endMin - nowMinutes;
         if (remaining > 0) {
           timeInfo = `encore ${fmtDur(remaining)}`;
           if (slot.blockEnd) timeInfo += ` · jusqu'à ${fmtClock(slot.blockEnd)}`;
         }
       } else {
-        const minsUntil = slot.slotH * 60 - nowMinutes;
+        const minsUntil = slot.slotStart - nowMinutes;
         timeInfo = `dans ${fmtDur(minsUntil)}`;
       }
 
-      const label  = isNow ? nowLabel : `${String(slot.slotH).padStart(2, '0')}h00`;
+      const label  = isNow ? nowLabel : fmtClock(slot.slotStart);
       const marker = isNow ? '▶' : '→';
 
       html += `<div class="todo-now-slot${isNow ? ' is-now' : ' is-next'}">`;
@@ -661,7 +689,7 @@ setTodayDate();
     const todayStr = now.toISOString().slice(0, 10);
     const dayOfWeek = now.getDay();
     const dayIdx = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const mainIdx = parseInt(VitalStore.getRaw(MAIN_PL_KEY));
+    const mainIdx = plannings.length === 1 ? 0 : parseInt(VitalStore.getRaw(MAIN_PL_KEY));
     const p = plannings[mainIdx];
     const sleepTitle = i18n.t('planning.sleep_activity_title') || 'Sommeil';
     const freeTitle  = i18n.t('planning.free_activity_title')  || 'Temps Libre';
@@ -680,71 +708,88 @@ setTodayDate();
       grid = weeks[weekIdx].grid;
     }
 
-    // Build per-hour data
-    const hours = [];
-    for (let h = 0; h < 24; h++) {
+    const isQuarter = grid && grid.length === 96;
+    const cellMin   = isQuarter ? 15 : 60;
+    const cellCount = isQuarter ? 96 : 24;
+
+    function fmtClock(totalMin) {
+      const h = Math.floor(totalMin / 60) % 24;
+      const m = totalMin % 60;
+      return m === 0
+        ? `${String(h).padStart(2, '0')}h`
+        : `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}`;
+    }
+
+    // Build per-cell data (cell = 15 min on quarter grids, 60 min otherwise).
+    // Sleep cells are dropped, free cells are kept as a "free" pseudo-activity.
+    const cells = [];
+    for (let i = 0; i < cellCount; i++) {
+      const startMin = i * cellMin;
+      const endMin   = startMin + cellMin;
       let isSleep = false;
       let activity = null;
 
       if (grid) {
-        const isQuarter = grid.length === 96;
-        if (isQuarter) {
-          const acts = [0,1,2,3].map(q => {
-            const ai = grid[h*4+q][dayIdx];
-            return (ai !== null && ai !== undefined) ? p.activities[ai] : null;
-          });
-          isSleep = acts.every(a => a && a.title === sleepTitle);
-          if (!isSleep) {
-            const first = acts[0];
-            activity = (first && first.title !== sleepTitle)
-              ? { name: first.title, color: first.color }
-              : { name: freeTitle, color: '#bdc3c7' };
-          }
+        const ai = grid[i][dayIdx];
+        const act = (ai !== null && ai !== undefined) ? p.activities[ai] : null;
+        if (act && act.title === sleepTitle) {
+          isSleep = true;
         } else {
-          const ai = grid[h][dayIdx];
-          const act = (ai !== null && ai !== undefined) ? p.activities[ai] : null;
-          if (act && act.title === sleepTitle) { isSleep = true; }
-          else activity = act
+          activity = act
             ? { name: act.title, color: act.color }
             : { name: freeTitle, color: '#bdc3c7' };
         }
       }
       if (isSleep) continue;
 
-      const hourTasks = tasks.filter(t => {
+      const cellTasks = tasks.filter(t => {
         if (t.done || t.active === false) return false;
-        if (t.taskMode === 'deadline') return t.deadlineDate === todayStr && t.deadlineTime && parseInt(t.deadlineTime.split(':')[0]) === h;
-        return t.days && t.days.includes(dayOfWeek) && t.time && parseInt(t.time.split(':')[0]) === h;
+        let tStart;
+        if (t.taskMode === 'deadline') {
+          if (t.deadlineDate !== todayStr || !t.deadlineTime) return false;
+          const [th, tm] = t.deadlineTime.split(':').map(Number);
+          tStart = th * 60 + tm;
+        } else {
+          if (!t.days || !t.days.includes(dayOfWeek) || !t.time) return false;
+          const [th, tm] = t.time.split(':').map(Number);
+          tStart = th * 60 + tm;
+        }
+        return tStart >= startMin && tStart < endMin;
       }).sort((a, b) => (b.importance || 0) - (a.importance || 0));
 
-      const hourEvents = events.filter(e =>
-        e.date === todayStr && e.time && parseInt(e.time.split(':')[0]) === h
-      ).sort((a, b) => (b.importance || 0) - (a.importance || 0));
+      const cellEvents = events.filter(e => {
+        if (e.date !== todayStr || !e.time) return false;
+        const [eh, em] = e.time.split(':').map(Number);
+        const evStart = eh * 60 + em;
+        return evStart >= startMin && evStart < endMin;
+      }).sort((a, b) => (b.importance || 0) - (a.importance || 0));
 
-      if (!activity && !hourTasks.length && !hourEvents.length) continue;
+      if (!activity && !cellTasks.length && !cellEvents.length) continue;
 
-      hours.push({
-        h, activity,
-        tasks:  hourTasks.map(t => ({ type: 'task',  name: t.name, time: t.time || null })),
-        events: hourEvents.map(e => ({ type: 'event', name: e.name, time: e.time || null }))
+      cells.push({
+        startMin, endMin, activity,
+        tasks:  cellTasks.map(t  => ({ type: 'task',  name: t.name, time: (t.taskMode === 'deadline' ? t.deadlineTime : t.time) || null })),
+        events: cellEvents.map(e => ({ type: 'event', name: e.name, time: e.time || null }))
       });
     }
 
-    if (!hours.length) {
+    if (!cells.length) {
       dayContent.innerHTML = `<div class="todo-day-empty">${i18n.t('index.todo.now_nothing')}</div>`;
       return;
     }
 
-    // Group consecutive same-activity hours into segments
+    // Group consecutive same-activity cells into segments. Cells separated by
+    // a dropped sleep cell don't merge (contiguity check on startMin/endMin).
     const segments = [];
     let seg = null;
-    for (const hd of hours) {
-      const key = hd.activity ? `${hd.activity.name}|${hd.activity.color}` : '__none__';
-      if (seg && seg.key === key) {
-        seg.endH = hd.h + 1;
-        seg.items.push(...hd.tasks, ...hd.events);
+    for (const c of cells) {
+      const key = c.activity ? `${c.activity.name}|${c.activity.color}` : '__none__';
+      const contiguous = seg && seg.endMin === c.startMin;
+      if (seg && seg.key === key && contiguous) {
+        seg.endMin = c.endMin;
+        seg.items.push(...c.tasks, ...c.events);
       } else {
-        seg = { startH: hd.h, endH: hd.h + 1, activity: hd.activity, key, items: [...hd.tasks, ...hd.events] };
+        seg = { startMin: c.startMin, endMin: c.endMin, activity: c.activity, key, items: [...c.tasks, ...c.events] };
         segments.push(seg);
       }
     }
@@ -760,11 +805,9 @@ setTodayDate();
       <div class="todo-day-now-bar"></div>`;
 
     for (const s of segments) {
-      const segStartMin = s.startH * 60;
-      const segEndMin   = s.endH   * 60;
-      const isPast    = segEndMin   <= nowMinutes;
-      const isCurrent = nowMinutes  >= segStartMin && nowMinutes < segEndMin;
-      const isFuture  = segStartMin >  nowMinutes;
+      const isPast    = s.endMin   <= nowMinutes;
+      const isCurrent = nowMinutes  >= s.startMin && nowMinutes < s.endMin;
+      const isFuture  = s.startMin >  nowMinutes;
 
       // Now falls in a gap before this segment
       if (!nowInserted && isFuture) {
@@ -772,10 +815,9 @@ setTodayDate();
         html += `<div class="todo-day-between-now">${nowMarkerHtml}</div>`;
       }
 
-      const span = s.endH - s.startH;
-      const timeLabel = span > 1
-        ? `${String(s.startH).padStart(2,'0')}h&nbsp;&ndash;&nbsp;${String(s.endH).padStart(2,'0')}h`
-        : `${String(s.startH).padStart(2,'0')}h`;
+      const timeLabel = (s.endMin - s.startMin) > cellMin
+        ? `${fmtClock(s.startMin)}&nbsp;&ndash;&nbsp;${fmtClock(s.endMin)}`
+        : fmtClock(s.startMin);
 
       const classes = ['todo-day-segment'];
       if (isPast)    classes.push('is-past');
