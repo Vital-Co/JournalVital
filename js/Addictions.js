@@ -467,6 +467,7 @@
       note: existing && existing.note ? existing.note : '',
       savedAt: new Date().toISOString()
     };
+    state.palierStartDate = today;
     return true;
   }
 
@@ -512,6 +513,7 @@
       note: note || '',
       savedAt: new Date().toISOString()
     };
+    state.palierStartDate = today;
     return true;
   }
 
@@ -966,6 +968,9 @@
 
   function dayStatus(date, log, palier) {
     if (!log) return 'pending';
+    if (state.journalMode === 'abstain') {
+      return log.kind === 'held' ? 'done' : 'miss';
+    }
     if (log.dose === undefined || log.dose === null || log.dose === '') return 'pending';
     const dose = parseFloat(log.dose);
     const unitForLog = UNIT_TYPES[log.unitType];
@@ -1644,40 +1649,77 @@
   function renderCatchupModal(dates) {
     const body = document.getElementById('catchup-body');
     if (!body) return;
-    const u = getUnit();
-    const palier = currentPalier();
-    const stepStr = u.integerOnly ? '1' : String(u.step);
 
-    body.innerHTML = dates.map(date => {
-      // Label date : "lun. 27 avr." + délai relatif "il y a 3 jours"
-      const dateLabel = formatDateFR(date);
-      const today = todayISO();
-      const diff = daysBetween(date, today);
-      const ago = diff === 1 ? i18n.t('addiction.catchup_yesterday') : i18n.t('addiction.catchup_days_ago', {n: diff});
-      const dayTarget = palier.dose;
-      const targetStr = u.format(dayTarget);
-      return `
-        <div class="catchup-row" data-catchup-date="${date}">
-          <div class="catchup-row-date">
-            ${escapeHtml(dateLabel)}
-            <small>${ago}</small>
+    if (state.journalMode === 'abstain') {
+      body.innerHTML = dates.map(date => {
+        const dateLabel = formatDateFR(date);
+        const today = todayISO();
+        const diff = daysBetween(date, today);
+        const ago = diff === 1 ? i18n.t('addiction.catchup_yesterday') : i18n.t('addiction.catchup_days_ago', {n: diff});
+        return `
+          <div class="catchup-row catchup-row-abstain" data-catchup-date="${date}">
+            <div class="catchup-row-date">
+              ${escapeHtml(dateLabel)}
+              <small>${ago}</small>
+            </div>
+            <div class="catchup-row-btns">
+              <button type="button" class="btn-catchup-choice" data-kind="held" data-date="${date}">${i18n.t('addiction.btn_hold_main')}</button>
+              <button type="button" class="btn-catchup-choice" data-kind="relapse" data-date="${date}">${i18n.t('addiction.btn_relapse_main')}</button>
+            </div>
           </div>
-          <div class="catchup-row-input">
-            <input
-              type="number"
-              class="catchup-input"
-              data-catchup-date="${date}"
-              step="${stepStr}"
-              min="0"
-              placeholder="0"
-              inputmode="${u.integerOnly ? 'numeric' : 'decimal'}"
-            >
-            <span class="catchup-row-unit">${escapeHtml(u.shortSuffix)}</span>
+        `;
+      }).join('');
+
+      // Add click handlers for the choice buttons
+      body.querySelectorAll('.btn-catchup-choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const date = btn.dataset.date;
+          const kind = btn.dataset.kind;
+          // Toggle selection
+          const row = btn.closest('.catchup-row');
+          row.querySelectorAll('.btn-catchup-choice').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          row.dataset.selectedKind = kind;
+          // Efface l'erreur sur cette ligne
+          row.classList.remove('err');
+        });
+      });
+
+    } else {
+      const u = getUnit();
+      const palier = currentPalier();
+      const stepStr = u.integerOnly ? '1' : String(u.step);
+
+      body.innerHTML = dates.map(date => {
+        const dateLabel = formatDateFR(date);
+        const today = todayISO();
+        const diff = daysBetween(date, today);
+        const ago = diff === 1 ? i18n.t('addiction.catchup_yesterday') : i18n.t('addiction.catchup_days_ago', {n: diff});
+        const dayTarget = palier.dose;
+        const targetStr = u.format(dayTarget);
+        return `
+          <div class="catchup-row" data-catchup-date="${date}">
+            <div class="catchup-row-date">
+              ${escapeHtml(dateLabel)}
+              <small>${ago}</small>
+            </div>
+            <div class="catchup-row-input">
+              <input
+                type="number"
+                class="catchup-input"
+                data-catchup-date="${date}"
+                step="${stepStr}"
+                min="0"
+                placeholder="0"
+                inputmode="${u.integerOnly ? 'numeric' : 'decimal'}"
+              >
+              <span class="catchup-row-unit">${escapeHtml(u.shortSuffix)}</span>
+            </div>
+            <div class="catchup-row-target">${i18n.t('addiction.catchup_target_prefix')}${escapeHtml(targetStr)}</div>
           </div>
-          <div class="catchup-row-target">${i18n.t('addiction.catchup_target_prefix')}${escapeHtml(targetStr)}</div>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
+    }
 
     // Reset l'état d'erreur et le statut
     const status = document.getElementById('catchup-status');
@@ -1716,80 +1758,149 @@
   function commitCatchup() {
     const modal = document.getElementById('catchup-modal');
     if (!modal) return false;
-    const u = getUnit();
-    const palier = currentPalier();
+    const today = todayISO();
 
-    // 1. Récolter et valider toutes les valeurs
-    const inputs = modal.querySelectorAll('.catchup-input');
-    const values = []; // { date, dose }
-    let firstInvalid = null;
+    const values = []; // { date, dose, kind }
+    let firstInvalidRow = null;
 
-    inputs.forEach(input => {
-      const date = input.dataset.catchupDate;
-      const wrap = input.closest('.catchup-row-input');
-      const raw = input.value;
-      if (raw === '' || raw === null || isNaN(parseFloat(raw))) {
-        if (wrap) wrap.classList.add('err');
-        if (!firstInvalid) firstInvalid = input;
-        return;
-      }
-      let dose = parseFloat(raw);
-      if (u.integerOnly) dose = Math.round(dose);
-      if (dose < 0) dose = 0;
-      if (wrap) wrap.classList.remove('err');
-      values.push({ date, dose });
-    });
+    if (state.journalMode === 'abstain') {
+      const rows = modal.querySelectorAll('.catchup-row');
+      rows.forEach(row => {
+        const date = row.dataset.catchupDate;
+        const kind = row.dataset.selectedKind;
+        if (!kind) {
+          row.classList.add('err');
+          if (!firstInvalidRow) firstInvalidRow = row;
+          return;
+        }
+        row.classList.remove('err');
+        values.push({ date, kind });
+      });
+    } else {
+      const u = getUnit();
+      const inputs = modal.querySelectorAll('.catchup-input');
+      inputs.forEach(input => {
+        const date = input.dataset.catchupDate;
+        const wrap = input.closest('.catchup-row-input');
+        const raw = input.value;
+        if (raw === '' || raw === null || isNaN(parseFloat(raw))) {
+          if (wrap) wrap.classList.add('err');
+          if (!firstInvalidRow) firstInvalidRow = input.closest('.catchup-row');
+          return;
+        }
+        let dose = parseFloat(raw);
+        if (u.integerOnly) dose = Math.round(dose);
+        if (dose < 0) dose = 0;
+        if (wrap) wrap.classList.remove('err');
+        values.push({ date, dose });
+      });
+    }
 
-    if (firstInvalid) {
+    if (firstInvalidRow) {
       const status = document.getElementById('catchup-status');
       if (status) {
         status.textContent = i18n.t('addiction.catchup_error_fill_all');
         status.classList.add('err');
       }
-      firstInvalid.focus();
+      firstInvalidRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return false;
     }
 
-    // 2. Tout est valide : on prépare les logs (sans encore les écrire dans state).
-    // On les stocke dans un objet temporaire pour pouvoir tout écrire d'un coup,
-    // et faire un rollback propre si saveState échoue.
-    const today = todayISO();
+    // 2. Tout est valide : on prépare les logs
+    const palier = currentPalier();
     const newLogs = {};
-    for (const { date, dose } of values) {
-      const dayTarget = palier.dose;
-      newLogs[date] = {
-        title: '',
-        dose: dose,
-        targetDose: dayTarget,
-        phase: palier.phase,
-        unitType: state.unitType,
-        note: '',
-        savedAt: new Date().toISOString(),
-        catchupAt: new Date().toISOString()  // marqueur traçabilité : log saisi en différé
-      };
+
+    if (state.journalMode === 'abstain') {
+      values.forEach(v => {
+        newLogs[v.date] = {
+          kind: v.kind,
+          savedAt: new Date().toISOString(),
+          catchupAt: new Date().toISOString()
+        };
+      });
+    } else {
+      for (const { date, dose } of values) {
+        const dayTarget = palier.dose;
+        newLogs[date] = {
+          title: '',
+          dose: dose,
+          targetDose: dayTarget,
+          phase: palier.phase,
+          unitType: state.unitType,
+          note: '',
+          savedAt: new Date().toISOString(),
+          catchupAt: new Date().toISOString()
+        };
+      }
     }
+
     if (pendingTodayLog) {
-      const todayTarget = palier.dose;
-      newLogs[today] = {
-        title: pendingTodayLog.title,
-        dose: pendingTodayLog.dose,
-        doses: pendingTodayLog.doses || [],
-        targetDose: todayTarget,
-        phase: palier.phase,
-        unitType: state.unitType,
-        note: pendingTodayLog.note,
-        notes: pendingTodayLog.notes || [],
-        audios: pendingTodayLog.audios || [],
-        savedAt: new Date().toISOString()
-      };
+      if (state.journalMode === 'abstain') {
+        newLogs[today] = {
+          kind: pendingTodayLog.kind,
+          note: pendingTodayLog.note || '',
+          notes: pendingTodayLog.notes || [],
+          audios: pendingTodayLog.audios || [],
+          savedAt: new Date().toISOString()
+        };
+      } else {
+        const todayTarget = palier.dose;
+        newLogs[today] = {
+          title: pendingTodayLog.title,
+          dose: pendingTodayLog.dose,
+          doses: pendingTodayLog.doses || [],
+          targetDose: todayTarget,
+          phase: palier.phase,
+          unitType: state.unitType,
+          note: pendingTodayLog.note,
+          notes: pendingTodayLog.notes || [],
+          audios: pendingTodayLog.audios || [],
+          savedAt: new Date().toISOString()
+        };
+      }
     }
 
     // 3. Écriture dans state, puis sauvegarde. Si saveState échoue, on rollback.
     const backupLogs = {};
+    const backupCurrentStreakStart = state.currentStreakStart;
+    const backupStreakHistory = [...state.streakHistory];
+    const backupPalierStartDate = state.palierStartDate;
+
     for (const k of Object.keys(newLogs)) {
-      backupLogs[k] = state.logs[k];  // sauvegarde l'éventuel log existant (peut être undefined)
-      state.logs[k] = newLogs[k];
+      backupLogs[k] = state.logs[k];
     }
+
+    if (state.journalMode === 'abstain') {
+      const sortedDates = Object.keys(newLogs).sort();
+      sortedDates.forEach(date => {
+        const log = newLogs[date];
+        if (log.kind === 'held') {
+          if (!state.currentStreakStart) state.currentStreakStart = date;
+          state.logs[date] = log;
+        } else {
+          // Relapse
+          if (state.currentStreakStart) {
+            const heldBefore = daysBetween(state.currentStreakStart, date);
+            if (heldBefore > 0) {
+              state.streakHistory.push({
+                startDate: state.currentStreakStart,
+                endDate: dateAddDays(date, -1),
+                days: heldBefore,
+                relapseNote: log.note || ''
+              });
+            }
+          }
+          state.currentStreakStart = null;
+          state.logs[date] = log;
+        }
+      });
+      state.palierStartDate = today;
+    } else {
+      for (const k of Object.keys(newLogs)) {
+        state.logs[k] = newLogs[k];
+      }
+    }
+
     const ok = saveState();
     if (!ok) {
       // Rollback
@@ -1797,6 +1908,10 @@
         if (backupLogs[k] === undefined) delete state.logs[k];
         else state.logs[k] = backupLogs[k];
       }
+      state.currentStreakStart = backupCurrentStreakStart;
+      state.streakHistory = backupStreakHistory;
+      state.palierStartDate = backupPalierStartDate;
+
       const status = document.getElementById('catchup-status');
       if (status) {
         status.textContent = i18n.t('addiction.catchup_error_save');
@@ -1806,6 +1921,7 @@
     }
 
     // 4. Succès : on ferme et reset
+    pendingTodayLog = null;
     closeCatchupModal();
     return true;
   }
@@ -2881,6 +2997,7 @@
           const abstainLabel = abstainLabelInput ? abstainLabelInput.value.trim() : '';
           state.started = true;
           state.abstainLabel = abstainLabel;
+          state.palierStartDate = todayISO();
           // Reset des champs spécifiques abstinence
           state.currentStreakStart = null;
           state.streakHistory = [];
@@ -3017,6 +3134,19 @@
         if (existing && existing.kind === 'relapse') {
           if (!confirm(i18n.t('addiction.confirm_switch_to_held'))) return;
         }
+
+        const pendingDays = findPendingDays();
+        if (pendingDays.length > 0) {
+          pendingTodayLog = {
+            kind: 'held',
+            note: currentNotes.map(n => n.text).join('\n'),
+            notes: currentNotes.map(n => ({...n})),
+            audios: [...currentAudios]
+          };
+          openCatchupModal(pendingDays);
+          return;
+        }
+
         markTodayHeld();
         // Préserver les notes multi si saisies
         if (state.logs[today]) {
@@ -3045,7 +3175,21 @@
         }
         confirmMsg += i18n.t('addiction.confirm_relapse_end');
         if (!confirm(confirmMsg)) return;
+
         const note = currentNotes.map(n => n.text).join('\n');
+
+        const pendingDays = findPendingDays();
+        if (pendingDays.length > 0) {
+          pendingTodayLog = {
+            kind: 'relapse',
+            note: note,
+            notes: currentNotes.map(n => ({...n})),
+            audios: [...currentAudios]
+          };
+          openCatchupModal(pendingDays);
+          return;
+        }
+
         markTodayRelapse(note);
         if (state.logs[today]) {
           state.logs[today].notes = currentNotes.map(n => ({...n}));
