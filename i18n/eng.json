@@ -79,6 +79,8 @@
     "placeholder_desc": "Description (optional)",
     "btn_validate_palette": "✓ Validate schedule",
     "palette_brush_title": "🎨 Brush",
+    "palette_legend_title": "📋 Legend",
+        "calendar_week_range": "Week from {start} to {end}",
     "palette_brush_subtitle": "Click an activity to select it as your brush, then paint the grid.",
     "palette_activities_title": "📋 Activity editor",
     "activities_common_label": "Common activities:",
@@ -576,7 +578,11 @@
     "settings_data_text": "Your data is stored locally in your browser and persists between sessions.",
     "settings_delete_label": "Delete this journal",
     "settings_delete_desc": "Deletes all entries from <em>this journal only</em>. Your other journals are not affected. This action cannot be undone.",
-    "btn_delete_journal": "Delete this journal"
+    "btn_delete_journal": "Delete this journal",
+
+    "add_score_label": "Score (optional)",
+    "add_score_toggle": "Add a score",
+    "entry_score_label": "Score: {score}/10"
   },
 
   "task": {

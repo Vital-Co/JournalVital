@@ -79,6 +79,8 @@
     "placeholder_desc": "Descripción (opcional)",
     "btn_validate_palette": "✓ Validar la planificación",
     "palette_brush_title": "🎨 Pincel",
+    "palette_legend_title": "📋 Leyenda",
+        "calendar_week_range": "Semana del {start} al {end}",
     "palette_brush_subtitle": "Haz clic en una actividad para seleccionarla como pincel, luego pinta la cuadrícula.",
     "palette_activities_title": "📋 Editor de actividades",
     "activities_common_label": "Actividades Comunes :",
@@ -578,7 +580,11 @@
     "settings_data_text": "Tus datos están almacenados localmente en tu navegador y persisten entre sesiones.",
     "settings_delete_label": "Eliminar este diario",
     "settings_delete_desc": "Borra todas las entradas de <em>este diario únicamente</em>. Tus otros diarios no se ven afectados. Acción irreversible.",
-    "btn_delete_journal": "Eliminar este diario"
+    "btn_delete_journal": "Eliminar este diario",
+
+    "add_score_label": "Nota (opcional)",
+    "add_score_toggle": "Asignar una nota",
+    "entry_score_label": "Nota: {score}/10"
   },
 
   "task": {

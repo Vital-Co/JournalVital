@@ -242,6 +242,10 @@
     const cardLabel = document.querySelector('#view-add .card-label');
     if (cardLabel) cardLabel.textContent = i18n.t('perso.add_card_label');
     $('cancel-edit-btn').classList.add('hidden');
+    if ($('score-toggle')) { $('score-toggle').checked = false; }
+    if ($('entry-score')) { $('entry-score').value = 0; }
+    if ($('entry-score-display')) { $('entry-score-display').textContent = '0'; }
+    if ($('score-slider-row')) { $('score-slider-row').classList.add('hidden'); }
   }
 
   function startEditEntry(entry) {
@@ -254,6 +258,17 @@
     renderPendingImages();
     $('save-status').textContent = '';
     $('save-entry-btn').textContent = i18n.t('perso.btn_update_entry');
+    if (entry.score != null) {
+      if ($('score-toggle')) { $('score-toggle').checked = true; }
+      if ($('score-slider-row')) { $('score-slider-row').classList.remove('hidden'); }
+      if ($('entry-score')) { $('entry-score').value = entry.score; }
+      if ($('entry-score-display')) { $('entry-score-display').textContent = entry.score; }
+    } else {
+      if ($('score-toggle')) { $('score-toggle').checked = false; }
+      if ($('score-slider-row')) { $('score-slider-row').classList.add('hidden'); }
+      if ($('entry-score')) { $('entry-score').value = 0; }
+      if ($('entry-score-display')) { $('entry-score-display').textContent = '0'; }
+    }
     const cardLabel = document.querySelector('#view-add .card-label');
     if (cardLabel) cardLabel.textContent = i18n.t('perso.add_card_label_edit');
     $('cancel-edit-btn').classList.remove('hidden');
@@ -363,16 +378,25 @@
           audios: pendingAudios.slice(),
           images: pendingImages.slice()
         };
+        if ($('score-toggle') && $('score-toggle').checked) {
+          j.entries[idx].score = parseInt($('entry-score').value, 10);
+        } else {
+          delete j.entries[idx].score;
+        }
       }
     } else {
-      j.entries.push({
+      const newEntry = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         date: new Date().toISOString(),
         title: title,
         text: entryText,
         audios: pendingAudios.slice(),
         images: pendingImages.slice()
-      });
+      };
+      if ($('score-toggle') && $('score-toggle').checked) {
+        newEntry.score = parseInt($('entry-score').value, 10);
+      }
+      j.entries.push(newEntry);
     }
 
     saveAll();
@@ -430,6 +454,10 @@
         html += '<div class="perso-entry-title">' + esc(entry.title) + '</div>';
       }
       html += '<div class="perso-entry-date">' + dateStr + ' · ' + timeStr + '</div>';
+
+      if (entry.score != null) {
+        html += '<div class="perso-entry-score">' + i18n.t('perso.entry_score_label', { score: entry.score }) + '</div>';
+      }
 
       const entryTextContent = entry.text || (entry.texts && entry.texts.length ? entry.texts.join('\n') : '');
       if (entryTextContent) {
@@ -592,6 +620,18 @@
     $('cancel-edit-btn').addEventListener('click', () => {
       resetAddForm();
     });
+
+    // Score toggle & slider
+    if ($('score-toggle')) {
+      $('score-toggle').addEventListener('change', () => {
+        $('score-slider-row').classList.toggle('hidden', !$('score-toggle').checked);
+      });
+    }
+    if ($('entry-score')) {
+      $('entry-score').addEventListener('input', () => {
+        $('entry-score-display').textContent = $('entry-score').value;
+      });
+    }
 
     // Filter
     $('filter-mode').addEventListener('change', () => { updateFilterUI(); renderBrowse(); });

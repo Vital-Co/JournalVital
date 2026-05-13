@@ -135,11 +135,22 @@
       <button class="btn-home" id="btn-back-list2" data-i18n="common.back">Retour</button>
       <div class="journal-name-display" id="show-plan-name"></div>
     </div>
-    <p style="font-family:var(--sans), sans-serif;font-size:13px;color:var(--ink-soft);margin:4px 0 14px;" id="show-plan-desc"></p>
-    <div class="legend" id="show-legend"></div>
+
+    <div class="create-top">
+      <div class="show-desc-display" id="show-plan-desc"></div>
+    </div>
+
     <div class="week-tabs-bar" id="show-week-tabs-bar"></div>
-    <div class="week-grid-wrap">
-      <div class="view-week-grid" id="show-grid"></div>
+
+    <div class="create-body">
+      <div class="create-grid-area">
+        <div id="show-grid"></div>
+      </div>
+
+      <div class="create-palette show-palette">
+        <div class="palette-title" data-i18n="planning.palette_legend_title">📋 Légende</div>
+        <div class="legend show-legend-vertical" id="show-legend"></div>
+      </div>
     </div>
   </section>
 

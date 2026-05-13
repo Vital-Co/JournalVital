@@ -138,6 +138,21 @@
         </div>
       </div>
 
+      <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+        <div class="today-row-label"><span data-i18n="perso.add_score_label">Note (optionnel)</span></div>
+        <div class="perso-score-zone">
+          <label class="perso-score-toggle-label">
+            <input type="checkbox" id="score-toggle"> <span data-i18n="perso.add_score_toggle">Attribuer une note</span>
+          </label>
+          <div class="perso-score-slider-row hidden" id="score-slider-row">
+            <span class="perso-score-label-min">−10</span>
+            <input type="range" id="entry-score" min="-10" max="10" value="0" class="mood-slider">
+            <span class="perso-score-label-max">+10</span>
+            <span class="perso-score-display" id="entry-score-display">0</span>
+          </div>
+        </div>
+      </div>
+
       <div class="save-row">
         <span class="save-status" id="save-status"></span>
         <button class="btn btn-ghost hidden" id="cancel-edit-btn" data-i18n="common.cancel">Annuler</button>

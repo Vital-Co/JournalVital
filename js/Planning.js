@@ -1,4 +1,4 @@
-﻿// ============ PLANNING PAGE ============
+﻿﻿// ============ PLANNING PAGE ============
 // Common logic (lang, theme, date, constants) is in js/Common.js
 
 let _oldPresetTitles = [];
@@ -38,6 +38,7 @@ setTodayDate();
 // ============ DONNÉES ============
 const STORAGE_KEY = 'vital_plannings';
 const MAIN_KEY = 'vital_main_planning';
+const MAIN_ACTIVATED_KEY = 'vital_main_planning_activated';
 function getDays() { return i18n.t('planning.days') || ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim']; }
 const SLOTS = 96;
 
@@ -102,7 +103,12 @@ function getMainPlanning(){
   const v=parseInt(VitalStore.getRaw(MAIN_KEY)); return (v>=0&&v<plannings.length)?v:null;
 }
 function setMainPlanning(idx){
-  if(idx===null||idx===undefined) VitalStore.remove(MAIN_KEY); else VitalStore.setRaw(MAIN_KEY,String(idx));
+  if(idx===null||idx===undefined){ VitalStore.remove(MAIN_KEY); VitalStore.remove(MAIN_ACTIVATED_KEY); }
+  else { VitalStore.setRaw(MAIN_KEY,String(idx)); if(!VitalStore.getRaw(MAIN_ACTIVATED_KEY)) VitalStore.setRaw(MAIN_ACTIVATED_KEY, new Date().toISOString()); }
+}
+function getMainActivatedAt(){
+  const raw = VitalStore.getRaw(MAIN_ACTIVATED_KEY);
+  return raw ? new Date(raw) : null;
 }
 
 // ============ VIEWS ============
@@ -238,7 +244,7 @@ function renderList(){
   el.querySelectorAll('.main-check').forEach(cb=>cb.addEventListener('change',e=>{
     e.stopPropagation();
     const idx = +cb.dataset.idx;
-    if(cb.checked){ setMainPlanning(idx); } else { setMainPlanning(null); }
+    if(cb.checked){ VitalStore.remove(MAIN_ACTIVATED_KEY); setMainPlanning(idx); } else { setMainPlanning(null); }
     renderList();
   }));
   el.querySelectorAll('.main-check').forEach(cb=>cb.addEventListener('click',e=>e.stopPropagation()));
@@ -308,10 +314,22 @@ function openPlanning(idx){
   document.getElementById('show-plan-name').textContent = p.name;
   document.getElementById('show-plan-desc').textContent = p.desc||'';
 
+  // Collect activity indices actually used in the grid across all weeks
+  const usedIndices = new Set();
+  const allWeeks = getWeeks(p);
+  for(const w of allWeeks){
+    const g = w.grid;
+    for(let s=0;s<g.length;s++) for(let d=0;d<7;d++){
+      const v = g[s][d];
+      if(v !== null && v !== undefined && v !== 'sleep') usedIndices.add(v);
+    }
+  }
   const legendEl = document.getElementById('show-legend');
-  legendEl.innerHTML = p.activities.map(a=>`
-    <div class="legend-item"><span class="legend-dot" style="background:${a.color}"></span>${esc(a.title)}</div>
-  `).join('');
+  legendEl.innerHTML = p.activities
+    .map((a,i)=>({a,i}))
+    .filter(x=>usedIndices.has(x.i))
+    .map(x=>`<div class="legend-item"><span class="legend-dot" style="background:${x.a.color}"></span>${esc(x.a.title)}</div>`)
+    .join('');
 
   renderShowWeekTabs(p);
   renderShowGrid(p, 0);
@@ -323,15 +341,38 @@ function getWeeks(p){
   return [{ grid: p.grid, sleepConfig: p.sleepConfig }];
 }
 
+function getCalendarWeekLabel(weekIdx, totalWeeks, activatedAt){
+  if(!activatedAt) return '';
+  const now = new Date();
+  const msPerDay = 86400000;
+  const daysSince = Math.floor((now - activatedAt) / msPerDay);
+  const currentCycleWeek = Math.floor(daysSince / 7) % totalWeeks;
+  const diff = (weekIdx - currentCycleWeek + totalWeeks) % totalWeeks;
+  // Compute Monday of the target week
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayOfWeek = today.getDay(); // 0=Sun
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const thisMonday = new Date(today.getTime() + mondayOffset * msPerDay);
+  const targetMonday = new Date(thisMonday.getTime() + diff * 7 * msPerDay);
+  const targetSunday = new Date(targetMonday.getTime() + 6 * msPerDay);
+  const fmt = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+  const semLabel = i18n.t('planning.calendar_week_range') || 'Semaine du {start} au {end}';
+  return semLabel.replace('{start}', fmt(targetMonday)).replace('{end}', fmt(targetSunday));
+}
+
 function renderShowWeekTabs(p){
   const weeks = getWeeks(p);
   const bar = document.getElementById('show-week-tabs-bar');
   if(weeks.length <= 1){ bar.innerHTML = ''; return; }
+  const mainIdx = getMainPlanning();
+  const isActive = mainIdx === currentShowIdx;
+  const activatedAt = isActive ? getMainActivatedAt() : null;
   let html = '';
   weeks.forEach((_,i)=>{
     const active = i === currentShowWeek ? ' active' : '';
     const label = (i18n.t('planning.week_tab_label') || 'Semaine') + ' ' + (i+1);
-    html += `<div class="week-tab${active}" data-week="${i}"><span class="week-tab-label">${esc(label)}</span></div>`;
+    const calLabel = isActive && activatedAt ? ' <span class="week-tab-cal">' + esc(getCalendarWeekLabel(i, weeks.length, activatedAt)) + '</span>' : '';
+    html += '<div class="week-tab' + active + '" data-week="' + i + '"><span class="week-tab-label">' + esc(label) + '</span>' + calLabel + '</div>';
   });
   bar.innerHTML = html;
   bar.querySelectorAll('.week-tab').forEach(el=>el.addEventListener('click',()=>{
@@ -341,43 +382,95 @@ function renderShowWeekTabs(p){
   }));
 }
 
+function slotToTime(s, isQuarter){
+  if(isQuarter){
+    const h = Math.floor(s/4), m = (s%4)*15;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+  return `${String(s).padStart(2,'0')}:00`;
+}
+
+function buildDayBlocks(grid, d, sleepSet, totalSlots, isQuarter, activities){
+  const blocks = [];
+  let s = 0;
+  while(s < totalSlots){
+    const isSleep = sleepSet.has(s+','+d);
+    const ai = grid[s][d];
+    if(isSleep || ai === 'sleep'){
+      const start = s;
+      while(s < totalSlots && (sleepSet.has(s+','+d) || grid[s][d] === 'sleep')) s++;
+      blocks.push({type:'sleep', start, end:s});
+    } else if(ai !== null && ai !== undefined){
+      const start = s;
+      const actIdx = ai;
+      while(s < totalSlots && grid[s][d] === actIdx && !sleepSet.has(s+','+d)) s++;
+      blocks.push({type:'activity', start, end:s, actIdx});
+    } else {
+      const start = s;
+      while(s < totalSlots && grid[s][d] === null && !sleepSet.has(s+','+d)) s++;
+      blocks.push({type:'empty', start, end:s});
+    }
+  }
+  return blocks;
+}
+
 function renderShowGrid(p, weekIdx){
   const weeks = getWeeks(p);
-  const grid = weeks[weekIdx].grid;
+  const week = weeks[weekIdx];
+  const grid = week.grid;
   const gridEl = document.getElementById('show-grid');
-  let html = '<div class="vwg-header"></div>';
-  getDays().forEach(d=>{html+=`<div class="vwg-header" style="grid-column:span 4">${d}</div>`;});
-
   const isQuarter = grid.length === 96;
-  for(let h=0;h<24;h++){
-    html+=`<div class="vwg-hour">${String(h).padStart(2,'0')}h</div>`;
+  const totalSlots = isQuarter ? 96 : 24;
+
+  // Compute sleep slots for this week
+  const sleepSet = new Set();
+  if(week.sleepConfig){
     for(let d=0;d<7;d++){
-      if(isQuarter){
-        for(let q=0;q<4;q++){
-          const s = h*4+q;
-          const ai = grid[s][d];
-          const act = ai!==null&&ai!==undefined ? p.activities[ai] : null;
-          const isLast = q===3 ? ' qtr-last' : '';
-          const qMin = q*15;
-          const timeLabel = `${String(h).padStart(2,'0')}:${String(qMin).padStart(2,'0')}`;
-          if(act){
-            const txt = q===0 ? esc(act.title) : '';
-            html+=`<div class="vwg-cell${isLast}" style="background:${act.color}" title="${timeLabel} — ${esc(act.title)}">${txt}</div>`;
-          } else {
-            html+=`<div class="vwg-cell empty${isLast}"></div>`;
-          }
-        }
-      } else {
-        const ai = grid[h][d];
-        const act = ai!==null&&ai!==undefined ? p.activities[ai] : null;
-        if(act){
-          html+=`<div class="vwg-cell qtr-last" style="background:${act.color};grid-column:span 4" title="${esc(act.title)}">${esc(act.title)}</div>`;
-        } else {
-          html+=`<div class="vwg-cell empty qtr-last" style="grid-column:span 4"></div>`;
-        }
+      const sc = week.sleepConfig[d];
+      if(!sc) continue;
+      const [hh,mm] = sc.bedtime.split(':').map(Number);
+      const startSlot = hh*4 + Math.floor(mm/15);
+      const dur = parseDuration(sc.duration);
+      const startDay = (hh < 12) ? (d + 1) % 7 : d;
+      for(let i=0;i<dur;i++){
+        const absSlot = startSlot + i;
+        const slot = absSlot % 96;
+        const day = (absSlot >= 96) ? (startDay + 1) % 7 : startDay;
+        sleepSet.add(slot+','+day);
       }
     }
   }
+
+  const sleepTitle = getSleepActivity().title;
+
+  let html = '<div class="week-columns">';
+  for(let d=0;d<7;d++){
+    const blocks = buildDayBlocks(grid, d, sleepSet, totalSlots, isQuarter, p.activities);
+    html += `<div class="day-col-wrap">`;
+    html += `<div class="day-col-header">${getDays()[d]}</div>`;
+    html += `<div class="day-col-cells show-collapsed">`;
+    for(const block of blocks){
+      const startTime = slotToTime(block.start, isQuarter);
+      const endTime = slotToTime(block.end < totalSlots ? block.end : 0, isQuarter);
+      const timeRange = `${startTime}-${endTime}`;
+      if(block.type === 'sleep'){
+        html += `<div class="wg-cell show-cell show-block sleep-cell" title="${sleepTitle}: ${timeRange}">`;
+        html += `<span class="wg-act-label">${esc(sleepTitle)}: ${timeRange}</span>`;
+        html += `</div>`;
+      } else if(block.type === 'activity'){
+        const act = p.activities[block.actIdx];
+        html += `<div class="wg-cell show-cell show-block" style="background:${act.color};" title="${esc(act.title)}: ${timeRange}">`;
+        html += `<span class="wg-act-label">${esc(act.title)}: ${timeRange}</span>`;
+        html += `</div>`;
+      } else {
+        html += `<div class="wg-cell show-cell show-block empty" title="${timeRange}">`;
+        html += `<span class="wg-time-label">${timeRange}</span>`;
+        html += `</div>`;
+      }
+    }
+    html += `</div></div>`;
+  }
+  html += '</div>';
   gridEl.innerHTML = html;
 }
 

@@ -457,6 +457,41 @@
     text-align: center;
   }
 
+  /* Show grid read-only overrides */
+  .day-col-cells .wg-cell.show-cell {
+    cursor: default;
+  }
+  .day-col-cells .wg-cell.show-cell:hover {
+    opacity: 1;
+  }
+
+  /* Collapsed show blocks */
+  .day-col-cells.show-collapsed {
+    display: flex;
+    flex-direction: column;
+  }
+  .day-col-cells.show-collapsed .show-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--line-soft, var(--line));
+    box-sizing: border-box;
+    padding: 4px 4px;
+    min-height: 28px;
+    overflow: hidden;
+  }
+  .day-col-cells.show-collapsed .show-block:last-child {
+    border-bottom: none;
+  }
+  .day-col-cells.show-collapsed .show-block .wg-act-label {
+    position: static;
+    font-size: 10px;
+  }
+  .day-col-cells.show-collapsed .show-block.empty .wg-time-label {
+    position: static;
+    font-size: 10px;
+  }
+
   /* ============ VIEW PLANNING (read-only) ============ */
   .view-week-grid {
     display: grid;
@@ -517,6 +552,11 @@
     font-size: 12px;
     color: var(--ink-soft);
   }
+  .show-legend-vertical {
+    flex-direction: column;
+    gap: 6px;
+    margin: 8px 0 0;
+  }
   .legend-item {
     display: flex;
     align-items: center;
@@ -526,6 +566,19 @@
     width: 12px; height: 12px;
     border-radius: 50%;
     flex-shrink: 0;
+  }
+
+  /* Show view description */
+  .show-desc-display {
+    font-family: var(--sans), sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    padding: 6px 0;
+  }
+
+  /* Show palette overrides */
+  .show-palette {
+    width: 220px;
   }
 
   /* Week tabs */
@@ -563,6 +616,16 @@
     font-weight: 600;
   }
   .week-tab-label { cursor: pointer; }
+  .week-tab-cal {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    opacity: .75;
+    margin-top: 2px;
+  }
+  .week-tab.active .week-tab-cal {
+    opacity: .9;
+  }
   .week-tab-remove {
     background: none;
     border: none;
