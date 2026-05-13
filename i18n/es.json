@@ -48,8 +48,6 @@
     "footer_license": "© 2026 Vital C. — Código fuente disponible bajo la licencia MIT.",
     "card_perso_name": "Diario Personal",
     "card_perso_desc": "Tu espacio para escribir, grabar y guardar un registro.",
-    "card_mindmap_name": "Mindmap",
-    "card_mindmap_desc": "Organiza tus ideas visualmente.",
     "card_taskmanager_name": "Gestor de tareas",
     "card_taskmanager_desc": "Gestiona y organiza tus tareas y eventos.",
     "under_construction": "🚧 Este sitio está en construcción — ¡nuevas funciones próximamente!",
@@ -576,6 +574,21 @@
     "btn_filter_apply": "Filtrar",
     "btn_filter_reset": "Reiniciar",
 
+    "score_filter_label": "Búsqueda por nota",
+    "score_filter_exact": "Nota exacta",
+    "score_filter_above": "Por encima de…",
+    "score_filter_below": "Por debajo de…",
+    "score_filter_range": "Entre dos notas",
+    "score_filter_val_label": "Nota",
+    "score_filter_val2_label": "Hasta",
+
+    "sort_label": "Orden",
+    "sort_order_label": "Orden",
+    "sort_date_desc": "Fecha (Más reciente → Más antigua)",
+    "sort_date_asc": "Fecha (Más antigua → Más reciente)",
+    "sort_score_desc": "Nota (Mayor → Menor)",
+    "sort_score_asc": "Nota (Menor → Mayor)",
+
     "settings_data_label": "Datos",
     "settings_data_text": "Tus datos están almacenados localmente en tu navegador y persisten entre sesiones.",
     "settings_delete_label": "Eliminar este diario",
@@ -584,7 +597,18 @@
 
     "add_score_label": "Nota (opcional)",
     "add_score_toggle": "Asignar una nota",
-    "entry_score_label": "Nota: {score}/10"
+    "entry_score_label": "Nota: {score}/10",
+
+    "view_all": "Todo",
+    "view_journal": "Diario",
+    "view_audio": "Diario de voz",
+    "view_score": "Evolución",
+    "view_all_desc": "Muestra todas las entradas con su contenido completo: texto, imágenes, sonido y notas.",
+    "view_journal_desc": "Muestra solo los textos como páginas de diario, con la fecha y el título al margen.",
+    "view_audio_desc": "Muestra solo las notas de voz con la fecha y el título al margen. La siguiente se reproduce automáticamente cuando termina cada grabación.",
+    "view_score_desc": "Muestra una curva de la evolución de tus notas a lo largo del tiempo.",
+    "browse_no_audio": "No hay entradas con notas de voz que coincidan con los criterios.",
+    "browse_no_score": "No hay entradas con una puntuación que coincidan con los criterios."
   },
 
   "task": {
@@ -621,6 +645,7 @@
     "toggle_on": "Sí",
     "toggle_off": "No",
     "btn_save": "Guardar",
+    "btn_edit": "Editar",
     "error_name_required": "El nombre es obligatorio.",
     "type_task": "Tarea",
     "type_event": "Evento",

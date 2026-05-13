@@ -104,17 +104,22 @@
   // ---- Helper: today's date as YYYY-MM-DD ----
   function todayDate() { return new Date().toISOString().slice(0, 10); }
 
+  function todayTime() {
+    const now = new Date();
+    return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  }
+
   // ---- Reset modal fields ----
   function resetTaskModal(data) {
     document.getElementById('task-name').value = data ? data.name : '';
-    document.getElementById('task-duration').value = data ? data.duration : '';
-    document.getElementById('task-time').value = data ? data.time || '' : '';
+    document.getElementById('task-duration').value = data ? data.duration : '00:00';
+    document.getElementById('task-time').value = data ? data.time || '' : todayTime();
     document.getElementById('task-week-interval').value = data ? (data.weekInterval || 1) : 1;
     document.getElementById('task-description').value = data ? data.description : '';
     document.getElementById('task-importance').value = data ? data.importance : 50;
     document.getElementById('task-importance-val').textContent = data ? data.importance : 50;
     document.getElementById('task-deadline-date').value = data && data.deadlineDate ? data.deadlineDate : todayDate();
-    document.getElementById('task-deadline-time').value = data && data.deadlineTime ? data.deadlineTime : '';
+    document.getElementById('task-deadline-time').value = data && data.deadlineTime ? data.deadlineTime : todayTime();
     document.getElementById('task-error').classList.add('hidden');
 
     // days
@@ -131,9 +136,9 @@
 
   function resetEventModal(data) {
     document.getElementById('event-name').value = data ? data.name : '';
-    document.getElementById('event-duration').value = data ? data.duration : '';
+    document.getElementById('event-duration').value = data ? data.duration : '00:00';
     document.getElementById('event-date').value = data ? data.date || '' : todayDate();
-    document.getElementById('event-time').value = data ? data.time || '' : '';
+    document.getElementById('event-time').value = data ? data.time || '' : todayTime();
     document.getElementById('event-description').value = data ? data.description : '';
     document.getElementById('event-error').classList.add('hidden');
     eventTags.set(data && data.tags ? data.tags : []);
@@ -511,6 +516,20 @@
       actions.appendChild(reorder);
     }
 
+    // Edit
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'btn-edit';
+    btnEdit.textContent = '✎';
+    btnEdit.title = t('task.btn_edit', 'Modifier');
+    btnEdit.onclick = (e) => {
+      e.stopPropagation();
+      editingTaskId = task.id;
+      resetTaskModal(task);
+      document.querySelector('#modal-task .tm-title').textContent = t('task.modal_task_edit_title', 'Modifier la tâche');
+      openModal('modal-task');
+    };
+    actions.appendChild(btnEdit);
+
     // Done
     const btnDone = document.createElement('button');
     btnDone.className = 'btn-done';
@@ -678,6 +697,20 @@
       reorder.appendChild(btnDown);
       actions.appendChild(reorder);
     }
+
+    // Edit
+    const btnEditEv = document.createElement('button');
+    btnEditEv.className = 'btn-edit';
+    btnEditEv.textContent = '✎';
+    btnEditEv.title = t('task.btn_edit', 'Modifier');
+    btnEditEv.onclick = (e) => {
+      e.stopPropagation();
+      editingEventId = ev.id;
+      resetEventModal(ev);
+      document.querySelector('#modal-event .tm-title').textContent = t('task.modal_event_edit_title', "Modifier l'événement");
+      openModal('modal-event');
+    };
+    actions.appendChild(btnEditEv);
 
     // Delete
     const btnDel = document.createElement('button');

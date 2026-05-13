@@ -48,8 +48,6 @@
     "footer_license": "© 2026 Vital C. — Source code available under the MIT License.",
     "card_perso_name": "Personal Journal",
     "card_perso_desc": "Your space to write, record, and keep track.",
-    "card_mindmap_name": "Mindmap",
-    "card_mindmap_desc": "Organize your ideas visually.",
     "card_taskmanager_name": "Task Manager",
     "card_taskmanager_desc": "Manage and organize your tasks and events.",
     "under_construction": "🚧 This site is under construction — new features coming soon!",
@@ -574,6 +572,21 @@
     "btn_filter_apply": "Filter",
     "btn_filter_reset": "Reset",
 
+    "score_filter_label": "Search by score",
+    "score_filter_exact": "Exact score",
+    "score_filter_above": "Above…",
+    "score_filter_below": "Below…",
+    "score_filter_range": "Between two scores",
+    "score_filter_val_label": "Score",
+    "score_filter_val2_label": "Up to",
+
+    "sort_label": "Sort",
+    "sort_order_label": "Order",
+    "sort_date_desc": "Date (Newest → Oldest)",
+    "sort_date_asc": "Date (Oldest → Newest)",
+    "sort_score_desc": "Score (Highest → Lowest)",
+    "sort_score_asc": "Score (Lowest → Highest)",
+
     "settings_data_label": "Data",
     "settings_data_text": "Your data is stored locally in your browser and persists between sessions.",
     "settings_delete_label": "Delete this journal",
@@ -582,7 +595,18 @@
 
     "add_score_label": "Score (optional)",
     "add_score_toggle": "Add a score",
-    "entry_score_label": "Score: {score}/10"
+    "entry_score_label": "Score: {score}/10",
+
+    "view_all": "All",
+    "view_journal": "Journal",
+    "view_audio": "Audio Journal",
+    "view_score": "Score Trend",
+    "view_all_desc": "Displays all entries with their full content: text, images, audio and scores.",
+    "view_journal_desc": "Displays only text entries as journal pages, with the date and title in the margin.",
+    "view_audio_desc": "Displays only voice notes with date and title in the margin. The next one plays automatically when each recording ends.",
+    "view_score_desc": "Displays a curve of your score evolution over time.",
+    "browse_no_audio": "No entries with voice notes match the criteria.",
+    "browse_no_score": "No entries with a score match the criteria."
   },
 
   "task": {
@@ -619,6 +643,7 @@
     "toggle_on": "Yes",
     "toggle_off": "No",
     "btn_save": "Save",
+    "btn_edit": "Edit",
     "error_name_required": "Name is required.",
     "type_task": "Task",
     "type_event": "Event",

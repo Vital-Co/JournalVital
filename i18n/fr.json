@@ -48,8 +48,6 @@
     "footer_license": "© 2026 Vital C. — Code source disponible sous licence MIT.",
     "card_perso_name": "Journal Personnel",
     "card_perso_desc": "Ton espace pour écrire, enregistrer, garder une trace.",
-    "card_mindmap_name": "Mindmap",
-    "card_mindmap_desc": "Organise tes idées visuellement.",
     "card_taskmanager_name": "Tâches et événements",
     "card_taskmanager_desc": "Gère et organise tes tâches et événements.",
     "under_construction": "🚧 Ce site est en construction — de nouvelles fonctionnalités arrivent bientôt !",
@@ -575,6 +573,21 @@
     "btn_filter_apply": "Filtrer",
     "btn_filter_reset": "Réinitialiser",
 
+    "score_filter_label": "Recherche par note",
+    "score_filter_exact": "Note précise",
+    "score_filter_above": "Au-dessus de…",
+    "score_filter_below": "En-dessous de…",
+    "score_filter_range": "Entre deux notes",
+    "score_filter_val_label": "Note",
+    "score_filter_val2_label": "Jusqu'à",
+
+    "sort_label": "Tri",
+    "sort_order_label": "Ordre",
+    "sort_date_desc": "Date (Plus récent → Plus ancien)",
+    "sort_date_asc": "Date (Plus ancien → Plus récent)",
+    "sort_score_desc": "Note (Haute → Basse)",
+    "sort_score_asc": "Note (Basse → Haute)",
+
     "settings_data_label": "Données",
     "settings_data_text": "Tes données sont stockées localement dans ton navigateur et persistent entre les sessions.",
     "settings_delete_label": "Supprimer ce journal",
@@ -583,7 +596,18 @@
 
     "add_score_label": "Note (optionnel)",
     "add_score_toggle": "Attribuer une note",
-    "entry_score_label": "Note : {score}/10"
+    "entry_score_label": "Note : {score}/10",
+
+    "view_all": "Tout",
+    "view_journal": "Journal",
+    "view_audio": "Journal vocal",
+    "view_score": "Évolution",
+    "view_all_desc": "Affiche toutes les entrées avec leur contenu complet : texte, images, sons et notes.",
+    "view_journal_desc": "Affiche uniquement les textes comme des pages de journal. La date et le titre apparaissent dans la marge.",
+    "view_audio_desc": "Affiche uniquement les notes vocales avec la date et le titre en marge. La suivante se lance automatiquement à la fin de chaque enregistrement.",
+    "view_score_desc": "Affiche une courbe de l'évolution de tes notes au fil du temps.",
+    "browse_no_audio": "Aucune entrée avec note vocale ne correspond aux critères.",
+    "browse_no_score": "Aucune entrée avec une note ne correspond aux critères."
   },
 
   "task": {
@@ -620,6 +644,7 @@
     "toggle_on": "Oui",
     "toggle_off": "Non",
     "btn_save": "Enregistrer",
+    "btn_edit": "Modifier",
     "error_name_required": "Le nom est obligatoire.",
     "type_task": "Tâche",
     "type_event": "Événement",

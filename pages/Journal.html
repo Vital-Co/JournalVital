@@ -52,6 +52,7 @@
   <div class="journal-name-row hidden" id="journal-name-row">
     <button class="btn-home" id="back-home-btn" data-i18n-title="common.back_to_tools_title" data-i18n="common.back">Retour</button>
     <div class="journal-name-display" id="journal-name-display"></div>
+    <button class="btn-add-entry" id="open-add-modal-btn" data-i18n="perso.nav_add">+ Ajouter une entrée</button>
   </div>
 
   <div class="main-content">
@@ -99,12 +100,138 @@
 
   <nav class="tabs">
     <button class="tab" data-view="browse" data-i18n="perso.nav_browse">Consulter</button>
-    <button class="tab active" data-view="add" data-i18n="perso.nav_add">Ajouter une entrée</button>
     <button class="tab tab-quit" data-view="settings" data-i18n="perso.nav_settings">Paramètres</button>
   </nav>
 
-  <!-- ============ ADD ENTRY VIEW ============ -->
-  <section id="view-add">
+  <!-- ============ BROWSE VIEW ============ -->
+  <section id="view-browse" class="hidden">
+    <div class="perso-filters-row">
+    <div class="card perso-filter-card">
+      <div class="card-label" data-i18n="perso.browse_filter_label">Recherche par date</div>
+      <div class="perso-filter-row">
+        <div class="perso-filter-group">
+          <label class="perso-filter-lbl" for="filter-mode" data-i18n="perso.filter_mode_label">Mode</label>
+          <select id="filter-mode" class="perso-filter-select">
+            <option value="all" data-i18n="perso.filter_all">Tout afficher</option>
+            <option value="exact" data-i18n="perso.filter_exact">Date précise</option>
+            <option value="after" data-i18n="perso.filter_after">Après le…</option>
+            <option value="before" data-i18n="perso.filter_before">Avant le…</option>
+            <option value="range" data-i18n="perso.filter_range">Entre deux dates</option>
+          </select>
+        </div>
+        <div class="perso-filter-group hidden" id="filter-date1-group">
+          <label class="perso-filter-lbl" for="filter-date1" id="filter-date1-label" data-i18n="perso.filter_date_label">Date</label>
+          <input type="date" id="filter-date1" class="perso-filter-date">
+        </div>
+        <div class="perso-filter-group hidden" id="filter-date2-group">
+          <label class="perso-filter-lbl" for="filter-date2" data-i18n="perso.filter_date2_label">Jusqu'au</label>
+          <input type="date" id="filter-date2" class="perso-filter-date">
+        </div>
+        <div id="filter-buttons-group">
+          <button class="btn btn-ghost" id="filter-apply-btn" data-i18n="perso.btn_filter_apply">Filtrer</button>
+          <button class="btn btn-ghost" id="filter-reset-btn" data-i18n="perso.btn_filter_reset">Réinitialiser</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card perso-filter-card">
+      <div class="card-label" data-i18n="perso.score_filter_label">Recherche par note</div>
+      <div class="perso-filter-row">
+        <div class="perso-filter-group">
+          <label class="perso-filter-lbl" for="score-filter-mode" data-i18n="perso.filter_mode_label">Mode</label>
+          <select id="score-filter-mode" class="perso-filter-select">
+            <option value="all" data-i18n="perso.filter_all">Tout afficher</option>
+            <option value="exact" data-i18n="perso.score_filter_exact">Note précise</option>
+            <option value="above" data-i18n="perso.score_filter_above">Au-dessus de…</option>
+            <option value="below" data-i18n="perso.score_filter_below">En-dessous de…</option>
+            <option value="range" data-i18n="perso.score_filter_range">Entre deux notes</option>
+          </select>
+        </div>
+        <div class="perso-filter-group hidden" id="score-filter-val1-group">
+          <label class="perso-filter-lbl" for="score-filter-val1" data-i18n="perso.score_filter_val_label">Note</label>
+          <input type="number" id="score-filter-val1" min="-10" max="10" value="0" class="perso-filter-score">
+        </div>
+        <div class="perso-filter-group hidden" id="score-filter-val2-group">
+          <label class="perso-filter-lbl" for="score-filter-val2" data-i18n="perso.score_filter_val2_label">Jusqu'à</label>
+          <input type="number" id="score-filter-val2" min="-10" max="10" value="10" class="perso-filter-score">
+        </div>
+        <div id="score-filter-buttons-group" class="hidden">
+          <button class="btn btn-ghost" id="score-filter-apply-btn" data-i18n="perso.btn_filter_apply">Filtrer</button>
+          <button class="btn btn-ghost" id="score-filter-reset-btn" data-i18n="perso.btn_filter_reset">Réinitialiser</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card perso-filter-card">
+      <div class="card-label" data-i18n="perso.sort_label">Tri</div>
+      <div class="perso-filter-row">
+        <div class="perso-filter-group">
+          <label class="perso-filter-lbl" for="sort-order" data-i18n="perso.sort_order_label">Ordre</label>
+          <select id="sort-order" class="perso-filter-select">
+            <option value="date-desc" data-i18n="perso.sort_date_desc">Date (Plus récent → Plus ancien)</option>
+            <option value="date-asc" data-i18n="perso.sort_date_asc">Date (Plus ancien → Plus récent)</option>
+            <option value="score-desc" data-i18n="perso.sort_score_desc">Note (Haute → Basse)</option>
+            <option value="score-asc" data-i18n="perso.sort_score_asc">Note (Basse → Haute)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    </div><!-- /.perso-filters-row -->
+
+    <div class="view-mode-bar">
+      <button class="view-mode-btn active" data-mode="all">
+        <span class="view-mode-label" data-i18n="perso.view_all">Tout</span>
+        <span class="view-mode-tooltip" data-i18n="perso.view_all_desc">Affiche toutes les entrées avec leur contenu complet : texte, images, sons et notes.</span>
+      </button>
+      <button class="view-mode-btn" data-mode="journal">
+        <span class="view-mode-label" data-i18n="perso.view_journal">Journal</span>
+        <span class="view-mode-tooltip" data-i18n="perso.view_journal_desc">Affiche uniquement les textes comme des pages de journal. La date et le titre apparaissent dans la marge.</span>
+      </button>
+      <button class="view-mode-btn" data-mode="audio">
+        <span class="view-mode-label" data-i18n="perso.view_audio">Journal vocal</span>
+        <span class="view-mode-tooltip" data-i18n="perso.view_audio_desc">Affiche uniquement les notes vocales avec la date et le titre en marge. La suivante se lance automatiquement à la fin de chaque enregistrement.</span>
+      </button>
+      <button class="view-mode-btn" data-mode="score">
+        <span class="view-mode-label" data-i18n="perso.view_score">Évolution</span>
+        <span class="view-mode-tooltip" data-i18n="perso.view_score_desc">Affiche une courbe de l'évolution de tes notes au fil du temps.</span>
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="perso.browse_card_label">Entrées du journal</div>
+      <div id="browse-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS VIEW ============ -->
+  <section id="view-settings" class="hidden">
+    <div class="card" style="margin-top:20px;">
+      <div class="card-label" data-i18n="perso.settings_data_label">Données</div>
+      <p style="font-size:13px; color:var(--ink-soft);" data-i18n="perso.settings_data_text">
+        Tes données sont stockées localement dans ton navigateur et persistent entre les sessions.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="perso.settings_delete_label">Supprimer ce journal</div>
+      <p style="font-size:14px; color:var(--ink-soft); line-height:1.55; margin-bottom:14px;" data-i18n-html="perso.settings_delete_desc">
+        Efface toutes les entrées de <em>ce journal uniquement</em>. Tes autres journaux ne sont pas touchés. Action irréversible.
+      </p>
+      <button class="btn btn-ghost" id="delete-journal-btn" style="border-color:var(--line); color:var(--ink-mute);" data-i18n="perso.btn_delete_journal">Supprimer ce journal</button>
+    </div>
+  </section>
+
+  </div><!-- /#main-app -->
+  </div><!-- /.main-content -->
+</div>
+
+<p class="idx-footer" data-i18n="index.footer_license">© 2026 Vital C. — Code source disponible sous licence MIT. </p>
+<p class="idx-footer"> <a href="https://github.com/Vital-Co/JournalVital" target="Sur GitHub">GitHub</a></p>
+
+<!-- ============ ADD ENTRY MODAL ============ -->
+<div id="add-entry-modal" class="add-modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="add-modal-box">
+    <button class="add-modal-close" id="close-add-modal-btn" aria-label="Fermer">✕</button>
     <div class="card">
       <div class="card-label" data-i18n="perso.add_card_label">Nouvelle entrée</div>
 
@@ -159,68 +286,8 @@
         <button class="btn" id="save-entry-btn" data-i18n="perso.btn_save_entry">Enregistrer l'entrée</button>
       </div>
     </div>
-  </section>
-
-  <!-- ============ BROWSE VIEW ============ -->
-  <section id="view-browse" class="hidden">
-    <div class="card perso-filter-card">
-      <div class="card-label" data-i18n="perso.browse_filter_label">Recherche par date</div>
-      <div class="perso-filter-row">
-        <div class="perso-filter-group">
-          <label class="perso-filter-lbl" for="filter-mode" data-i18n="perso.filter_mode_label">Mode</label>
-          <select id="filter-mode" class="perso-filter-select">
-            <option value="all" data-i18n="perso.filter_all">Tout afficher</option>
-            <option value="exact" data-i18n="perso.filter_exact">Date précise</option>
-            <option value="after" data-i18n="perso.filter_after">Après le…</option>
-            <option value="before" data-i18n="perso.filter_before">Avant le…</option>
-            <option value="range" data-i18n="perso.filter_range">Entre deux dates</option>
-          </select>
-        </div>
-        <div class="perso-filter-group hidden" id="filter-date1-group">
-          <label class="perso-filter-lbl" for="filter-date1" id="filter-date1-label" data-i18n="perso.filter_date_label">Date</label>
-          <input type="date" id="filter-date1" class="perso-filter-date">
-        </div>
-        <div class="perso-filter-group hidden" id="filter-date2-group">
-          <label class="perso-filter-lbl" for="filter-date2" data-i18n="perso.filter_date2_label">Jusqu'au</label>
-          <input type="date" id="filter-date2" class="perso-filter-date">
-        </div>
-        <div id="filter-buttons-group">
-          <button class="btn btn-ghost" id="filter-apply-btn" data-i18n="perso.btn_filter_apply">Filtrer</button>
-          <button class="btn btn-ghost" id="filter-reset-btn" data-i18n="perso.btn_filter_reset">Réinitialiser</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-label" data-i18n="perso.browse_card_label">Entrées du journal</div>
-      <div id="browse-list"></div>
-    </div>
-  </section>
-
-  <!-- ============ SETTINGS VIEW ============ -->
-  <section id="view-settings" class="hidden">
-    <div class="card" style="margin-top:20px;">
-      <div class="card-label" data-i18n="perso.settings_data_label">Données</div>
-      <p style="font-size:13px; color:var(--ink-soft);" data-i18n="perso.settings_data_text">
-        Tes données sont stockées localement dans ton navigateur et persistent entre les sessions.
-      </p>
-    </div>
-
-    <div class="card">
-      <div class="card-label" data-i18n="perso.settings_delete_label">Supprimer ce journal</div>
-      <p style="font-size:14px; color:var(--ink-soft); line-height:1.55; margin-bottom:14px;" data-i18n-html="perso.settings_delete_desc">
-        Efface toutes les entrées de <em>ce journal uniquement</em>. Tes autres journaux ne sont pas touchés. Action irréversible.
-      </p>
-      <button class="btn btn-ghost" id="delete-journal-btn" style="border-color:var(--line); color:var(--ink-mute);" data-i18n="perso.btn_delete_journal">Supprimer ce journal</button>
-    </div>
-  </section>
-
-  </div><!-- /#main-app -->
-  </div><!-- /.main-content -->
+  </div>
 </div>
-
-<p class="idx-footer" data-i18n="index.footer_license">© 2026 Vital C. — Code source disponible sous licence MIT. </p>
-<p class="idx-footer"> <a href="https://github.com/Vital-Co/JournalVital" target="Sur GitHub">GitHub</a></p>
 
 <script src="../js/Common.js"></script>
 <script src="../js/Journal.js"></script>

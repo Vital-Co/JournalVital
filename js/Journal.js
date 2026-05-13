@@ -8,6 +8,8 @@
   // ---- State ----
   let journals = [];      // [{id, name, createdAt, entries:[{id,date,texts:[],audios:[],images:[]}]}]
   let currentJournalId = null;
+  let browseMode = 'all'; // 'all' | 'journal' | 'audio' | 'score'
+  let _scoreTooltip = null;
 
   // Pending entry data (add tab)
   let pendingAudios = [];   // base64 data-urls
@@ -37,7 +39,7 @@
       const el = $(id);
       if (el) el.classList.add('hidden');
     });
-    ['view-add', 'view-browse', 'view-settings'].forEach(id => {
+    ['view-browse', 'view-settings'].forEach(id => {
       const el = $(id);
       if (el) el.classList.add('hidden');
     });
@@ -55,18 +57,18 @@
       $('journal-name-row').classList.remove('hidden');
       const j = getJournal(currentJournalId);
       if (j) $('journal-name-display').textContent = j.name;
-      // open browse tab if journal has entries, otherwise add tab
-      const defaultTab = (j && j.entries && j.entries.length > 0) ? 'browse' : 'add';
-      $('view-' + defaultTab).classList.remove('hidden');
+      browseMode = 'all';
+      $('view-browse').classList.remove('hidden');
       document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
-      document.querySelector('.tab[data-view="' + defaultTab + '"]').classList.add('active');
-      if (defaultTab === 'browse') renderBrowse();
+      document.querySelector('.tab[data-view="browse"]').classList.add('active');
+      renderBrowse();
       resetAddForm();
+      if (!j || !j.entries || j.entries.length === 0) openAddModal();
     }
   }
 
   function openTab(view) {
-    ['view-add', 'view-browse', 'view-settings'].forEach(id => {
+    ['view-browse', 'view-settings'].forEach(id => {
       const el = $(id);
       if (el) el.classList.add('hidden');
     });
@@ -76,6 +78,15 @@
       t.classList.toggle('active', t.dataset.view === view);
     });
     if (view === 'browse') renderBrowse();
+  }
+
+  function openAddModal() {
+    $('add-entry-modal').classList.remove('hidden');
+    $('entry-title').focus();
+  }
+
+  function closeAddModal() {
+    $('add-entry-modal').classList.add('hidden');
   }
 
   // ---- Home rendering ----
@@ -239,7 +250,7 @@
     $('image-preview-list').innerHTML = '';
     $('save-status').textContent = '';
     $('save-entry-btn').textContent = i18n.t('perso.btn_save_entry');
-    const cardLabel = document.querySelector('#view-add .card-label');
+    const cardLabel = document.querySelector('#add-entry-modal .card-label');
     if (cardLabel) cardLabel.textContent = i18n.t('perso.add_card_label');
     $('cancel-edit-btn').classList.add('hidden');
     if ($('score-toggle')) { $('score-toggle').checked = false; }
@@ -269,11 +280,10 @@
       if ($('entry-score')) { $('entry-score').value = 0; }
       if ($('entry-score-display')) { $('entry-score-display').textContent = '0'; }
     }
-    const cardLabel = document.querySelector('#view-add .card-label');
+    const cardLabel = document.querySelector('#add-entry-modal .card-label');
     if (cardLabel) cardLabel.textContent = i18n.t('perso.add_card_label_edit');
     $('cancel-edit-btn').classList.remove('hidden');
-    openTab('add');
-    $('entry-title').focus();
+    openAddModal();
   }
 
   // ---- Voice recording ----
@@ -400,26 +410,25 @@
     }
 
     saveAll();
-    const t = new Date().toLocaleTimeString(getLangLocale(), { hour: '2-digit', minute: '2-digit' });
-    $('save-status').style.color = '';
-    $('save-status').textContent = i18n.t('perso.save_status_saved_at', { t: t });
     resetAddForm();
+    closeAddModal();
+    openTab('browse');
   }
 
   // ---- Browse / filter ----
-  function renderBrowse() {
+  function getFilteredSortedEntries() {
     const j = getJournal(currentJournalId);
-    const list = $('browse-list');
-    if (!j || !j.entries || j.entries.length === 0) {
-      list.innerHTML = '<div class="perso-browse-empty">' + i18n.t('perso.browse_empty') + '</div>';
-      return;
-    }
+    if (!j || !j.entries || j.entries.length === 0) return null;
 
     const mode = $('filter-mode').value;
     const d1 = $('filter-date1').value;
     const d2 = $('filter-date2').value;
+    const scoreMode = $('score-filter-mode').value;
+    const sv1 = parseInt($('score-filter-val1').value, 10);
+    const sv2 = parseInt($('score-filter-val2').value, 10);
+    const sortOrder = $('sort-order').value;
 
-    let entries = j.entries.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+    let entries = j.entries.slice();
 
     if (mode === 'exact' && d1) {
       entries = entries.filter(e => toDateStr(e.date) === d1);
@@ -433,12 +442,60 @@
       entries = entries.filter(e => { const ds = toDateStr(e.date); return ds >= lo && ds <= hi; });
     }
 
+    if (scoreMode === 'exact') {
+      entries = entries.filter(e => e.score != null && e.score === sv1);
+    } else if (scoreMode === 'above') {
+      entries = entries.filter(e => e.score != null && e.score >= sv1);
+    } else if (scoreMode === 'below') {
+      entries = entries.filter(e => e.score != null && e.score <= sv1);
+    } else if (scoreMode === 'range') {
+      const lo = sv1 < sv2 ? sv1 : sv2;
+      const hi = sv1 < sv2 ? sv2 : sv1;
+      entries = entries.filter(e => e.score != null && e.score >= lo && e.score <= hi);
+    }
+
+    if (sortOrder === 'date-asc') {
+      entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+    } else if (sortOrder === 'score-desc') {
+      entries.sort((a, b) => (b.score != null ? b.score : -Infinity) - (a.score != null ? a.score : -Infinity));
+    } else if (sortOrder === 'score-asc') {
+      entries.sort((a, b) => (a.score != null ? a.score : Infinity) - (b.score != null ? b.score : Infinity));
+    } else {
+      entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+
+    return entries;
+  }
+
+  function renderBrowse() {
+    const j = getJournal(currentJournalId);
+    const list = $('browse-list');
+
+    // Sync active state on view mode buttons
+    document.querySelectorAll('.view-mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === browseMode);
+    });
+
+    if (!j || !j.entries || j.entries.length === 0) {
+      list.innerHTML = '<div class="perso-browse-empty">' + i18n.t('perso.browse_empty') + '</div>';
+      return;
+    }
+
+    const entries = getFilteredSortedEntries();
+
     list.innerHTML = '';
-    if (entries.length === 0) {
+    if (!entries || entries.length === 0) {
       list.innerHTML = '<div class="perso-browse-empty">' + i18n.t('perso.browse_no_results') + '</div>';
       return;
     }
 
+    if (browseMode === 'journal') return renderModeJournal(entries, list);
+    if (browseMode === 'audio')   return renderModeAudio(entries, list);
+    if (browseMode === 'score')   return renderModeScore(entries, list);
+    renderModeAll(entries, list);
+  }
+
+  function renderModeAll(entries, list) {
     entries.forEach(entry => {
       const div = document.createElement('div');
       div.className = 'perso-entry';
@@ -489,12 +546,9 @@
       list.appendChild(div);
     });
 
-    // Lightbox
     list.querySelectorAll('[data-lightbox]').forEach(img => {
       img.addEventListener('click', () => openLightbox(img.src));
     });
-
-    // Edit entry
     list.querySelectorAll('.perso-entry-edit').forEach(btn => {
       btn.addEventListener('click', () => {
         const j2 = getJournal(currentJournalId);
@@ -503,8 +557,6 @@
         if (entry) startEditEntry(entry);
       });
     });
-
-    // Delete entry
     list.querySelectorAll('.perso-entry-delete').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!confirm(i18n.t('perso.confirm_delete_entry'))) return;
@@ -518,12 +570,251 @@
     });
   }
 
+  function renderModeJournal(entries, list) {
+    const wrap = document.createElement('div');
+    wrap.className = 'jmode-wrap';
+
+    entries.forEach(entry => {
+      const d = new Date(entry.date);
+      const dateStr = d.toLocaleDateString(getLangLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
+      const weekday = d.toLocaleDateString(getLangLocale(), { weekday: 'long' });
+      const text = entry.text || (entry.texts && entry.texts.length ? entry.texts.join('\n') : '');
+
+      const div = document.createElement('div');
+      div.className = 'jmode-entry';
+      div.innerHTML =
+        '<div class="jmode-margin">' +
+          '<span class="jmode-weekday">' + esc(weekday) + '</span>' +
+          '<span class="jmode-date">' + esc(dateStr) + '</span>' +
+          (entry.title ? '<span class="jmode-title">' + esc(entry.title) + '</span>' : '') +
+        '</div>' +
+        '<div class="jmode-body">' +
+          (text
+            ? '<div class="jmode-text">' + linkify(esc(text)) + '</div>'
+            : '<div class="jmode-no-text">—</div>') +
+        '</div>';
+      wrap.appendChild(div);
+    });
+
+    list.appendChild(wrap);
+  }
+
+  function renderModeAudio(entries, list) {
+    const audioEntries = entries.filter(e => e.audios && e.audios.length > 0);
+    if (audioEntries.length === 0) {
+      list.innerHTML = '<div class="perso-browse-empty">' + i18n.t('perso.browse_no_audio') + '</div>';
+      return;
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'amode-wrap';
+
+    audioEntries.forEach(entry => {
+      const d = new Date(entry.date);
+      const dateStr = d.toLocaleDateString(getLangLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
+      const weekday = d.toLocaleDateString(getLangLocale(), { weekday: 'long' });
+
+      const div = document.createElement('div');
+      div.className = 'amode-entry';
+
+      let audiosHtml = '';
+      entry.audios.forEach(src => {
+        audiosHtml += '<audio controls src="' + src + '"></audio>';
+      });
+
+      div.innerHTML =
+        '<div class="amode-margin">' +
+          '<span class="amode-weekday">' + esc(weekday) + '</span>' +
+          '<span class="amode-date">' + esc(dateStr) + '</span>' +
+          (entry.title ? '<span class="amode-title">' + esc(entry.title) + '</span>' : '') +
+        '</div>' +
+        '<div class="amode-body">' + audiosHtml + '</div>';
+
+      wrap.appendChild(div);
+    });
+
+    list.appendChild(wrap);
+
+    // Chain autoplay: when one audio ends, play the next
+    const allAudios = [...list.querySelectorAll('audio')];
+    allAudios.forEach((audio, i) => {
+      audio.addEventListener('ended', () => {
+        if (i + 1 < allAudios.length) allAudios[i + 1].play();
+      });
+    });
+  }
+
+  function getScoreTooltip() {
+    if (!_scoreTooltip) {
+      _scoreTooltip = document.createElement('div');
+      _scoreTooltip.className = 'score-hover-tooltip';
+      document.body.appendChild(_scoreTooltip);
+    }
+    _scoreTooltip.style.display = 'none';
+    return _scoreTooltip;
+  }
+
+  function renderModeScore(entries, list) {
+    const scored = entries.filter(e => e.score != null);
+    if (scored.length === 0) {
+      list.innerHTML = '<div class="perso-browse-empty">' + i18n.t('perso.browse_no_score') + '</div>';
+      return;
+    }
+
+    const W = 760, H = 320;
+    const PAD = { t: 30, r: 30, b: 72, l: 52 };
+    const CW = W - PAD.l - PAD.r;
+    const CH = H - PAD.t - PAD.b;
+    const n = scored.length;
+    const uid = 'sc' + Math.random().toString(36).slice(2, 7);
+
+    function xp(i) { return PAD.l + (n === 1 ? CW / 2 : (i / (n - 1)) * CW); }
+    function yp(s) { return PAD.t + ((10 - s) / 20) * CH; }
+
+    const y0 = yp(0);
+
+    // Grid lines + Y labels
+    let grid = '';
+    [-10, -5, 0, 5, 10].forEach(v => {
+      const y = yp(v);
+      const cls = v === 0 ? 'score-grid score-zero-line' : 'score-grid';
+      grid += '<line class="' + cls + '" x1="' + PAD.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - PAD.r) + '" y2="' + y.toFixed(1) + '"/>';
+      const lbl = (v > 0 ? '+' : '') + v;
+      grid += '<text class="score-axis-label" x="' + (PAD.l - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end">' + lbl + '</text>';
+    });
+
+    // Area fill path (closed polygon from zero line through data back to zero)
+    let fillPath = '';
+    if (n > 1) {
+      let d = 'M' + xp(0).toFixed(1) + ',' + y0.toFixed(1);
+      d += ' L' + xp(0).toFixed(1) + ',' + yp(scored[0].score).toFixed(1);
+      for (let i = 1; i < n; i++) {
+        d += ' L' + xp(i).toFixed(1) + ',' + yp(scored[i].score).toFixed(1);
+      }
+      d += ' L' + xp(n - 1).toFixed(1) + ',' + y0.toFixed(1) + ' Z';
+      fillPath =
+        '<defs>' +
+          '<clipPath id="' + uid + '-pos"><rect x="' + PAD.l + '" y="' + PAD.t + '" width="' + CW + '" height="' + (y0 - PAD.t).toFixed(1) + '"/></clipPath>' +
+          '<clipPath id="' + uid + '-neg"><rect x="' + PAD.l + '" y="' + y0.toFixed(1) + '" width="' + CW + '" height="' + (H - PAD.b - y0).toFixed(1) + '"/></clipPath>' +
+        '</defs>' +
+        '<path class="score-fill-pos" d="' + d + '" clip-path="url(#' + uid + '-pos)"/>' +
+        '<path class="score-fill-neg" d="' + d + '" clip-path="url(#' + uid + '-neg)"/>';
+    }
+
+    // Line
+    let line = '';
+    if (n > 1) {
+      let d = scored.map((e, i) => (i === 0 ? 'M' : 'L') + xp(i).toFixed(1) + ',' + yp(e.score).toFixed(1)).join(' ');
+      line = '<path class="score-line" d="' + d + '" fill="none"/>';
+    }
+
+    // Dots + labels + date ticks
+    let dots = '', xlabels = '';
+    scored.forEach((e, i) => {
+      const x = xp(i), y = yp(e.score);
+      const cls = e.score > 0 ? 'pos' : e.score < 0 ? 'neg' : 'neu';
+      const slbl = (e.score > 0 ? '+' : '') + e.score;
+      const dateStr = new Date(e.date).toLocaleDateString(getLangLocale(), { day: '2-digit', month: 'short' });
+      dots += '<circle class="score-dot score-dot-' + cls + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="6" data-idx="' + i + '"></circle>';
+      dots += '<text class="score-dot-label score-dot-label-' + cls + '" x="' + x.toFixed(1) + '" y="' + (y - 12).toFixed(1) + '" text-anchor="middle">' + slbl + '</text>';
+      const lx = x.toFixed(1), ly = (H - PAD.b + 18).toFixed(1);
+      xlabels += '<text class="score-date-label" x="' + lx + '" y="' + ly + '" text-anchor="end" transform="rotate(-45 ' + lx + ' ' + ly + ')">' + esc(dateStr) + '</text>';
+    });
+
+    const svg =
+      '<svg class="score-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' +
+        fillPath + grid + line + dots + xlabels +
+      '</svg>';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'score-chart-wrap';
+    wrap.innerHTML = svg;
+    list.appendChild(wrap);
+
+    // Hover tooltip on each dot
+    const tooltip = getScoreTooltip();
+    const svgEl = wrap.querySelector('svg');
+
+    wrap.querySelectorAll('circle.score-dot').forEach(circle => {
+      const e = scored[parseInt(circle.dataset.idx, 10)];
+
+      circle.addEventListener('mouseenter', evt => {
+        const text = e.text || (e.texts && e.texts.length ? e.texts.join('\n') : '');
+        const truncated = text.length > 320 ? text.slice(0, 320) + '…' : text;
+        const dateStr = new Date(e.date).toLocaleDateString(getLangLocale(), {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        });
+        const slbl = (e.score > 0 ? '+' : '') + e.score;
+
+        let html = '';
+        if (e.title) html += '<div class="stt-title">' + esc(e.title) + '</div>';
+        html += '<div class="stt-meta">' + esc(dateStr) + ' &nbsp;·&nbsp; ' + slbl + '</div>';
+        if (truncated) html += '<div class="stt-text">' + esc(truncated).replace(/\n/g, '<br>') + '</div>';
+
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+
+        // Position anchored to dot via SVG coordinate transform
+        try {
+          const cx = parseFloat(circle.getAttribute('cx'));
+          const cy = parseFloat(circle.getAttribute('cy'));
+          const svgPt = svgEl.createSVGPoint();
+          svgPt.x = cx;
+          svgPt.y = cy;
+          const screen = svgPt.matrixTransform(svgEl.getScreenCTM());
+          const tw = tooltip.offsetWidth || 270;
+          const th = tooltip.offsetHeight || 80;
+          const vw = window.innerWidth;
+          let x = screen.x + 16;
+          if (x + tw > vw - 8) x = screen.x - tw - 16;
+          let y = screen.y - th - 14;
+          if (y < 8) y = screen.y + 18;
+          tooltip.style.left = x + 'px';
+          tooltip.style.top = y + 'px';
+        } catch (_) {
+          tooltip.style.left = (evt.clientX + 14) + 'px';
+          tooltip.style.top = Math.max(8, evt.clientY - 80) + 'px';
+        }
+      });
+
+      circle.addEventListener('mouseleave', () => {
+        tooltip.style.display = 'none';
+      });
+    });
+
+    // Hide tooltip when leaving the chart area entirely
+    wrap.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+  }
+
   // ---- Filter UI ----
   function updateFilterUI() {
     const mode = $('filter-mode').value;
     const g1 = $('filter-date1-group');
     const g2 = $('filter-date2-group');
     const gb = $('filter-buttons-group');
+    if (mode === 'all') {
+      g1.classList.add('hidden');
+      g2.classList.add('hidden');
+      if (gb) gb.classList.add('hidden');
+    } else if (mode === 'range') {
+      g1.classList.remove('hidden');
+      g2.classList.remove('hidden');
+      if (gb) gb.classList.remove('hidden');
+    } else {
+      g1.classList.remove('hidden');
+      g2.classList.add('hidden');
+      if (gb) gb.classList.remove('hidden');
+    }
+  }
+
+  // ---- Score filter UI ----
+  function updateScoreFilterUI() {
+    const mode = $('score-filter-mode').value;
+    const g1 = $('score-filter-val1-group');
+    const g2 = $('score-filter-val2-group');
+    const gb = $('score-filter-buttons-group');
     if (mode === 'all') {
       g1.classList.add('hidden');
       g2.classList.add('hidden');
@@ -568,13 +859,15 @@
   _onLangApplied = function () {
     setTodayDate();
     // Re-translate select options
-    const sel = $('filter-mode');
-    if (sel) {
-      sel.querySelectorAll('option').forEach(opt => {
-        const key = opt.dataset.i18n;
-        if (key) opt.textContent = i18n.t(key);
-      });
-    }
+    ['filter-mode', 'score-filter-mode', 'sort-order'].forEach(selId => {
+      const sel = $(selId);
+      if (sel) {
+        sel.querySelectorAll('option').forEach(opt => {
+          const key = opt.dataset.i18n;
+          if (key) opt.textContent = i18n.t(key);
+        });
+      }
+    });
     if (currentJournalId) {
       const j = getJournal(currentJournalId);
       if (j) $('journal-name-display').textContent = j.name;
@@ -595,7 +888,13 @@
 
     // Tabs
     document.querySelectorAll('.tabs .tab').forEach(tab => {
+      if (!tab.dataset.view) return;
       tab.addEventListener('click', () => openTab(tab.dataset.view));
+    });
+    $('open-add-modal-btn').addEventListener('click', openAddModal);
+    $('close-add-modal-btn').addEventListener('click', () => { resetAddForm(); closeAddModal(); });
+    $('add-entry-modal').addEventListener('click', e => {
+      if (e.target === $('add-entry-modal')) { resetAddForm(); closeAddModal(); }
     });
 
     // Home buttons
@@ -619,6 +918,7 @@
     $('save-entry-btn').addEventListener('click', saveEntry);
     $('cancel-edit-btn').addEventListener('click', () => {
       resetAddForm();
+      closeAddModal();
     });
 
     // Score toggle & slider
@@ -633,7 +933,7 @@
       });
     }
 
-    // Filter
+    // Date filter
     $('filter-mode').addEventListener('change', () => { updateFilterUI(); renderBrowse(); });
     $('filter-apply-btn').addEventListener('click', renderBrowse);
     $('filter-reset-btn').addEventListener('click', () => {
@@ -642,6 +942,28 @@
       $('filter-date2').value = '';
       updateFilterUI();
       renderBrowse();
+    });
+
+    // Score filter
+    $('score-filter-mode').addEventListener('change', () => { updateScoreFilterUI(); renderBrowse(); });
+    $('score-filter-apply-btn').addEventListener('click', renderBrowse);
+    $('score-filter-reset-btn').addEventListener('click', () => {
+      $('score-filter-mode').value = 'all';
+      $('score-filter-val1').value = '0';
+      $('score-filter-val2').value = '10';
+      updateScoreFilterUI();
+      renderBrowse();
+    });
+
+    // Sort order
+    $('sort-order').addEventListener('change', renderBrowse);
+
+    // View mode buttons
+    document.querySelectorAll('.view-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        browseMode = btn.dataset.mode;
+        renderBrowse();
+      });
     });
 
     // Settings — delete
