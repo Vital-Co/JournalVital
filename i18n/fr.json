@@ -62,7 +62,9 @@
       "task_label": "Tâche",
       "event_label": "Événement",
       "sleep_label": "Sommeil",
-      "now_label": "Maintenant"
+      "now_label": "Maintenant",
+      "quest_title": "Journal de Quêtes",
+      "quest_limit_label": "Max :"
     }
   },
 

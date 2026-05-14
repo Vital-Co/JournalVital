@@ -62,7 +62,9 @@
       "task_label": "Tarea",
       "event_label": "Evento",
       "sleep_label": "Sueño",
-      "now_label": "Ahora"
+      "now_label": "Ahora",
+      "quest_title": "Diario de Misiones",
+      "quest_limit_label": "Máx:"
     }
   },
 

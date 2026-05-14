@@ -62,7 +62,9 @@
       "task_label": "Task",
       "event_label": "Event",
       "sleep_label": "Sleep",
-      "now_label": "Now"
+      "now_label": "Now",
+      "quest_title": "Quest Log",
+      "quest_limit_label": "Max:"
     }
   },
 

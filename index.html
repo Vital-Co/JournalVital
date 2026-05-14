@@ -101,7 +101,13 @@
           <div id="todo-day-content" class="todo-day-grid"></div>
         </div>
         <div class="card todo-quest-card">
-          <div class="card-label">Quest Log</div>
+          <div class="card-label">
+            <span data-i18n="index.todo.quest_title">Quest Log</span>
+            <div class="quest-limit-wrap">
+              <span data-i18n="index.todo.quest_limit_label">Max:</span>
+              <input type="number" id="quest-limit" class="quest-limit-input" min="1" max="99" value="10">
+            </div>
+          </div>
           <div id="todo-quest-content" class="todo-quest-list"></div>
         </div>
       </div>

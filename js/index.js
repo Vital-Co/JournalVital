@@ -102,11 +102,13 @@ setTodayDate();
   const MAIN_PL_KEY = 'vital_main_planning';
   const TASKS_KEY = 'vital_tm_tasks';
   const EVENTS_KEY = 'vital_tm_events';
+  const QUEST_LIMIT_KEY = 'vital_quest_limit';
 
   const panel = document.getElementById('todo-panel');
   const nowContent = document.getElementById('todo-now-content');
   const dayContent = document.getElementById('todo-day-content');
   const questContent = document.getElementById('todo-quest-content');
+  const questLimitInput = document.getElementById('quest-limit');
 
   function run() {
     const plannings = VitalStore.get(PL_KEY, []);
@@ -582,6 +584,10 @@ setTodayDate();
       return (b.importance || 0) - (a.importance || 0);
     });
 
+    // Limit display
+    const limit = parseInt(VitalStore.get(QUEST_LIMIT_KEY, 10)) || 10;
+    const displayedEntries = entries.slice(0, limit);
+
     function daysUntil(dateStr) {
       const today = new Date(todayStr + 'T00:00:00');
       const d = new Date(dateStr + 'T00:00:00');
@@ -609,7 +615,7 @@ setTodayDate();
     const eventLabel = i18n.t('index.todo.event_label') || 'Événement';
 
     let html = '';
-    for (const entry of entries) {
+    for (const entry of displayedEntries) {
       const days = daysUntil(entry.date);
       const { bg, border } = urgencyColor(days);
       const badgeClass = entry.type === 'task' ? 'badge-task' : 'badge-event';
@@ -632,6 +638,18 @@ setTodayDate();
   }
 
   _langReady.then(() => {
+    if (questLimitInput) {
+      questLimitInput.value = VitalStore.get(QUEST_LIMIT_KEY, 10);
+      questLimitInput.addEventListener('change', () => {
+        let v = parseInt(questLimitInput.value);
+        if (isNaN(v) || v < 1) v = 1;
+        if (v > 99) v = 99;
+        questLimitInput.value = v;
+        VitalStore.set(QUEST_LIMIT_KEY, v);
+        run();
+      });
+    }
+
     run();
     // Align subsequent updates to the next exact minute boundary
     const _now = new Date();
