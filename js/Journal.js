@@ -655,7 +655,7 @@
   }
 
   function renderModeScore(entries, list) {
-    const scored = entries.filter(e => e.score != null);
+    const scored = entries.filter(e => e.score != null).sort((a, b) => new Date(a.date) - new Date(b.date));
     if (scored.length === 0) {
       list.innerHTML = '<div class="perso-browse-empty">' + i18n.t('perso.browse_no_score') + '</div>';
       return;
