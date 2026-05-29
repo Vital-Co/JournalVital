@@ -956,12 +956,15 @@
 
 
   function streakLogs() {
-    // returns the 7 days from palierStartDate
+    // returns all days from palierStartDate up to today (palier may extend
+    // beyond 7 days when the user has failed days and hasn't advanced yet)
     if (!state.palierStartDate) return [];
     const days = [];
-    for (let i = 0; i < 7; i++) {
-      const date = dateAddDays(state.palierStartDate, i);
-      days.push({ date, log: state.logs[date] || null });
+    const today = todayISO();
+    let cursor = state.palierStartDate;
+    while (cursor <= today) {
+      days.push({ date: cursor, log: state.logs[cursor] || null });
+      cursor = dateAddDays(cursor, 1);
     }
     return days;
   }
