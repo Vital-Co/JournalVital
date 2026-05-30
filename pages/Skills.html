@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skills</title>
+<link rel="stylesheet" href="../css/Shared.css">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script src="../i18n/i18n.js"></script>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('vital_theme');
+      if (t && t !== 'light') {
+        document.documentElement.setAttribute('data-theme', t);
+      }
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="../css/Skills.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <a href="../index.html" class="btn-tools" data-i18n-title="common.back_to_tools_title" data-i18n="common.back_to_tools">Mes outils</a>
+      <div class="header-title-wrap">
+        <div class="header-title" data-i18n="skill.header_title">Compétences</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="lang-switcher" role="group" aria-label="Langue / Language">
+        <button type="button" class="lang-btn" data-lang="fr" title="Français">FR</button>
+        <button type="button" class="lang-btn" data-lang="eng" title="English">EN</button>
+        <button type="button" class="lang-btn" data-lang="es" title="Español">ES</button>
+      </div>
+      <div class="theme-switcher" role="group" data-i18n-aria-label="common.theme_chooser_aria">
+        <span class="theme-label" data-i18n="common.theme_chooser_label">Choisis ta couleur...</span>
+        <button type="button" class="theme-dot theme-dot-light" data-theme="light" data-i18n-aria-label="common.theme_light" data-i18n-title="common.theme_light"></button>
+        <button type="button" class="theme-dot theme-dot-green" data-theme="green" data-i18n-aria-label="common.theme_green" data-i18n-title="common.theme_green"></button>
+        <button type="button" class="theme-dot theme-dot-blue" data-theme="blue" data-i18n-aria-label="common.theme_blue" data-i18n-title="common.theme_blue"></button>
+        <button type="button" class="theme-dot theme-dot-orange" data-theme="orange" data-i18n-aria-label="common.theme_orange" data-i18n-title="common.theme_orange"></button>
+        <button type="button" class="theme-dot theme-dot-rose" data-theme="rose" data-i18n-aria-label="common.theme_rose" data-i18n-title="common.theme_rose"></button>
+        <button type="button" class="theme-dot theme-dot-dark" data-theme="dark" data-i18n-aria-label="common.theme_dark" data-i18n-title="common.theme_dark"></button>
+      </div>
+      <div class="header-meta" id="today-date"></div>
+    </div>
+  </header>
+
+  <div class="main-content">
+
+    <!-- Hero -->
+    <div class="home-hero">
+      <h1 class="home-title" data-i18n="skill.home_title">Mes compétences</h1>
+      <p class="home-subtitle" data-i18n="skill.home_subtitle">Suis ta progression, gagne de l'XP et monte en niveau !</p>
+    </div>
+
+    <div class="home-create-row">
+      <button class="btn btn-create" id="btn-new-skill" data-i18n="skill.btn_new">+ Nouvelle compétence</button>
+    </div>
+
+    <!-- Tag filter -->
+    <div class="sk-tag-filter" id="tag-filter"></div>
+
+    <!-- Section title -->
+    <div class="sk-section-row">
+      <div class="journals-section-title" data-i18n="skill.section_list">— Compétences</div>
+    </div>
+
+    <!-- Skill list -->
+    <div class="journals-list" id="skill-list"></div>
+    <div class="journals-empty hidden" id="skill-empty">
+      <div class="journals-empty-text" data-i18n="skill.empty">Aucune compétence pour l'instant.</div>
+    </div>
+
+  </div><!-- /.main-content -->
+</div>
+
+<!-- ============ MODAL SKILL ============ -->
+<div class="sk-modal hidden" id="modal-skill" role="dialog" aria-modal="true">
+  <div class="sk-backdrop" data-close="modal-skill"></div>
+  <div class="sk-dialog">
+    <div class="sk-head">
+      <div class="sk-title" data-i18n="skill.modal_title">Nouvelle compétence</div>
+    </div>
+    <div class="sk-body">
+      <label class="sk-label" data-i18n="skill.field_name">Nom</label>
+      <input type="text" class="sk-input" id="skill-name" maxlength="120" data-i18n-placeholder="skill.field_name_ph">
+
+      <label class="sk-label" data-i18n="skill.field_tags">Tags</label>
+      <div class="sk-tags-wrap">
+        <div class="sk-tags" id="skill-tags"></div>
+        <div class="sk-tag-input-row">
+          <input type="text" class="sk-input sk-input-sm" id="skill-tag-input" maxlength="30" data-i18n-placeholder="skill.field_tags_ph">
+          <button type="button" class="btn btn-ghost sk-tag-add" id="skill-tag-add">+</button>
+        </div>
+      </div>
+
+      <div class="sk-toggle-row">
+        <label class="sk-label" style="margin-bottom:0" data-i18n="skill.field_type">Type</label>
+        <div class="sk-mode-btns">
+          <button type="button" class="toggle active" id="skill-type-time" data-i18n="skill.type_time">Temps</button>
+          <button type="button" class="toggle" id="skill-type-count" data-i18n="skill.type_count">Compteur</button>
+        </div>
+      </div>
+
+      <label class="sk-label" id="skill-xp-per-unit-label" data-i18n="skill.field_xp_per_minute">XP par minute</label>
+      <div class="sk-xp-unit-row">
+        <input type="number" class="sk-input sk-input-sm" id="skill-xp-per-unit" min="0.1" max="999999" value="1" step="0.1">
+        <select class="sk-input sk-input-sm" id="skill-time-unit">
+          <option value="second" data-i18n="skill.time_unit_second">seconde</option>
+          <option value="minute" selected data-i18n="skill.time_unit_minute">minute</option>
+          <option value="hour" data-i18n="skill.time_unit_hour">heure</option>
+        </select>
+      </div>
+
+      <label class="sk-label" data-i18n="skill.field_max_level">Niveau max</label>
+      <input type="number" class="sk-input sk-input-sm" id="skill-max-level" min="1" max="999" value="10">
+
+      <label class="sk-label" data-i18n="skill.field_base_xp">XP de base pour monter de niveau</label>
+      <input type="number" class="sk-input sk-input-sm" id="skill-base-xp" min="1" max="999999" value="100">
+
+      <label class="sk-label" data-i18n="skill.field_xp_curve">Courbe de progression</label>
+      <div class="sk-range-row">
+        <input type="range" min="1" max="3" step="0.1" value="1.5" class="sk-range" id="skill-xp-curve">
+        <span class="sk-range-val" id="skill-xp-curve-val">1.5</span>
+      </div>
+      <div class="sk-curve-hint" data-i18n="skill.xp_curve_hint">1 = linéaire, 2 = quadratique, 3 = cubique</div>
+
+      <label class="sk-label" data-i18n="skill.field_degression">Dégression XP / heure</label>
+      <input type="number" class="sk-input sk-input-sm" id="skill-degression" min="0" max="999999" value="0" step="0.1">
+
+      <label class="sk-label" data-i18n="skill.field_deg_curve">Courbe de dégression</label>
+      <div class="sk-range-row">
+        <input type="range" min="1" max="3" step="0.1" value="1" class="sk-range" id="skill-deg-curve">
+        <span class="sk-range-val" id="skill-deg-curve-val">1.0</span>
+      </div>
+      <div class="sk-curve-hint" data-i18n="skill.deg_curve_hint">1 = linéaire, >1 = accélère avec le temps</div>
+
+      <div class="sk-error hidden" id="skill-error"></div>
+    </div>
+    <div class="sk-foot">
+      <button class="btn btn-ghost" data-close="modal-skill" data-i18n="common.cancel">Annuler</button>
+      <button class="btn" id="skill-save-btn" data-i18n="skill.btn_save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL XP GAIN ============ -->
+<div class="sk-modal hidden" id="modal-xp-gain" role="dialog" aria-modal="true">
+  <div class="sk-backdrop" data-close="modal-xp-gain"></div>
+  <div class="sk-dialog sk-dialog-sm">
+    <div class="sk-head">
+      <div class="sk-title" id="xp-gain-title" data-i18n="skill.xp_gain_title">Ajouter de l'XP</div>
+    </div>
+    <div class="sk-body">
+      <div class="sk-xp-gain-skill-name" id="xp-gain-skill-name"></div>
+      <label class="sk-label" id="xp-gain-label" data-i18n="skill.xp_gain_amount">Durée / Quantité</label>
+      <div class="sk-xp-unit-row">
+        <input type="number" class="sk-input sk-input-sm" id="xp-gain-value" min="0.01" max="999999" value="1" step="0.01">
+        <span class="sk-xp-gain-unit" id="xp-gain-unit"></span>
+      </div>
+      <div class="sk-xp-gain-preview" id="xp-gain-preview"></div>
+    </div>
+    <div class="sk-foot">
+      <button class="btn btn-ghost" data-close="modal-xp-gain" data-i18n="common.cancel">Annuler</button>
+      <button class="btn" id="xp-gain-confirm-btn" data-i18n="skill.xp_gain_confirm">Gagner XP</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL SKILL DETAIL ============ -->
+<div class="sk-modal hidden" id="modal-skill-detail" role="dialog" aria-modal="true">
+  <div class="sk-backdrop" data-close="modal-skill-detail"></div>
+  <div class="sk-dialog sk-dialog-detail">
+    <div class="sk-head">
+      <div class="sk-title" id="skill-detail-title"></div>
+    </div>
+    <div class="sk-body">
+      <div class="sk-detail-info" id="skill-detail-info"></div>
+      <div class="sk-detail-chart-label" data-i18n="skill.detail_chart_label">Historique XP</div>
+      <div class="sk-detail-chart-wrap" id="skill-detail-chart"></div>
+      <div class="sk-detail-empty hidden" id="skill-detail-empty" data-i18n="skill.detail_no_entries">Aucune entrée pour l'instant.</div>
+    </div>
+    <div class="sk-foot">
+      <button class="btn btn-ghost" data-close="modal-skill-detail" data-i18n="common.close">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- XP animation overlay -->
+<div class="sk-xp-anim hidden" id="xp-anim">
+  <div class="sk-xp-anim-text" id="xp-anim-text"></div>
+</div>
+
+<p class="idx-footer" data-i18n="index.footer_license">© 2026 Vital C. — Code source disponible sous licence MIT. </p>
+<p class="idx-footer"> <a href="https://github.com/Vital-Co/JournalVital" target="Sur GitHub">GitHub</a></p>
+
+<script src="../js/Common.js"></script>
+<script src="../js/Skills.js"></script>
+</body>
+</html>
