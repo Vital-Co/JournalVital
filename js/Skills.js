@@ -563,13 +563,15 @@ function skOpenDetail(id) {
   const xpLabel = Math.round(effectiveXp) + ' XP';
   infoEl.innerHTML = '<span class="sk-detail-level">' + lvlLabel + '</span> · <span class="sk-detail-xp">' + xpLabel + '</span>';
 
-  // Chart
-  const entries = (skill.entries || []).slice(-100);
+  // Chart – prepend a dummy "0 XP" entry at skill creation time
+  const rawEntries = (skill.entries || []).slice(-100);
+  const originEntry = { xp: 0, ts: skill.createdAt || (rawEntries.length ? rawEntries[0].ts : Date.now()), type: 'origin' };
+  const entries = [originEntry, ...rawEntries];
   const chartEl = document.getElementById('skill-detail-chart');
   const emptyEl = document.getElementById('skill-detail-empty');
   chartEl.innerHTML = '';
 
-  if (entries.length === 0) {
+  if (rawEntries.length === 0) {
     emptyEl.classList.remove('hidden');
     chartEl.classList.add('hidden');
   } else {
