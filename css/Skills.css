@@ -530,7 +530,7 @@
   padding: 10px 14px;
   max-width: 260px;
   min-width: 120px;
-  z-index: 600;
+  z-index: 1000;
   box-shadow: 0 6px 24px rgba(0,0,0,.14);
   pointer-events: none;
 }
