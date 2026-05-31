@@ -594,8 +594,16 @@ function skRenderChart(entries, container) {
   const CH = H - PAD.t - PAD.b;
   const uid = 'skc' + Math.random().toString(36).slice(2, 7);
 
-  const maxXp = Math.max(...entries.map(e => e.xp));
-  const minXp = Math.min(...entries.map(e => e.xp), 0);
+  // Compute cumulative total XP
+  const totals = [];
+  let cumul = 0;
+  for (let i = 0; i < n; i++) {
+    cumul += entries[i].xp;
+    totals.push(cumul);
+  }
+
+  const maxXp = Math.max(...totals);
+  const minXp = Math.min(...totals, 0);
   const range = (maxXp - minXp) || 1;
 
   function xp(i) { return PAD.l + (n === 1 ? CW / 2 : (i / (n - 1)) * CW); }
@@ -622,15 +630,15 @@ function skRenderChart(entries, container) {
   if (n > 1) {
     const yBase = yp(Math.max(minXp, 0));
     let d = 'M' + xp(0).toFixed(1) + ',' + yBase.toFixed(1);
-    for (let i = 0; i < n; i++) d += ' L' + xp(i).toFixed(1) + ',' + yp(entries[i].xp).toFixed(1);
+    for (let i = 0; i < n; i++) d += ' L' + xp(i).toFixed(1) + ',' + yp(totals[i]).toFixed(1);
     d += ' L' + xp(n - 1).toFixed(1) + ',' + yBase.toFixed(1) + ' Z';
     fillPath = '<path class="sk-chart-fill" d="' + d + '"/>';
   }
 
-  // Line
+  // Line (total XP curve)
   let line = '';
   if (n > 1) {
-    let d = entries.map((e, i) => (i === 0 ? 'M' : 'L') + xp(i).toFixed(1) + ',' + yp(e.xp).toFixed(1)).join(' ');
+    let d = totals.map((t, i) => (i === 0 ? 'M' : 'L') + xp(i).toFixed(1) + ',' + yp(t).toFixed(1)).join(' ');
     line = '<path class="sk-chart-line" d="' + d + '" fill="none"/>';
   }
 
@@ -638,12 +646,13 @@ function skRenderChart(entries, container) {
   let dots = '', xlabels = '';
   const locale = (typeof getLangLocale === 'function') ? getLangLocale() : 'fr';
   entries.forEach((e, i) => {
-    const x = xp(i), y = yp(e.xp);
+    const x = xp(i), y = yp(totals[i]);
     const isDeg = e.type === 'degression';
-    const lbl = (isDeg ? '' : '+') + Math.round(e.xp * 100) / 100;
+    const delta = (isDeg ? '' : '+') + Math.round(e.xp * 100) / 100;
+    const totalLbl = Math.round(totals[i] * 100) / 100;
     const dotClass = isDeg ? 'sk-chart-dot sk-chart-dot-loss' : 'sk-chart-dot';
     dots += '<circle class="' + dotClass + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="5" data-idx="' + i + '"/>';
-    dots += '<text class="sk-chart-dot-label" x="' + x.toFixed(1) + '" y="' + (y - 10).toFixed(1) + '" text-anchor="middle">' + lbl + '</text>';
+    dots += '<text class="sk-chart-dot-label" x="' + x.toFixed(1) + '" y="' + (y - 10).toFixed(1) + '" text-anchor="middle">' + delta + ' (' + totalLbl + ')</text>';
     const dateStr = new Date(e.ts).toLocaleDateString(locale, { day: '2-digit', month: 'short' });
     const lx = x.toFixed(1), ly = (H - PAD.b + 18).toFixed(1);
     xlabels += '<text class="sk-chart-date" x="' + lx + '" y="' + ly + '" text-anchor="end" transform="rotate(-45 ' + lx + ' ' + ly + ')">' + dateStr + '</text>';
@@ -662,7 +671,8 @@ function skRenderChart(entries, container) {
   const svgEl = wrap.querySelector('svg');
 
   wrap.querySelectorAll('circle.sk-chart-dot').forEach(circle => {
-    const e = entries[parseInt(circle.dataset.idx, 10)];
+    const idx = parseInt(circle.dataset.idx, 10);
+    const e = entries[idx];
     circle.addEventListener('mouseenter', evt => {
       const dateStr = new Date(e.ts).toLocaleDateString(locale, {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -670,8 +680,9 @@ function skRenderChart(entries, container) {
       });
       const isDeg = e.type === 'degression';
       const xpStr = (isDeg ? '' : '+') + (Math.round(e.xp * 100) / 100) + ' XP';
+      const totalStr = Math.round(totals[idx] * 100) / 100 + ' XP';
       const xpClass = isDeg ? 'skt-xp skt-xp-loss' : 'skt-xp';
-      tooltip.innerHTML = '<div class="' + xpClass + '">' + xpStr + '</div><div class="skt-date">' + dateStr + '</div>';
+      tooltip.innerHTML = '<div class="' + xpClass + '">' + xpStr + '</div><div class="skt-total">Total: ' + totalStr + '</div><div class="skt-date">' + dateStr + '</div>';
       tooltip.style.display = 'block';
       try {
         const cx = parseFloat(circle.getAttribute('cx'));
