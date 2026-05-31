@@ -788,7 +788,7 @@
   function daysBetween(iso1, iso2) {
     const d1 = new Date(iso1 + 'T00:00:00');
     const d2 = new Date(iso2 + 'T00:00:00');
-    return Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
+    return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
   }
 
   function dateAddDays(iso, n) {

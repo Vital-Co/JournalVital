@@ -12,7 +12,7 @@ let skFilterTag = null;
 // ---- Helpers ----
 
 function skXpForLevel(level, baseXp, curve) {
-  return Math.round(baseXp * Math.pow(level, curve));
+  return Math.round(baseXp * Math.pow(curve, level - 1));
 }
 
 function skTotalXpForLevel(targetLevel, baseXp, curve) {
@@ -265,10 +265,10 @@ function skOpenModal(editId) {
       document.getElementById('skill-max-level').value = skill.maxLevel;
       document.getElementById('skill-base-xp').value = skill.baseXp;
       document.getElementById('skill-xp-curve').value = skill.xpCurve;
-      document.getElementById('skill-xp-curve-val').textContent = skill.xpCurve;
+      document.getElementById('skill-xp-curve-val').textContent = parseFloat(skill.xpCurve).toFixed(2);
       document.getElementById('skill-degression').value = skill.degression || 0;
       document.getElementById('skill-deg-curve').value = skill.degCurve || 1;
-      document.getElementById('skill-deg-curve-val').textContent = (skill.degCurve || 1).toFixed(1);
+      document.getElementById('skill-deg-curve-val').textContent = (skill.degCurve || 1).toFixed(2);
       titleEl.textContent = i18n.t('skill.modal_title_edit') || 'Edit skill';
     }
   } else {
@@ -278,10 +278,10 @@ function skOpenModal(editId) {
     document.getElementById('skill-max-level').value = 10;
     document.getElementById('skill-base-xp').value = 100;
     document.getElementById('skill-xp-curve').value = 1.5;
-    document.getElementById('skill-xp-curve-val').textContent = '1.5';
+    document.getElementById('skill-xp-curve-val').textContent = '1.10';
     document.getElementById('skill-degression').value = 0;
     document.getElementById('skill-deg-curve').value = 1;
-    document.getElementById('skill-deg-curve-val').textContent = '1.0';
+    document.getElementById('skill-deg-curve-val').textContent = '1.00';
     titleEl.textContent = i18n.t('skill.modal_title') || 'New skill';
   }
 
@@ -344,7 +344,7 @@ function skSave() {
     timeUnit: skType === 'time' ? document.getElementById('skill-time-unit').value : undefined,
     maxLevel: parseInt(document.getElementById('skill-max-level').value) || 10,
     baseXp: parseInt(document.getElementById('skill-base-xp').value) || 100,
-    xpCurve: parseFloat(document.getElementById('skill-xp-curve').value) || 1.5,
+    xpCurve: parseFloat(document.getElementById('skill-xp-curve').value) || 1.1,
     degression: parseFloat(document.getElementById('skill-degression').value) || 0,
     degCurve: parseFloat(document.getElementById('skill-deg-curve').value) || 1,
   };
@@ -750,10 +750,10 @@ function skInit() {
 
   // Range sliders
   document.getElementById('skill-xp-curve').addEventListener('input', e => {
-    document.getElementById('skill-xp-curve-val').textContent = parseFloat(e.target.value).toFixed(1);
+    document.getElementById('skill-xp-curve-val').textContent = parseFloat(e.target.value).toFixed(2);
   });
   document.getElementById('skill-deg-curve').addEventListener('input', e => {
-    document.getElementById('skill-deg-curve-val').textContent = parseFloat(e.target.value).toFixed(1);
+    document.getElementById('skill-deg-curve-val').textContent = parseFloat(e.target.value).toFixed(2);
   });
 
   // Render
