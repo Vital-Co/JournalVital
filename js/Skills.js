@@ -215,7 +215,14 @@ function skRenderItem(skill, idx, total) {
   btnDel.title = i18n.t('common.delete') || 'Delete';
   btnDel.onclick = () => skDelete(skill.id);
 
+  const btnDup = document.createElement('button');
+  btnDup.className = 'btn-duplicate';
+  btnDup.textContent = '⧉';
+  btnDup.title = i18n.t('skill.duplicate') || 'Duplicate';
+  btnDup.onclick = () => skDuplicate(skill.id);
+
   actions.appendChild(btnXp);
+  actions.appendChild(btnDup);
   actions.appendChild(btnUp);
   actions.appendChild(btnDown);
   actions.appendChild(btnEdit);
@@ -394,6 +401,34 @@ function skDelete(id) {
   if (!confirm((i18n.t('skill.confirm_delete') || 'Delete this skill?') + '\n' + skill.name)) return;
   const newList = list.filter(s => s.id !== id);
   skSaveAll(newList);
+  skRenderList();
+}
+
+function skDuplicate(id) {
+  const list = skLoadAll();
+  const skill = list.find(s => s.id === id);
+  if (!skill) return;
+  const newName = prompt(i18n.t('skill.prompt_duplicate_name') || 'Name for the duplicate:', skill.name + ' (copy)');
+  if (!newName || !newName.trim()) return;
+  const dup = {
+    id: VitalStore.newId('sk_'),
+    name: newName.trim(),
+    tags: [...(skill.tags || [])],
+    type: skill.type,
+    xpPerUnit: skill.xpPerUnit,
+    timeUnit: skill.timeUnit,
+    maxLevel: skill.maxLevel,
+    baseXp: skill.baseXp,
+    xpCurve: skill.xpCurve,
+    degression: skill.degression || 0,
+    degCurve: skill.degCurve || 1,
+    xp: 0,
+    entries: [],
+    lastEntry: null,
+    createdAt: Date.now(),
+  };
+  list.push(dup);
+  skSaveAll(list);
   skRenderList();
 }
 
