@@ -123,17 +123,17 @@
 
       <label class="sk-label" data-i18n="skill.field_xp_curve">Courbe de progression</label>
       <div class="sk-range-row">
-        <input type="range" min="1" max="1.2" step="0.01" value="1.1" class="sk-range" id="skill-xp-curve">
+        <input type="range" min="1" max="3" step="0.01" value="1.1" class="sk-range" id="skill-xp-curve">
         <span class="sk-range-val" id="skill-xp-curve-val">1.10</span>
       </div>
-      <div class="sk-curve-hint" data-i18n="skill.xp_curve_hint">1 = linéaire, 2 = quadratique, 3 = cubique</div>
+      <div class="sk-xp-max-preview" id="skill-xp-max-preview"></div>
 
       <label class="sk-label" data-i18n="skill.field_degression">Dégression XP / heure</label>
       <input type="number" class="sk-input sk-input-sm" id="skill-degression" min="0" max="999999" value="0" step="0.1">
 
       <label class="sk-label" data-i18n="skill.field_deg_curve">Courbe de dégression</label>
       <div class="sk-range-row">
-        <input type="range" min="1" max="1.2" step="0.01" value="1" class="sk-range" id="skill-deg-curve">
+        <input type="range" min="1" max="3" step="0.01" value="1" class="sk-range" id="skill-deg-curve">
         <span class="sk-range-val" id="skill-deg-curve-val">1.00</span>
       </div>
       <div class="sk-curve-hint" data-i18n="skill.deg_curve_hint">1 = linéaire, >1 = accélère avec le temps</div>

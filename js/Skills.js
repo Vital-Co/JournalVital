@@ -284,7 +284,7 @@ function skOpenModal(editId) {
     document.getElementById('skill-time-unit').value = 'minute';
     document.getElementById('skill-max-level').value = 10;
     document.getElementById('skill-base-xp').value = 100;
-    document.getElementById('skill-xp-curve').value = 1.5;
+    document.getElementById('skill-xp-curve').value = 1.1;
     document.getElementById('skill-xp-curve-val').textContent = '1.10';
     document.getElementById('skill-degression').value = 0;
     document.getElementById('skill-deg-curve').value = 1;
@@ -300,6 +300,7 @@ function skOpenModal(editId) {
   skRenderModalTags();
   document.getElementById('skill-error').classList.add('hidden');
   modal.classList.remove('hidden');
+  skUpdateXpMaxPreview();
 }
 
 function skCloseModal() {
@@ -745,6 +746,16 @@ function skRenderChart(entries, container) {
   wrap.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
 }
 
+function skUpdateXpMaxPreview() {
+  const maxLevel = parseInt(document.getElementById('skill-max-level').value) || 10;
+  const baseXp = parseInt(document.getElementById('skill-base-xp').value) || 100;
+  const curve = parseFloat(document.getElementById('skill-xp-curve').value) || 1.1;
+  const totalXp = skTotalXpForLevel(maxLevel, baseXp, curve);
+  const label = i18n.t('skill.xp_to_max') || 'XP to reach max level';
+  const el = document.getElementById('skill-xp-max-preview');
+  if (el) el.textContent = label + ': ' + totalXp.toLocaleString();
+}
+
 // ---- Init ----
 
 function skInit() {
@@ -799,10 +810,15 @@ function skInit() {
   // Range sliders
   document.getElementById('skill-xp-curve').addEventListener('input', e => {
     document.getElementById('skill-xp-curve-val').textContent = parseFloat(e.target.value).toFixed(2);
+    skUpdateXpMaxPreview();
   });
   document.getElementById('skill-deg-curve').addEventListener('input', e => {
     document.getElementById('skill-deg-curve-val').textContent = parseFloat(e.target.value).toFixed(2);
   });
+
+  // XP max preview listeners
+  document.getElementById('skill-max-level').addEventListener('input', skUpdateXpMaxPreview);
+  document.getElementById('skill-base-xp').addEventListener('input', skUpdateXpMaxPreview);
 
   // Render
   skRenderList();

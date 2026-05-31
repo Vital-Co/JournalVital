@@ -728,6 +728,7 @@
     "xp_gain_confirm": "Ganar XP",
     "detail_level": "Nivel",
     "detail_chart_label": "Historial XP",
-    "detail_no_entries": "Ninguna entrada por ahora."
+    "detail_no_entries": "Ninguna entrada por ahora.",
+    "xp_to_max": "XP para alcanzar el nivel máximo"
   }
 }

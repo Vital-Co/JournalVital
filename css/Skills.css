@@ -185,6 +185,15 @@
   margin-top: 2px;
 }
 
+/* XP max preview */
+.sk-xp-max-preview {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
 /* Error */
 .sk-error {
   font-family: var(--mono);
