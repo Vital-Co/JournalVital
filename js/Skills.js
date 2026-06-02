@@ -549,7 +549,8 @@ function skConfirmXpGain() {
     }
   }
 
-  skill.entries.push({ ts: now, xp: xpGained, type: 'gain' });
+  const unit = skill.type === 'time' ? (skill.timeUnit || 'minute') : 'count';
+  skill.entries.push({ ts: now, xp: xpGained, type: 'gain', amount: amount, unit: unit });
   skSaveAll(list);
   skCloseXpGain();
   skShowXpAnim(xpGained);
@@ -599,8 +600,8 @@ function skOpenDetail(id) {
   const xpLabel = Math.round(effectiveXp) + ' XP';
   infoEl.innerHTML = '<span class="sk-detail-level">' + lvlLabel + '</span> · <span class="sk-detail-xp">' + xpLabel + '</span>';
 
-  // Chart – prepend a dummy "0 XP" entry at skill creation time
-  const rawEntries = (skill.entries || []).slice(-100);
+  // Chart – filter out degression (XP loss) ticks, keep only gain entries
+  const rawEntries = (skill.entries || []).filter(e => e.type !== 'degression').slice(-100);
   const originEntry = { xp: 0, ts: skill.createdAt || (rawEntries.length ? rawEntries[0].ts : Date.now()), type: 'origin' };
   const entries = [originEntry, ...rawEntries];
   const chartEl = document.getElementById('skill-detail-chart');
@@ -685,10 +686,9 @@ function skRenderChart(entries, container) {
   const locale = (typeof getLangLocale === 'function') ? getLangLocale() : 'fr';
   entries.forEach((e, i) => {
     const x = xp(i), y = yp(totals[i]);
-    const isDeg = e.type === 'degression';
-    const delta = (isDeg ? '' : '+') + Math.round(e.xp * 100) / 100;
+    const delta = '+' + Math.round(e.xp * 100) / 100;
     const totalLbl = Math.round(totals[i] * 100) / 100;
-    const dotClass = isDeg ? 'sk-chart-dot sk-chart-dot-loss' : 'sk-chart-dot';
+    const dotClass = 'sk-chart-dot';
     dots += '<circle class="' + dotClass + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="5" data-idx="' + i + '"/>';
     dots += '<text class="sk-chart-dot-label" x="' + x.toFixed(1) + '" y="' + (y - 10).toFixed(1) + '" text-anchor="middle">' + delta + ' (' + totalLbl + ')</text>';
     const dateStr = new Date(e.ts).toLocaleDateString(locale, { day: '2-digit', month: 'short' });
@@ -716,11 +716,21 @@ function skRenderChart(entries, container) {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
       });
-      const isDeg = e.type === 'degression';
-      const xpStr = (isDeg ? '' : '+') + (Math.round(e.xp * 100) / 100) + ' XP';
+      const xpStr = '+' + (Math.round(e.xp * 100) / 100) + ' XP';
       const totalStr = Math.round(totals[idx] * 100) / 100 + ' XP';
-      const xpClass = isDeg ? 'skt-xp skt-xp-loss' : 'skt-xp';
-      tooltip.innerHTML = '<div class="' + xpClass + '">' + xpStr + '</div><div class="skt-total">Total: ' + totalStr + '</div><div class="skt-date">' + dateStr + '</div>';
+      const xpClass = 'skt-xp';
+      let amountHtml = '';
+      if (e.amount != null) {
+        let unitLabel = '';
+        if (e.unit === 'count') {
+          unitLabel = i18n.t('skill.xp_gain_unit_count') || 'x';
+          amountHtml = '<div class="skt-amount">' + e.amount + ' ' + unitLabel + '</div>';
+        } else if (e.unit) {
+          unitLabel = i18n.t('skill.time_unit_' + e.unit) || e.unit;
+          amountHtml = '<div class="skt-amount">' + e.amount + ' ' + unitLabel + '</div>';
+        }
+      }
+      tooltip.innerHTML = '<div class="' + xpClass + '">' + xpStr + '</div>' + amountHtml + '<div class="skt-total">Total: ' + totalStr + '</div><div class="skt-date">' + dateStr + '</div>';
       tooltip.style.display = 'block';
       try {
         const cx = parseFloat(circle.getAttribute('cx'));
