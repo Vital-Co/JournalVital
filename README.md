@@ -14,6 +14,7 @@ Le projet est un site web **statique** (HTML / CSS / JavaScript pur) composé de
 | **Planning**             | Création et gestion de plannings hebdomadaires | `pages/Planning.html` |
 | **Tâches et événements** | Gestion des tâches récurrentes et événements | `pages/TaskManager.html` |
 | **Aide Addictions**      | Journal de suivi pour les addictions | `pages/Addictions.html` |
+| **Compétences**          | Suivi de progression avec XP et niveaux | `pages/Skills.html` |
 
 Toutes les données sont stockées dans le **localStorage** du navigateur — rien n'est envoyé à un serveur.
 
@@ -122,6 +123,24 @@ Un journal de suivi pour accompagner une démarche de réduction, d’abstinence
 | 🌊 **Urge surfing** | Lance une mini séance guidée pour observer l’envie sans agir. |
 
 > Une rechute ou une journée ratée n’annule rien : l’outil est conçu pour suivre, comprendre et continuer — sans jugement.
+
+---
+
+### 🎮 Compétences
+
+Un outil de progression personnelle : suis tes compétences, gagne de l'XP et monte en niveau.
+
+| Fonctionnalité | Description |
+|---|---|
+| 🏷️ **Compétences multiples** | Crée autant de compétences que tu veux, chacune avec ses propres tags. |
+| ⏱️ **Mode Temps** | Gagne de l'XP en fonction du temps passé (par seconde, minute ou heure). |
+| 🔢 **Mode Compteur** | Gagne de l'XP par action réalisée. |
+| 📈 **Courbe de progression** | Configure le XP de base, le niveau max et la courbe (linéaire, quadratique, cubique). |
+| 📉 **Dégression XP** | Réduit le gain d'XP au fil du temps pour encourager la régularité. |
+| 🏷️ **Filtrage par tags** | Filtre tes compétences par tags pour t'y retrouver facilement. |
+| 📊 **Historique XP** | Consulte l'historique de tes gains d'XP sous forme de graphique. |
+
+> Monte en niveau dans ce qui compte pour toi — un système de progression simple et motivant.
 
 ---
 

@@ -429,10 +429,13 @@
     return diff + 1;
   }
 
-  // Renvoie le record (meilleur streak passé), ou 0 s'il n'y en a pas.
+  // Renvoie le record (meilleur streak, passé ou en cours), ou 0 s'il n'y en a pas.
   function bestStreakDays() {
-    if (!Array.isArray(state.streakHistory) || state.streakHistory.length === 0) return 0;
-    return state.streakHistory.reduce((max, s) => Math.max(max, s.days || 0), 0);
+    const cur = currentStreakDays();
+    const bestPast = (!Array.isArray(state.streakHistory) || state.streakHistory.length === 0)
+      ? 0
+      : state.streakHistory.reduce((max, s) => Math.max(max, s.days || 0), 0);
+    return Math.max(cur, bestPast);
   }
 
   // Format humain : 0 → "0 jour", 1 → "1 jour", 30 → "30 jours", 60 → "2 mois (60j)", 365 → "1 an (365j)"
@@ -924,7 +927,8 @@
           currentDays = diff < 0 ? 0 : diff + 1;
         }
         const history = Array.isArray(s.streakHistory) ? s.streakHistory : [];
-        const bestDays = history.reduce((mx, x) => Math.max(mx, x.days || 0), 0);
+        const bestPast = history.reduce((mx, x) => Math.max(mx, x.days || 0), 0);
+        const bestDays = Math.max(currentDays, bestPast);
         return Object.assign(base, {
           abstainLabel: typeof s.abstainLabel === 'string' ? s.abstainLabel : '',
           currentStreakDays: currentDays,
