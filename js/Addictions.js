@@ -2586,6 +2586,10 @@
   // ============ EXPORT PDF ============
   function exportHistoryPDF() {
     if (!state.started) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      alert('PDF library not loaded. Please check your internet connection and reload the page.');
+      return;
+    }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
