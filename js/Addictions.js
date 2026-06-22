@@ -2583,6 +2583,254 @@
     list.innerHTML = html;
   }
 
+  // ============ EXPORT PDF ============
+  function exportHistoryPDF() {
+    if (!state.started) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginL = 15;
+    const marginR = 15;
+    const contentW = pageW - marginL - marginR;
+    let y = 15;
+
+    function checkPage(needed) {
+      if (y + needed > pageH - 15) {
+        doc.addPage();
+        y = 15;
+      }
+    }
+
+    function drawLine() {
+      doc.setDrawColor(180);
+      doc.line(marginL, y, pageW - marginR, y);
+      y += 3;
+    }
+
+    // --- Title ---
+    const journal = getJournalById(activeJournalId);
+    const journalName = journal ? journal.name : '';
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text(journalName || i18n.t('addiction.pdf_title'), marginL, y);
+    y += 8;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(i18n.t('addiction.pdf_generated', { date: formatDateNumeric(todayISO()) }), marginL, y);
+    doc.setTextColor(0);
+    y += 8;
+
+    drawLine();
+
+    // --- Overview section ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text(i18n.t('addiction.pdf_overview_title'), marginL, y);
+    y += 7;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    if (state.journalMode === 'taper') {
+      const u = getUnit();
+      const infos = [
+        [i18n.t('addiction.pdf_mode'), i18n.t('addiction.pdf_mode_taper')],
+        [i18n.t('addiction.pdf_unit'), u.name],
+        [i18n.t('addiction.pdf_start_dose'), u.format(state.startDose)],
+        [i18n.t('addiction.pdf_end_dose'), u.format(state.endDose)],
+        [i18n.t('addiction.pdf_duration'), i18n.t('addiction.pdf_weeks', { n: state.totalWeeks })],
+        [i18n.t('addiction.pdf_curve'), (CURVES[state.curveType] || CURVES[DEFAULT_CURVE]).name],
+        [i18n.t('addiction.pdf_current_week'), state.currentWeek + ' / ' + (state.totalWeeks + 1)],
+        [i18n.t('addiction.pdf_days_logged'), Object.keys(state.logs).length.toString()]
+      ];
+      if (state.palierStartDate) {
+        infos.push([i18n.t('addiction.pdf_start_date'), formatDateNumeric(state.palierStartDate)]);
+      }
+      infos.forEach(([label, value]) => {
+        checkPage(6);
+        doc.setFont('helvetica', 'bold');
+        doc.text(label + ' : ', marginL, y);
+        const labelW = doc.getTextWidth(label + ' : ');
+        doc.setFont('helvetica', 'normal');
+        doc.text(value, marginL + labelW, y);
+        y += 5.5;
+      });
+    } else {
+      // abstain mode
+      const cur = currentStreakDays();
+      const best = bestStreakDays();
+      const infos = [
+        [i18n.t('addiction.pdf_mode'), i18n.t('addiction.pdf_mode_abstain')],
+        [i18n.t('addiction.pdf_current_streak'), cur + ' ' + i18n.t('addiction.pdf_days')],
+        [i18n.t('addiction.pdf_best_streak'), best + ' ' + i18n.t('addiction.pdf_days')],
+        [i18n.t('addiction.pdf_total_relapses'), (state.streakHistory || []).length.toString()],
+        [i18n.t('addiction.pdf_days_logged'), Object.keys(state.logs).length.toString()]
+      ];
+      if (state.abstainLabel && state.abstainLabel.trim()) {
+        infos.unshift([i18n.t('addiction.pdf_substance'), state.abstainLabel.trim()]);
+      }
+      if (state.currentStreakStart) {
+        infos.push([i18n.t('addiction.pdf_streak_since'), formatDateNumeric(state.currentStreakStart)]);
+      }
+      infos.forEach(([label, value]) => {
+        checkPage(6);
+        doc.setFont('helvetica', 'bold');
+        doc.text(label + ' : ', marginL, y);
+        const labelW = doc.getTextWidth(label + ' : ');
+        doc.setFont('helvetica', 'normal');
+        doc.text(value, marginL + labelW, y);
+        y += 5.5;
+      });
+    }
+
+    y += 4;
+    drawLine();
+    y += 2;
+
+    // --- History section ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text(i18n.t('addiction.pdf_history_title'), marginL, y);
+    y += 8;
+
+    const dates = Object.keys(state.logs).sort().reverse();
+    if (dates.length === 0) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(10);
+      doc.text(i18n.t('addiction.history_empty'), marginL, y);
+    } else {
+      dates.forEach(date => {
+        const log = state.logs[date];
+        checkPage(20);
+
+        // Date header
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text(formatDateNumeric(date), marginL, y);
+
+        if (state.journalMode === 'taper') {
+          const logUnit = UNIT_TYPES[log.unitType] || getUnit();
+          const targetDose = log.targetDose;
+          const dayPalier = { phase: log.phase, dose: targetDose };
+          const status = dayStatus(date, log, dayPalier);
+          const statusLabel = status === 'done' ? i18n.t('addiction.history_status_done')
+            : status === 'miss' ? i18n.t('addiction.history_status_miss')
+            : i18n.t('addiction.history_status_pending');
+
+          // Status
+          doc.setFont('helvetica', 'normal');
+          const statusX = marginL + 30;
+          doc.setFontSize(9);
+          if (status === 'done') doc.setTextColor(34, 139, 34);
+          else if (status === 'miss') doc.setTextColor(200, 50, 50);
+          else doc.setTextColor(150);
+          doc.text('[' + statusLabel + ']', statusX, y);
+          doc.setTextColor(0);
+
+          // Dose
+          const doseLogged = (log.dose === null || log.dose === undefined || log.dose === '') ? null : parseFloat(log.dose);
+          const doseStr = doseLogged !== null
+            ? logUnit.format(doseLogged) + ' / ' + logUnit.format(targetDose)
+            : '— / ' + logUnit.format(targetDose);
+          doc.text(doseStr, statusX + 25, y);
+          y += 5;
+
+          // Title
+          if (log.title && log.title.trim()) {
+            checkPage(5);
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(9);
+            doc.text(log.title.trim(), marginL + 4, y);
+            y += 4.5;
+          }
+        } else {
+          // abstain
+          const status = log.kind === 'held'
+            ? i18n.t('addiction.history_status_held')
+            : i18n.t('addiction.history_status_relapse');
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          if (log.kind === 'held') doc.setTextColor(34, 139, 34);
+          else doc.setTextColor(200, 50, 50);
+          doc.text('[' + status + ']', marginL + 30, y);
+          doc.setTextColor(0);
+          y += 5;
+        }
+
+        // Notes
+        const notes = Array.isArray(log.notes) ? log.notes
+          : (log.note && log.note.trim()) ? [{ text: log.note }] : [];
+        notes.forEach(n => {
+          const entry = typeof n === 'object' ? n : { text: n };
+          if (!entry.text || !entry.text.trim()) return;
+          checkPage(5);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor(80);
+          const lines = doc.splitTextToSize(entry.text.trim(), contentW - 8);
+          lines.forEach(line => {
+            checkPage(4);
+            doc.text(line, marginL + 4, y);
+            y += 3.8;
+          });
+          doc.setTextColor(0);
+        });
+
+        y += 3;
+      });
+    }
+
+    // --- Streak history for abstain ---
+    if (state.journalMode === 'abstain' && Array.isArray(state.streakHistory) && state.streakHistory.length > 0) {
+      y += 4;
+      checkPage(15);
+      drawLine();
+      y += 2;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(i18n.t('addiction.abstain_hist_section_streaks'), marginL, y);
+      y += 7;
+
+      const sorted = [...state.streakHistory].sort((a, b) => (b.endDate || '').localeCompare(a.endDate || ''));
+      sorted.forEach(s => {
+        checkPage(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text((s.days || 0) + ' ' + i18n.t('addiction.pdf_days'), marginL, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(100);
+        const period = (s.startDate && s.endDate)
+          ? '  (' + formatDateNumeric(s.startDate) + ' → ' + formatDateNumeric(s.endDate) + ')'
+          : '';
+        doc.text(period, marginL + 18, y);
+        doc.setTextColor(0);
+        y += 4.5;
+        if (s.relapseNote && s.relapseNote.trim()) {
+          checkPage(5);
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8);
+          doc.setTextColor(80);
+          const lines = doc.splitTextToSize(s.relapseNote.trim(), contentW - 8);
+          lines.forEach(line => {
+            checkPage(4);
+            doc.text(line, marginL + 4, y);
+            y += 3.5;
+          });
+          doc.setTextColor(0);
+        }
+        y += 2;
+      });
+    }
+
+    // Save
+    const safeName = (journalName || 'journal').replace(/[^a-zA-Z0-9àâäéèêëïîôùûüÿçæœ _-]/g, '_');
+    doc.save(safeName + '_history.pdf');
+  }
+
   // ============ RENDER — mode abstinence ============
 
   // Status bar abstinence : streak en cours / record / prochain palier
@@ -3500,6 +3748,9 @@
       }
       console.log('[debug] Mode debug actif. Boutons fast-forward disponibles dans la barre rouge.');
     }
+
+    // Export PDF
+    document.getElementById('export-history-pdf-btn').addEventListener('click', () => exportHistoryPDF());
 
     // Reset — efface le journal actif et retourne à l'accueil
     document.getElementById('reset-btn').addEventListener('click', () => {

@@ -18,6 +18,7 @@
   })();
 </script>
 <link rel="stylesheet" href="../css/Addictions.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -552,6 +553,7 @@
   <section id="view-history" class="hidden">
     <div class="card">
       <div class="card-label" data-i18n="addiction.history_card_label">Tes derniers jours</div>
+      <button class="btn btn-ghost" id="export-history-pdf-btn" style="margin-bottom:12px; font-size:13px;" data-i18n="addiction.btn_export_pdf">Exporter en PDF</button>
       <div id="history-list"></div>
     </div>
   </section>
