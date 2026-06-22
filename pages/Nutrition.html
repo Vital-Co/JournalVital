@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrition</title>
+<link rel="stylesheet" href="../css/Shared.css">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script src="../i18n/i18n.js"></script>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('vital_theme');
+      if (t && t !== 'light') {
+        document.documentElement.setAttribute('data-theme', t);
+      }
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="../css/Nutrition.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <a href="../index.html" class="btn-tools" data-i18n-title="common.back_to_tools_title" data-i18n="common.back_to_tools">Mes outils</a>
+      <div class="header-title-wrap">
+        <div class="header-title" data-i18n="nutrition.header_title">Nutrition</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="lang-switcher" role="group" aria-label="Langue / Language">
+        <button type="button" class="lang-btn" data-lang="fr" title="Français">FR</button>
+        <button type="button" class="lang-btn" data-lang="eng" title="English">EN</button>
+        <button type="button" class="lang-btn" data-lang="es" title="Español">ES</button>
+      </div>
+      <div class="theme-switcher" role="group" data-i18n-aria-label="common.theme_chooser_aria">
+        <span class="theme-label" data-i18n="common.theme_chooser_label">Choisis ta couleur...</span>
+        <button type="button" class="theme-dot theme-dot-light" data-theme="light" data-i18n-aria-label="common.theme_light" data-i18n-title="common.theme_light"></button>
+        <button type="button" class="theme-dot theme-dot-green" data-theme="green" data-i18n-aria-label="common.theme_green" data-i18n-title="common.theme_green"></button>
+        <button type="button" class="theme-dot theme-dot-blue" data-theme="blue" data-i18n-aria-label="common.theme_blue" data-i18n-title="common.theme_blue"></button>
+        <button type="button" class="theme-dot theme-dot-orange" data-theme="orange" data-i18n-aria-label="common.theme_orange" data-i18n-title="common.theme_orange"></button>
+        <button type="button" class="theme-dot theme-dot-rose" data-theme="rose" data-i18n-aria-label="common.theme_rose" data-i18n-title="common.theme_rose"></button>
+        <button type="button" class="theme-dot theme-dot-dark" data-theme="dark" data-i18n-aria-label="common.theme_dark" data-i18n-title="common.theme_dark"></button>
+      </div>
+      <div class="header-meta" id="today-date"></div>
+    </div>
+  </header>
+
+  <div class="main-content">
+
+    <!-- Hero -->
+    <div class="home-hero">
+      <h1 class="home-title" data-i18n="nutrition.home_title">Ma nutrition</h1>
+      <p class="home-subtitle" data-i18n="nutrition.home_subtitle">Suis tes apports macros, jour après jour.</p>
+    </div>
+
+    <!-- ============ DAILY MACROS WIDGET ============ -->
+    <div class="nu-today-card">
+      <div class="nu-today-head">
+        <div class="nu-today-title" data-i18n="nutrition.today_title">Aujourd'hui</div>
+        <div class="nu-today-window" data-i18n="nutrition.today_window">Journée de 6h à 6h</div>
+      </div>
+      <div class="nu-today-macros" id="nu-today-macros"></div>
+      <div class="nu-today-empty hidden" id="nu-today-empty" data-i18n="nutrition.today_empty">Aucune prise enregistrée pour cette journée.</div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="home-create-row nu-actions-row">
+      <button class="btn btn-create" id="btn-new-template" data-i18n="nutrition.btn_new_template">+ Nouveau template d'aliment</button>
+      <button class="btn btn-create" id="btn-new-entry" data-i18n="nutrition.btn_new_entry">+ Nouvelle consommation</button>
+    </div>
+
+    <!-- Tag filter -->
+    <div class="sk-tag-filter" id="nu-tag-filter"></div>
+
+    <!-- Templates section -->
+    <div class="sk-section-row">
+      <div class="journals-section-title" data-i18n="nutrition.section_templates">— Mes aliments</div>
+    </div>
+    <div class="journals-list" id="nu-template-list"></div>
+    <div class="journals-empty hidden" id="nu-template-empty">
+      <div class="journals-empty-text" data-i18n="nutrition.empty_templates">Aucun aliment pour l'instant.</div>
+    </div>
+
+    <!-- History section -->
+    <div class="sk-section-row nu-history-head">
+      <div class="journals-section-title" data-i18n="nutrition.section_history">— Historique</div>
+      <div class="nu-history-controls">
+        <select class="sk-input sk-input-sm" id="nu-hist-range">
+          <option value="day" data-i18n="nutrition.range_day">Aujourd'hui</option>
+          <option value="week" selected data-i18n="nutrition.range_week">7 derniers jours</option>
+          <option value="month" data-i18n="nutrition.range_month">30 derniers jours</option>
+          <option value="year" data-i18n="nutrition.range_year">365 derniers jours</option>
+          <option value="all" data-i18n="nutrition.range_all">Tout</option>
+        </select>
+        <select class="sk-input sk-input-sm" id="nu-hist-sort">
+          <option value="time-desc" data-i18n="nutrition.sort_time_desc">Plus récent</option>
+          <option value="time-asc" data-i18n="nutrition.sort_time_asc">Plus ancien</option>
+          <option value="kcal-desc" data-i18n="nutrition.sort_kcal_desc">Kcal ↓</option>
+          <option value="kcal-asc" data-i18n="nutrition.sort_kcal_asc">Kcal ↑</option>
+          <option value="protein-desc" data-i18n="nutrition.sort_protein_desc">Protéines ↓</option>
+          <option value="lipids-desc" data-i18n="nutrition.sort_lipids_desc">Lipides ↓</option>
+          <option value="carbs-desc" data-i18n="nutrition.sort_carbs_desc">Glucides ↓</option>
+          <option value="fibers-desc" data-i18n="nutrition.sort_fibers_desc">Fibres ↓</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Daily totals chart -->
+    <div class="nu-chart-wrap" id="nu-chart-wrap">
+      <div class="nu-chart-label" data-i18n="nutrition.chart_label">Kcal par jour</div>
+      <div class="nu-chart" id="nu-chart"></div>
+    </div>
+
+    <!-- Entry history list -->
+    <div class="nu-history-list" id="nu-history-list"></div>
+    <div class="journals-empty hidden" id="nu-history-empty">
+      <div class="journals-empty-text" data-i18n="nutrition.empty_history">Aucune consommation enregistrée.</div>
+    </div>
+
+  </div><!-- /.main-content -->
+</div>
+
+<!-- ============ MODAL — FOOD TEMPLATE ============ -->
+<div class="sk-modal hidden" id="modal-template" role="dialog" aria-modal="true">
+  <div class="sk-backdrop" data-close="modal-template"></div>
+  <div class="sk-dialog">
+    <div class="sk-head">
+      <div class="sk-title" id="tpl-modal-title" data-i18n="nutrition.tpl_modal_title">Nouveau template d'aliment</div>
+    </div>
+    <div class="sk-body">
+      <label class="sk-label" data-i18n="nutrition.field_name">Nom</label>
+      <input type="text" class="sk-input" id="tpl-name" maxlength="120" data-i18n-placeholder="nutrition.field_name_ph">
+
+      <label class="sk-label" data-i18n="nutrition.field_tags">Tags</label>
+      <div class="sk-tags-wrap">
+        <div class="sk-tags" id="tpl-tags"></div>
+        <div class="sk-tag-input-row">
+          <input type="text" class="sk-input sk-input-sm" id="tpl-tag-input" maxlength="30" data-i18n-placeholder="nutrition.field_tags_ph">
+          <button type="button" class="btn btn-ghost sk-tag-add" id="tpl-tag-add">+</button>
+        </div>
+      </div>
+
+      <div class="sk-toggle-row">
+        <label class="sk-label" style="margin-bottom:0" data-i18n="nutrition.field_measure">Mesure</label>
+        <div class="sk-mode-btns">
+          <button type="button" class="toggle active" id="tpl-mode-count" data-i18n="nutrition.mode_count">Par unité</button>
+          <button type="button" class="toggle" id="tpl-mode-quantity" data-i18n="nutrition.mode_quantity">Par quantité</button>
+        </div>
+      </div>
+
+      <!-- Quantity-specific -->
+      <div id="tpl-qty-block" class="hidden">
+        <label class="sk-label" data-i18n="nutrition.field_qty_type">Type de quantité</label>
+        <select class="sk-input sk-input-sm" id="tpl-qty-type">
+          <option value="g" data-i18n="nutrition.qty_g">Grammes (g)</option>
+          <option value="kg" data-i18n="nutrition.qty_kg">Kilogrammes (kg)</option>
+          <option value="ml" data-i18n="nutrition.qty_ml">Millilitres (ml)</option>
+          <option value="l" data-i18n="nutrition.qty_l">Litres (l)</option>
+        </select>
+
+        <label class="sk-label" data-i18n="nutrition.field_ref_qty">Quantité de référence</label>
+        <input type="number" class="sk-input sk-input-sm" id="tpl-ref-qty" min="0.01" value="100" step="0.01">
+      </div>
+
+      <div class="nu-macros-block">
+        <div class="sk-label nu-macros-head">
+          <span id="tpl-macros-label" data-i18n="nutrition.macros_per_unit">Macros pour 1 unité</span>
+        </div>
+
+        <div class="nu-macro-row">
+          <span class="nu-macro-name" data-i18n="nutrition.macro_kcal">Kcal</span>
+          <input type="number" class="sk-input sk-input-sm" id="tpl-kcal" min="0" value="0" step="0.1">
+          <span class="nu-macro-unit">kcal</span>
+        </div>
+        <div class="nu-macro-row">
+          <span class="nu-macro-name" data-i18n="nutrition.macro_protein">Protéines</span>
+          <input type="number" class="sk-input sk-input-sm" id="tpl-protein" min="0" value="0" step="0.01">
+          <span class="nu-macro-unit">g</span>
+        </div>
+        <div class="nu-macro-row">
+          <span class="nu-macro-name" data-i18n="nutrition.macro_lipids">Lipides</span>
+          <input type="number" class="sk-input sk-input-sm" id="tpl-lipids" min="0" value="0" step="0.01">
+          <span class="nu-macro-unit">g</span>
+        </div>
+        <div class="nu-macro-row">
+          <span class="nu-macro-name" data-i18n="nutrition.macro_carbs">Glucides</span>
+          <input type="number" class="sk-input sk-input-sm" id="tpl-carbs" min="0" value="0" step="0.01">
+          <span class="nu-macro-unit">g</span>
+        </div>
+        <div class="nu-macro-row">
+          <span class="nu-macro-name" data-i18n="nutrition.macro_fibers">Fibres</span>
+          <input type="number" class="sk-input sk-input-sm" id="tpl-fibers" min="0" value="0" step="0.01">
+          <span class="nu-macro-unit">g</span>
+        </div>
+
+        <!-- Custom macros -->
+        <div class="sk-label nu-custom-head" data-i18n="nutrition.custom_macros">Macros personnalisées</div>
+        <div id="tpl-custom-list"></div>
+        <div class="nu-custom-add">
+          <input type="text" class="sk-input sk-input-sm" id="tpl-custom-name" maxlength="30" data-i18n-placeholder="nutrition.custom_name_ph">
+          <input type="text" class="sk-input sk-input-sm" id="tpl-custom-unit" maxlength="10" data-i18n-placeholder="nutrition.custom_unit_ph">
+          <input type="number" class="sk-input sk-input-sm" id="tpl-custom-value" min="0" value="0" step="0.01">
+          <button type="button" class="btn btn-ghost sk-tag-add" id="tpl-custom-add">+</button>
+        </div>
+      </div>
+
+      <div class="sk-error hidden" id="tpl-error"></div>
+    </div>
+    <div class="sk-foot">
+      <button class="btn btn-ghost" data-close="modal-template" data-i18n="common.cancel">Annuler</button>
+      <button class="btn" id="tpl-save-btn" data-i18n="nutrition.btn_save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL — CONSUMPTION ENTRY ============ -->
+<div class="sk-modal hidden" id="modal-entry" role="dialog" aria-modal="true">
+  <div class="sk-backdrop" data-close="modal-entry"></div>
+  <div class="sk-dialog sk-dialog-sm">
+    <div class="sk-head">
+      <div class="sk-title" data-i18n="nutrition.entry_modal_title">Nouvelle consommation</div>
+    </div>
+    <div class="sk-body">
+      <label class="sk-label" data-i18n="nutrition.field_template">Aliment</label>
+      <select class="sk-input" id="entry-template"></select>
+
+      <label class="sk-label" id="entry-amount-label" data-i18n="nutrition.field_amount">Quantité</label>
+      <div class="sk-xp-unit-row">
+        <input type="number" class="sk-input sk-input-sm" id="entry-amount" min="0.01" value="1" step="0.01">
+        <span class="sk-xp-gain-unit" id="entry-amount-unit"></span>
+      </div>
+
+      <label class="sk-label" data-i18n="nutrition.field_when">Date / heure</label>
+      <input type="datetime-local" class="sk-input sk-input-sm" id="entry-when">
+
+      <div class="nu-entry-preview" id="entry-preview"></div>
+      <div class="sk-error hidden" id="entry-error"></div>
+    </div>
+    <div class="sk-foot">
+      <button class="btn btn-ghost" data-close="modal-entry" data-i18n="common.cancel">Annuler</button>
+      <button class="btn" id="entry-save-btn" data-i18n="nutrition.btn_save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL — TEMPLATE DETAIL / HISTORY ============ -->
+<div class="sk-modal hidden" id="modal-tpl-detail" role="dialog" aria-modal="true">
+  <div class="sk-backdrop" data-close="modal-tpl-detail"></div>
+  <div class="sk-dialog sk-dialog-detail">
+    <div class="sk-head">
+      <div class="sk-title" id="tpl-detail-title"></div>
+    </div>
+    <div class="sk-body">
+      <div class="nu-detail-info" id="tpl-detail-info"></div>
+      <div class="sk-detail-chart-label" data-i18n="nutrition.detail_entries">Consommations enregistrées</div>
+      <div id="tpl-detail-entries" class="nu-detail-entries"></div>
+      <div class="sk-detail-empty hidden" id="tpl-detail-empty" data-i18n="nutrition.detail_empty">Aucune consommation pour cet aliment.</div>
+    </div>
+    <div class="sk-foot">
+      <button class="btn btn-ghost" data-close="modal-tpl-detail" data-i18n="common.close">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<p class="idx-footer" data-i18n="index.footer_license">© 2026 Vital C. — Code source disponible sous licence MIT. </p>
+<p class="idx-footer"> <a href="https://github.com/Vital-Co/JournalVital" target="Sur GitHub">GitHub</a></p>
+
+<script src="../js/Common.js"></script>
+<script src="../js/Nutrition.js"></script>
+</body>
+</html>
