@@ -404,6 +404,10 @@
     "pdf_days": "days",
     "pdf_substance": "Substance",
     "pdf_streak_since": "Streak since",
+    "pdf_total_consumption": "Total consumption",
+    "pdf_avg_consumption": "Average consumption / day",
+    "pdf_max_consumption": "Max consumption (worst day)",
+    "pdf_min_consumption": "Min consumption (best day)",
 
     "reasons_card_label": "Your reasons",
     "reasons_empty": "No reason saved.",

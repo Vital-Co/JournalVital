@@ -2628,6 +2628,7 @@
     y += 8;
 
     drawLine();
+    y += 4;
 
     // --- Overview section ---
     doc.setFont('helvetica', 'bold');
@@ -2652,6 +2653,20 @@
       ];
       if (state.palierStartDate) {
         infos.push([i18n.t('addiction.pdf_start_date'), formatDateNumeric(state.palierStartDate)]);
+      }
+      // Compute consumption stats from logs
+      const logDoses = Object.values(state.logs)
+        .map(l => (l.dose === null || l.dose === undefined || l.dose === '') ? null : parseFloat(l.dose))
+        .filter(d => d !== null && !isNaN(d));
+      if (logDoses.length > 0) {
+        const totalConso = logDoses.reduce((a, b) => a + b, 0);
+        const avgConso = totalConso / logDoses.length;
+        const maxConso = Math.max(...logDoses);
+        const minConso = Math.min(...logDoses);
+        infos.push([i18n.t('addiction.pdf_total_consumption'), u.format(totalConso)]);
+        infos.push([i18n.t('addiction.pdf_avg_consumption'), u.format(Math.round(avgConso * 100) / 100)]);
+        infos.push([i18n.t('addiction.pdf_max_consumption'), u.format(maxConso)]);
+        infos.push([i18n.t('addiction.pdf_min_consumption'), u.format(minConso)]);
       }
       infos.forEach(([label, value]) => {
         checkPage(6);
@@ -2700,7 +2715,7 @@
     doc.text(i18n.t('addiction.pdf_history_title'), marginL, y);
     y += 8;
 
-    const dates = Object.keys(state.logs).sort().reverse();
+    const dates = Object.keys(state.logs).sort();
     if (dates.length === 0) {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(10);
