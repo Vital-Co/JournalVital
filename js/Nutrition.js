@@ -449,7 +449,7 @@ function nuRenderToday() {
   wrap.appendChild(tile(i18n.t('nutrition.macro_lipids') || 'Lipides', totals.lipids, 'g'));
   wrap.appendChild(tile(i18n.t('nutrition.macro_carbs') || 'Glucides', totals.carbs, 'g'));
   wrap.appendChild(tile(i18n.t('nutrition.macro_fibers') || 'Fibres', totals.fibers, 'g'));
-  wrap.appendChild(tile(i18n.t('nutrition.macro_sugar') || 'Sucre', totals.sugar, 'g'));
+  wrap.appendChild(tile(i18n.t('nutrition.macro_sugar') || 'Sucres', totals.sugar, 'g'));
   wrap.appendChild(tile(i18n.t('nutrition.macro_sodium') || 'Sodium', totals.sodium, 'mg'));
   Object.keys(customs).forEach(k => {
     wrap.appendChild(tile(k, customs[k].value, customs[k].unit || ''));
@@ -537,8 +537,8 @@ function nuRenderTplItem(tpl) {
     + '<span>L ' + fmt(tpl.macros.lipids) + 'g</span>'
     + '<span>G ' + fmt(tpl.macros.carbs) + 'g</span>'
     + '<span>F ' + fmt(tpl.macros.fibers) + 'g</span>'
-    + '<span>S ' + fmt(tpl.macros.sugar || 0) + 'g</span>'
-    + '<span>Na ' + fmt(tpl.macros.sodium || 0) + 'mg</span>';
+    + '<span>S ' + fmt(tpl.macros.sugar) + 'g</span>'
+    + '<span>Na ' + fmt(tpl.macros.sodium) + 'mg</span>';
   main.appendChild(macros);
 
   row.appendChild(main);
@@ -594,8 +594,8 @@ function nuOpenDetail(tplId) {
     + 'L ' + fmt(tpl.macros.lipids) + 'g · '
     + 'G ' + fmt(tpl.macros.carbs) + 'g · '
     + 'F ' + fmt(tpl.macros.fibers) + 'g · '
-    + 'S ' + fmt(tpl.macros.sugar || 0) + 'g · '
-    + 'Na ' + fmt(tpl.macros.sodium || 0) + 'mg'
+    + 'S ' + fmt(tpl.macros.sugar) + 'g · '
+    + 'Na ' + fmt(tpl.macros.sodium) + 'mg'
     + ((tpl.customs && tpl.customs.length)
         ? '<br>' + tpl.customs.map(c => c.name + ': ' + fmt(c.value) + (c.unit || '')).join(' · ')
         : '');

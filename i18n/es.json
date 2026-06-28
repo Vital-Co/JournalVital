@@ -802,6 +802,8 @@
     "macro_lipids": "Lípidos",
     "macro_carbs": "Carbohidratos",
     "macro_fibers": "Fibra",
+    "macro_sugar": "Azúcar",
+    "macro_sodium": "Sodio",
     "custom_macros": "Macros personalizadas",
     "custom_name_ph": "Nombre (ej. Sodio)",
     "custom_unit_ph": "Unidad (ej. mg)",
