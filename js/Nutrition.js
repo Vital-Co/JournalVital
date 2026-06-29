@@ -499,11 +499,24 @@ function nuRenderToday() {
   const MACRO_KEYS = ['kcal', 'protein', 'lipids', 'carbs', 'fibers', 'sugar', 'sodium'];
   const breakdown = {};
   MACRO_KEYS.forEach(k => breakdown[k] = {});
-  const customBreakdown = {}; // customName -> { sourceName -> value }
+  const customBreakdown = {}; // customName -> { sourceName -> {value, count, amount, amountUnit} }
+  const srcMeta = {}; // sourceName -> {count, totalAmount, amountUnit}
 
   entries.forEach(e => {
     const m = nuEntryMacros(e);
-    const srcName = e.name || (nuFindTemplate(e.tplId) || {}).name || '?';
+    const tpl = e.tplId ? nuFindTemplate(e.tplId) : null;
+    const srcName = e.name || (tpl || {}).name || '?';
+
+    // Track count and amount per source
+    if (!srcMeta[srcName]) srcMeta[srcName] = { count: 0, totalAmount: 0, amountUnit: '' };
+    srcMeta[srcName].count += 1;
+    if (!e.macros && tpl) {
+      srcMeta[srcName].totalAmount += e.amount;
+      srcMeta[srcName].amountUnit = tpl.mode === 'count'
+        ? (i18n.t('nutrition.unit_count_short') || '×')
+        : (tpl.qtyType || 'g');
+    }
+
     MACRO_KEYS.forEach(k => {
       totals[k] += m[k];
       if (m[k]) {
@@ -527,7 +540,15 @@ function nuRenderToday() {
     if (sorted.length === 0) return '';
     let html = '<div class="nu-macro-breakdown">';
     sorted.forEach(([src, val]) => {
-      html += '<div class="nu-macro-breakdown-row"><span>' + src + '</span><span>' + fmt(val) + ' ' + unit + '</span></div>';
+      const meta = srcMeta[src];
+      let detail = src;
+      if (meta) {
+        detail += ' ' + meta.count + '×';
+        if (meta.totalAmount && meta.amountUnit) {
+          detail += ' ' + fmt(meta.totalAmount) + meta.amountUnit;
+        }
+      }
+      html += '<div class="nu-macro-breakdown-row"><span>' + detail + '</span><span>' + fmt(val) + ' ' + unit + '</span></div>';
     });
     html += '</div>';
     return html;
