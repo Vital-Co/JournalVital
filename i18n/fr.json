@@ -838,6 +838,11 @@
     "detail_entries": "Consommations enregistrées",
     "detail_empty": "Aucune consommation pour cet aliment.",
     "detail_per_unit": "Par unité",
-    "detail_per": "Pour"
+    "detail_per": "Pour",
+    "custom_entry_modal_title": "Nouvelle consommation libre",
+    "custom_entry_name_ph": "Ex. Salade maison, Snack…",
+    "custom_entry_macros_label": "Macros",
+    "custom_entry_label": "Consommation libre",
+    "error_name": "Nom requis."
   }
 }

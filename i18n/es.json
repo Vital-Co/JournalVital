@@ -839,6 +839,11 @@
     "detail_entries": "Consumos registrados",
     "detail_empty": "Sin consumo para este alimento.",
     "detail_per_unit": "Por unidad",
-    "detail_per": "Por"
+    "detail_per": "Por",
+    "custom_entry_modal_title": "Nuevo consumo libre",
+    "custom_entry_name_ph": "Ej. Ensalada casera, Snack…",
+    "custom_entry_macros_label": "Macros",
+    "custom_entry_label": "Consumo libre",
+    "error_name": "Nombre requerido."
   }
 }

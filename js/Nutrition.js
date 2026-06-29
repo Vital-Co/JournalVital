@@ -52,6 +52,19 @@ function nuMacroMultiplier(tpl, amount) {
 
 // Compute macros for one entry (base + custom).
 function nuEntryMacros(entry, tpl) {
+  // Custom (one-time) entry: macros stored directly on the entry
+  if (entry.macros) {
+    return {
+      kcal:    entry.macros.kcal    || 0,
+      protein: entry.macros.protein || 0,
+      lipids:  entry.macros.lipids  || 0,
+      carbs:   entry.macros.carbs   || 0,
+      fibers:  entry.macros.fibers  || 0,
+      sugar:   entry.macros.sugar   || 0,
+      sodium:  entry.macros.sodium  || 0,
+      custom: {}
+    };
+  }
   tpl = tpl || nuFindTemplate(entry.tplId);
   if (!tpl) return { kcal: 0, protein: 0, lipids: 0, carbs: 0, fibers: 0, sugar: 0, sodium: 0, custom: {} };
   const m = nuMacroMultiplier(tpl, entry.amount);
@@ -407,6 +420,70 @@ function nuDeleteEntry(id) {
   nuRenderAll();
 }
 
+// ============ CUSTOM ENTRY MODAL ============
+
+function nuOpenCustomEntryModal() {
+  document.getElementById('custom-entry-name').value = '';
+  document.getElementById('custom-entry-kcal').value = 0;
+  document.getElementById('custom-entry-protein').value = 0;
+  document.getElementById('custom-entry-lipids').value = 0;
+  document.getElementById('custom-entry-carbs').value = 0;
+  document.getElementById('custom-entry-fibers').value = 0;
+  document.getElementById('custom-entry-sugar').value = 0;
+  document.getElementById('custom-entry-sodium').value = 0;
+  document.getElementById('custom-entry-error').classList.add('hidden');
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  document.getElementById('custom-entry-when').value =
+    now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate())
+    + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+  document.getElementById('modal-custom-entry').classList.remove('hidden');
+}
+
+function nuCloseCustomEntryModal() {
+  document.getElementById('modal-custom-entry').classList.add('hidden');
+}
+
+function nuSaveCustomEntry() {
+  const name = document.getElementById('custom-entry-name').value.trim();
+  const whenStr = document.getElementById('custom-entry-when').value;
+  const errEl = document.getElementById('custom-entry-error');
+  errEl.classList.add('hidden');
+
+  if (!name) {
+    errEl.textContent = i18n.t('nutrition.error_name') || 'Nom requis.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  const ts = whenStr ? new Date(whenStr).getTime() : Date.now();
+  if (isNaN(ts)) {
+    errEl.textContent = i18n.t('nutrition.error_date') || 'Date invalide.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  const entries = nuLoadEntries();
+  entries.push({
+    id: VitalStore.newId('nu_e_'),
+    name,
+    macros: {
+      kcal:    parseFloat(document.getElementById('custom-entry-kcal').value) || 0,
+      protein: parseFloat(document.getElementById('custom-entry-protein').value) || 0,
+      lipids:  parseFloat(document.getElementById('custom-entry-lipids').value) || 0,
+      carbs:   parseFloat(document.getElementById('custom-entry-carbs').value) || 0,
+      fibers:  parseFloat(document.getElementById('custom-entry-fibers').value) || 0,
+      sugar:   parseFloat(document.getElementById('custom-entry-sugar').value) || 0,
+      sodium:  parseFloat(document.getElementById('custom-entry-sodium').value) || 0
+    },
+    ts
+  });
+  nuSaveEntries(entries);
+  nuCloseCustomEntryModal();
+  nuRenderAll();
+}
+
 // ============ TODAY WIDGET ============
 
 function nuRenderToday() {
@@ -688,12 +765,18 @@ function nuRenderEntryRow(entry, tpl) {
 
   const name = document.createElement('div');
   name.className = 'nu-entry-name';
-  name.textContent = tpl ? tpl.name : (i18n.t('nutrition.deleted_template') || '(aliment supprimé)');
+  if (entry.macros) {
+    name.textContent = entry.name || (i18n.t('nutrition.custom_entry_label') || 'Consommation libre');
+  } else {
+    name.textContent = tpl ? tpl.name : (i18n.t('nutrition.deleted_template') || '(aliment supprimé)');
+  }
   row.appendChild(name);
 
   const amount = document.createElement('div');
   amount.className = 'nu-entry-amount';
-  if (tpl) {
+  if (entry.macros) {
+    amount.textContent = '';
+  } else if (tpl) {
     const unit = tpl.mode === 'count'
       ? (i18n.t('nutrition.unit_count_short') || '×')
       : (tpl.qtyType || 'g');
@@ -779,7 +862,7 @@ function nuRenderAll() {
 function nuInit() {
   // Buttons
   document.getElementById('btn-new-template').addEventListener('click', () => nuOpenTplModal());
-  document.getElementById('btn-new-entry').addEventListener('click', () => nuOpenEntryModal());
+  document.getElementById('btn-new-entry').addEventListener('click', () => nuOpenCustomEntryModal());
 
   // Template modal
   document.getElementById('tpl-save-btn').addEventListener('click', nuSaveTpl);
@@ -799,6 +882,10 @@ function nuInit() {
   document.querySelectorAll('[data-close="modal-entry"]').forEach(el => el.addEventListener('click', nuCloseEntryModal));
   document.getElementById('entry-template').addEventListener('change', () => { nuUpdateEntryUnitLabel(); nuUpdateEntryPreview(); });
   document.getElementById('entry-amount').addEventListener('input', nuUpdateEntryPreview);
+
+  // Custom entry modal
+  document.getElementById('custom-entry-save-btn').addEventListener('click', nuSaveCustomEntry);
+  document.querySelectorAll('[data-close="modal-custom-entry"]').forEach(el => el.addEventListener('click', nuCloseCustomEntryModal));
 
   // Detail modal
   document.querySelectorAll('[data-close="modal-tpl-detail"]').forEach(el => el.addEventListener('click', nuCloseDetail));

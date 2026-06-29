@@ -837,6 +837,11 @@
     "detail_entries": "Logged consumptions",
     "detail_empty": "No consumption for this food.",
     "detail_per_unit": "Per unit",
-    "detail_per": "Per"
+    "detail_per": "Per",
+    "custom_entry_modal_title": "New custom consumption",
+    "custom_entry_name_ph": "E.g. Homemade salad, Snack…",
+    "custom_entry_macros_label": "Macros",
+    "custom_entry_label": "Custom consumption",
+    "error_name": "Name is required."
   }
 }
