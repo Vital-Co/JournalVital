@@ -437,21 +437,27 @@
 }
 .nu-chart-bar:hover { filter: brightness(1.2); opacity: 1; }
 .nu-chart-bar-empty { background: var(--line); opacity: .4; }
-.nu-chart-bar[data-label]:hover::after {
-  content: attr(data-label);
+.nu-chart-tip {
+  display: none;
   position: absolute;
   bottom: 100%; left: 50%;
   transform: translateX(-50%);
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 4px;
-  padding: 4px 8px;
+  padding: 6px 10px;
   font-family: var(--mono);
   font-size: 11px;
+  line-height: 1.5;
   color: var(--ink);
   white-space: nowrap;
   box-shadow: var(--shadow);
   z-index: 5;
+  pointer-events: none;
+  text-align: left;
+}
+.nu-chart-bar:hover .nu-chart-tip {
+  display: block;
 }
 
 .nu-history-list { display: flex; flex-direction: column; gap: 6px; }

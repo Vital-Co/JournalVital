@@ -870,16 +870,23 @@ function nuRenderChart(entries) {
   entries.forEach(e => {
     if (e.ts < startTs) return;
     const k = nuDayKey(e.ts);
-    if (!buckets[k]) buckets[k] = 0;
+    if (!buckets[k]) buckets[k] = { kcal: 0, protein: 0, lipids: 0, carbs: 0, fibers: 0, sugar: 0, sodium: 0 };
     const m = nuEntryMacros(e);
-    buckets[k] += m.kcal;
+    buckets[k].kcal    += m.kcal;
+    buckets[k].protein += m.protein;
+    buckets[k].lipids  += m.lipids;
+    buckets[k].carbs   += m.carbs;
+    buckets[k].fibers  += m.fibers;
+    buckets[k].sugar   += m.sugar;
+    buckets[k].sodium  += m.sodium;
   });
 
   // Walk days
   const days = [];
   for (let t = firstDayStart; t <= endDayStart; t += 86400000) {
     const k = nuDayKey(t + 86400000 / 2); // midpoint stays within the same nutrition-day
-    days.push({ ts: t, key: k, value: buckets[k] || 0 });
+    const b = buckets[k] || { kcal: 0, protein: 0, lipids: 0, carbs: 0, fibers: 0, sugar: 0, sodium: 0 };
+    days.push({ ts: t, key: k, value: b.kcal, macros: b });
   }
 
   const max = Math.max(1, ...days.map(d => d.value));
@@ -889,7 +896,18 @@ function nuRenderChart(entries) {
     bar.className = 'nu-chart-bar' + (d.value === 0 ? ' nu-chart-bar-empty' : '');
     bar.style.height = (d.value / max * 100) + '%';
     const dateStr = new Date(d.ts).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
-    bar.setAttribute('data-label', dateStr + ' — ' + Math.round(d.value) + ' kcal');
+    const tip = document.createElement('span');
+    tip.className = 'nu-chart-tip';
+    const r = v => Math.round(v * 10) / 10;
+    tip.innerHTML = '<b>' + dateStr + '</b>'
+      + '<br>' + r(d.macros.kcal) + ' kcal'
+      + '<br>' + (i18n.t('nutrition.macro_protein') || 'Protéines') + ': ' + r(d.macros.protein) + ' g'
+      + '<br>' + (i18n.t('nutrition.macro_lipids') || 'Lipides') + ': ' + r(d.macros.lipids) + ' g'
+      + '<br>' + (i18n.t('nutrition.macro_carbs') || 'Glucides') + ': ' + r(d.macros.carbs) + ' g'
+      + '<br>' + (i18n.t('nutrition.macro_fibers') || 'Fibres') + ': ' + r(d.macros.fibers) + ' g'
+      + '<br>' + (i18n.t('nutrition.macro_sugar') || 'Sucres') + ': ' + r(d.macros.sugar) + ' g'
+      + '<br>' + (i18n.t('nutrition.macro_sodium') || 'Sodium') + ': ' + r(d.macros.sodium) + ' mg';
+    bar.appendChild(tip);
     wrap.appendChild(bar);
   });
 }
