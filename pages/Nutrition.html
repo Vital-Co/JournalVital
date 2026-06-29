@@ -69,19 +69,8 @@
     <!-- Action buttons -->
     <div class="home-create-row nu-actions-row">
       <button class="btn btn-create" id="btn-new-template" data-i18n="nutrition.btn_new_template">+ Nouveau template d'aliment</button>
+      <button class="btn btn-create" id="btn-new-from-template" data-i18n="nutrition.btn_new_from_template">+ Nouvelle consommation depuis template</button>
       <button class="btn btn-create" id="btn-new-entry" data-i18n="nutrition.btn_new_entry">+ Nouvelle consommation</button>
-    </div>
-
-    <!-- Tag filter -->
-    <div class="sk-tag-filter" id="nu-tag-filter"></div>
-
-    <!-- Templates section -->
-    <div class="sk-section-row">
-      <div class="journals-section-title" data-i18n="nutrition.section_templates">— Mes aliments</div>
-    </div>
-    <div class="journals-list" id="nu-template-list"></div>
-    <div class="journals-empty hidden" id="nu-template-empty">
-      <div class="journals-empty-text" data-i18n="nutrition.empty_templates">Aucun aliment pour l'instant.</div>
     </div>
 
     <!-- History section -->
@@ -316,6 +305,26 @@
     <div class="sk-foot">
       <button class="btn btn-ghost" data-close="modal-custom-entry" data-i18n="common.cancel">Annuler</button>
       <button class="btn" id="custom-entry-save-btn" data-i18n="nutrition.btn_save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL — FOOD PICKER (from template) ============ -->
+<div class="sk-modal hidden" id="modal-picker" role="dialog" aria-modal="true">
+  <div class="sk-backdrop" data-close="modal-picker"></div>
+  <div class="sk-dialog">
+    <div class="sk-head">
+      <div class="sk-title" data-i18n="nutrition.picker_modal_title">Choisir un aliment</div>
+    </div>
+    <div class="sk-body">
+      <div class="sk-tag-filter" id="nu-tag-filter"></div>
+      <div class="journals-list" id="nu-template-list"></div>
+      <div class="journals-empty hidden" id="nu-template-empty">
+        <div class="journals-empty-text" data-i18n="nutrition.empty_templates">Aucun aliment pour l'instant.</div>
+      </div>
+    </div>
+    <div class="sk-foot">
+      <button class="btn btn-ghost" data-close="modal-picker" data-i18n="common.close">Fermer</button>
     </div>
   </div>
 </div>

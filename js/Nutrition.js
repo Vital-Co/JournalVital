@@ -350,6 +350,7 @@ function nuOpenEntryModal(presetTplId) {
 
   nuUpdateEntryUnitLabel();
   nuUpdateEntryPreview();
+  nuClosePickerModal();
   document.getElementById('modal-entry').classList.remove('hidden');
 }
 
@@ -494,42 +495,65 @@ function nuRenderToday() {
 
   const totals = { kcal: 0, protein: 0, lipids: 0, carbs: 0, fibers: 0, sugar: 0, sodium: 0 };
   const customs = {}; // name -> {value, unit}
+  // breakdown: macro key -> { sourceName -> accumulated value }
+  const MACRO_KEYS = ['kcal', 'protein', 'lipids', 'carbs', 'fibers', 'sugar', 'sodium'];
+  const breakdown = {};
+  MACRO_KEYS.forEach(k => breakdown[k] = {});
+  const customBreakdown = {}; // customName -> { sourceName -> value }
+
   entries.forEach(e => {
     const m = nuEntryMacros(e);
-    totals.kcal += m.kcal;
-    totals.protein += m.protein;
-    totals.lipids += m.lipids;
-    totals.carbs += m.carbs;
-    totals.fibers += m.fibers;
-    totals.sugar += m.sugar;
-    totals.sodium += m.sodium;
+    const srcName = e.name || (nuFindTemplate(e.tplId) || {}).name || '?';
+    MACRO_KEYS.forEach(k => {
+      totals[k] += m[k];
+      if (m[k]) {
+        breakdown[k][srcName] = (breakdown[k][srcName] || 0) + m[k];
+      }
+    });
     Object.keys(m.custom).forEach(k => {
       if (!customs[k]) customs[k] = { value: 0, unit: m.custom[k].unit };
       customs[k].value += m.custom[k].value;
+      if (m.custom[k].value) {
+        if (!customBreakdown[k]) customBreakdown[k] = {};
+        customBreakdown[k][srcName] = (customBreakdown[k][srcName] || 0) + m.custom[k].value;
+      }
     });
   });
 
   const fmt = v => (Math.round(v * 10) / 10).toLocaleString(getLangLocale());
-  const tile = (name, value, unit) => {
+
+  function buildBreakdownHTML(bd, unit) {
+    const sorted = Object.entries(bd).sort((a, b) => b[1] - a[1]);
+    if (sorted.length === 0) return '';
+    let html = '<div class="nu-macro-breakdown">';
+    sorted.forEach(([src, val]) => {
+      html += '<div class="nu-macro-breakdown-row"><span>' + src + '</span><span>' + fmt(val) + ' ' + unit + '</span></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  const tile = (name, value, unit, bd) => {
     const d = document.createElement('div');
     d.className = 'nu-macro-tile';
     d.innerHTML =
       '<div class="nu-macro-tile-name">' + name + '</div>'
       + '<div><span class="nu-macro-tile-value">' + fmt(value) + '</span>'
-      + '<span class="nu-macro-tile-unit">' + unit + '</span></div>';
+      + '<span class="nu-macro-tile-unit">' + unit + '</span></div>'
+      + (bd ? buildBreakdownHTML(bd, unit) : '');
     return d;
   };
 
   wrap.innerHTML = '';
-  wrap.appendChild(tile(i18n.t('nutrition.macro_kcal') || 'Kcal', totals.kcal, 'kcal'));
-  wrap.appendChild(tile(i18n.t('nutrition.macro_protein') || 'Protéines', totals.protein, 'g'));
-  wrap.appendChild(tile(i18n.t('nutrition.macro_lipids') || 'Lipides', totals.lipids, 'g'));
-  wrap.appendChild(tile(i18n.t('nutrition.macro_carbs') || 'Glucides', totals.carbs, 'g'));
-  wrap.appendChild(tile(i18n.t('nutrition.macro_fibers') || 'Fibres', totals.fibers, 'g'));
-  wrap.appendChild(tile(i18n.t('nutrition.macro_sugar') || 'Sucres', totals.sugar, 'g'));
-  wrap.appendChild(tile(i18n.t('nutrition.macro_sodium') || 'Sodium', totals.sodium, 'mg'));
+  wrap.appendChild(tile(i18n.t('nutrition.macro_kcal') || 'Kcal', totals.kcal, 'kcal', breakdown.kcal));
+  wrap.appendChild(tile(i18n.t('nutrition.macro_protein') || 'Protéines', totals.protein, 'g', breakdown.protein));
+  wrap.appendChild(tile(i18n.t('nutrition.macro_lipids') || 'Lipides', totals.lipids, 'g', breakdown.lipids));
+  wrap.appendChild(tile(i18n.t('nutrition.macro_carbs') || 'Glucides', totals.carbs, 'g', breakdown.carbs));
+  wrap.appendChild(tile(i18n.t('nutrition.macro_fibers') || 'Fibres', totals.fibers, 'g', breakdown.fibers));
+  wrap.appendChild(tile(i18n.t('nutrition.macro_sugar') || 'Sucres', totals.sugar, 'g', breakdown.sugar));
+  wrap.appendChild(tile(i18n.t('nutrition.macro_sodium') || 'Sodium', totals.sodium, 'mg', breakdown.sodium));
   Object.keys(customs).forEach(k => {
-    wrap.appendChild(tile(k, customs[k].value, customs[k].unit || ''));
+    wrap.appendChild(tile(k, customs[k].value, customs[k].unit || '', customBreakdown[k]));
   });
 
   empty.classList.toggle('hidden', entries.length > 0);
@@ -849,6 +873,17 @@ function nuRenderChart(entries) {
   });
 }
 
+// ============ PICKER MODAL ============
+
+function nuOpenPickerModal() {
+  nuRenderTemplates();
+  document.getElementById('modal-picker').classList.remove('hidden');
+}
+
+function nuClosePickerModal() {
+  document.getElementById('modal-picker').classList.add('hidden');
+}
+
 // ============ RENDER ALL ============
 
 function nuRenderAll() {
@@ -862,7 +897,11 @@ function nuRenderAll() {
 function nuInit() {
   // Buttons
   document.getElementById('btn-new-template').addEventListener('click', () => nuOpenTplModal());
+  document.getElementById('btn-new-from-template').addEventListener('click', () => nuOpenPickerModal());
   document.getElementById('btn-new-entry').addEventListener('click', () => nuOpenCustomEntryModal());
+
+  // Picker modal
+  document.querySelectorAll('[data-close="modal-picker"]').forEach(el => el.addEventListener('click', nuClosePickerModal));
 
   // Template modal
   document.getElementById('tpl-save-btn').addEventListener('click', nuSaveTpl);

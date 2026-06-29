@@ -214,6 +214,54 @@
   color: var(--ink-mute);
   margin-left: 3px;
 }
+/* Macro breakdown tooltip */
+.nu-macro-tile { position: relative; cursor: default; }
+.nu-macro-breakdown {
+  display: none;
+  position: absolute;
+  left: 50%; bottom: 100%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  min-width: 180px;
+  max-width: 260px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  box-shadow: var(--shadow);
+  padding: 8px 10px;
+  z-index: 20;
+  text-align: left;
+}
+.nu-macro-tile:hover .nu-macro-breakdown { display: block; }
+.nu-macro-breakdown-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-mute);
+  margin-bottom: 5px;
+}
+.nu-macro-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink);
+  padding: 2px 0;
+}
+.nu-macro-breakdown-row span:last-child {
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: 10px;
+  white-space: nowrap;
+}
+.nu-macro-breakdown-empty {
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--ink-mute);
+  font-style: italic;
+}
+
 .nu-today-empty {
   font-family: var(--serif);
   font-size: 14px;
