@@ -29,7 +29,7 @@
     if (!Array.isArray(journals)) journals = [];
   }
   function saveAll() {
-    VitalStore.set(STORAGE_KEY, journals);
+    return VitalStore.set(STORAGE_KEY, journals);
   }
   function getJournal(id) { return journals.find(j => j.id === id); }
 
@@ -81,12 +81,12 @@
   }
 
   function openAddModal() {
-    $('add-entry-modal').classList.remove('hidden');
+    VitalModal.open('add-entry-modal');
     $('entry-title').focus();
   }
 
   function closeAddModal() {
-    $('add-entry-modal').classList.add('hidden');
+    VitalModal.close('add-entry-modal');
   }
 
   // ---- Home rendering ----
@@ -378,6 +378,11 @@
     const j = getJournal(currentJournalId);
     if (!j) return;
 
+    // Images and voice notes can push the journal past the browser's storage
+    // limit. Keep a snapshot so a failed write doesn't leave the UI showing an
+    // entry that was never persisted.
+    const entriesBackup = j.entries.slice();
+
     if (editingEntryId) {
       const idx = j.entries.findIndex(e => e.id === editingEntryId);
       if (idx !== -1) {
@@ -409,7 +414,13 @@
       j.entries.push(newEntry);
     }
 
-    saveAll();
+    if (!saveAll()) {
+      j.entries = entriesBackup;
+      $('save-status').textContent = i18n.t('common.save_error');
+      $('save-status').style.color = '#e53935';
+      return;
+    }
+
     resetAddForm();
     closeAddModal();
     openTab('browse');
@@ -857,7 +868,6 @@
 
   // ---- i18n hooks ----
   _onLangApplied = function () {
-    setTodayDate();
     // Re-translate select options
     ['filter-mode', 'score-filter-mode', 'sort-order'].forEach(selId => {
       const sel = $(selId);

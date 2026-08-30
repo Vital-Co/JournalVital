@@ -28,7 +28,10 @@
     "theme_rose": "Tema rosa",
     "theme_dark": "Tema oscuro",
     "move_up": "Subir",
-    "move_down": "Bajar"
+    "move_down": "Bajar",
+    "save_error": "No se pudo guardar. Tus últimos cambios no se han almacenado.",
+    "save_error_quota": "No se pudo guardar: el almacenamiento del navegador está lleno. Exporta y luego elimina entradas antiguas (sobre todo imágenes y notas de voz).",
+    "duplicate": "Duplicar"
   },
 
   "index": {
@@ -68,7 +71,14 @@
       "sleep_label": "Sueño",
       "now_label": "Ahora",
       "quest_title": "Diario de Misiones",
-      "quest_limit_label": "Máx:"
+      "quest_limit_label": "Máx:",
+      "remaining": "quedan {d}",
+      "until": "hasta las {t}",
+      "starts_in": "en {d}",
+      "rel_today": "Hoy",
+      "rel_tomorrow": "Mañana",
+      "rel_in_days": "D+{n}",
+      "rel_overdue": "D{n}"
     }
   },
 
@@ -296,6 +306,12 @@
     "urge_step5_text": "El impulso es una ola: sube, alcanza su pico, luego baja.<br>No necesitas actuar. Solo surfear.<br><br><em>Quédate aquí un momento más. Ya lo has logrado — eso es la victoria.</em>",
     "btn_urge_close": "Cerrar",
     "btn_urge_next": "Siguiente →",
+    "btn_urge_finish": "Terminar ✓",
+    "abstain_fmt_months_one": "{n} mes",
+    "abstain_fmt_months_other": "{n} meses",
+    "abstain_fmt_years_one": "{n} año",
+    "abstain_fmt_years_other": "{n} años",
+    "abstain_fmt_years_days": "{y} y {n} d",
 
     "hero_phase": "— Reducción de dosis",
     "hero_phase_libre": "— Fase libre · Objetivo alcanzado",
@@ -657,6 +673,8 @@
     "empty_events": "Ningún evento por ahora.",
     "modal_task_title": "Nueva tarea",
     "modal_event_title": "Nuevo evento",
+    "modal_task_edit_title": "Editar tarea",
+    "modal_event_edit_title": "Editar evento",
     "field_name": "Nombre",
     "field_name_ph": "Nombre de la tarea o del evento",
     "field_duration": "Duración",
@@ -748,6 +766,7 @@
     "btn_save": "Guardar",
     "error_name_required": "El nombre es obligatorio.",
     "prompt_rename": "Nuevo nombre:",
+    "prompt_duplicate_name": "Nombre del duplicado:",
     "confirm_delete": "¿Eliminar esta habilidad?",
     "filter_all": "Todas",
     "xp_gain_title": "Añadir XP",

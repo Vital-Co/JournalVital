@@ -53,7 +53,7 @@ function skLoadAll() {
 }
 
 function skSaveAll(list) {
-  VitalStore.saveIndex(SK_INDEX_KEY, list);
+  return VitalStore.saveIndex(SK_INDEX_KEY, list);
 }
 
 function skGetAllTags(list) {
@@ -218,7 +218,7 @@ function skRenderItem(skill, idx, total) {
   const btnDup = document.createElement('button');
   btnDup.className = 'btn-duplicate';
   btnDup.textContent = '⧉';
-  btnDup.title = i18n.t('skill.duplicate') || 'Duplicate';
+  btnDup.title = i18n.t('common.duplicate') || 'Duplicate';
   btnDup.onclick = () => skDuplicate(skill.id);
 
   actions.appendChild(btnXp);
@@ -299,12 +299,12 @@ function skOpenModal(editId) {
 
   skRenderModalTags();
   document.getElementById('skill-error').classList.add('hidden');
-  modal.classList.remove('hidden');
+  VitalModal.open('modal-skill');
   skUpdateXpMaxPreview();
 }
 
 function skCloseModal() {
-  document.getElementById('modal-skill').classList.add('hidden');
+  VitalModal.close('modal-skill');
   skEditId = null;
 }
 
@@ -472,11 +472,11 @@ function skOpenXpGain(id) {
   }
 
   skUpdateXpGainPreview();
-  document.getElementById('modal-xp-gain').classList.remove('hidden');
+  VitalModal.open('modal-xp-gain');
 }
 
 function skCloseXpGain() {
-  document.getElementById('modal-xp-gain').classList.add('hidden');
+  VitalModal.close('modal-xp-gain');
   skXpGainId = null;
 }
 
@@ -617,11 +617,11 @@ function skOpenDetail(id) {
     skRenderChart(entries, chartEl);
   }
 
-  document.getElementById('modal-skill-detail').classList.remove('hidden');
+  VitalModal.open('modal-skill-detail');
 }
 
 function skCloseDetail() {
-  document.getElementById('modal-skill-detail').classList.add('hidden');
+  VitalModal.close('modal-skill-detail');
   if (_skTooltip) _skTooltip.style.display = 'none';
 }
 

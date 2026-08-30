@@ -10,13 +10,13 @@
 
   // ---- Helpers ----
   function loadTasks()        { return VitalStore.get(TASKS_KEY, []); }
-  function saveTasks(a)       { VitalStore.set(TASKS_KEY, a); }
+  function saveTasks(a)       { return VitalStore.set(TASKS_KEY, a); }
   function loadEvents()       { return VitalStore.get(EVENTS_KEY, []); }
-  function saveEvents(a)      { VitalStore.set(EVENTS_KEY, a); }
+  function saveEvents(a)      { return VitalStore.set(EVENTS_KEY, a); }
   function loadTaskHistory()  { return VitalStore.get(TASK_HISTORY_KEY, []); }
-  function saveTaskHistory(a) { VitalStore.set(TASK_HISTORY_KEY, a); }
+  function saveTaskHistory(a) { return VitalStore.set(TASK_HISTORY_KEY, a); }
   function loadEventArchive() { return VitalStore.get(EVENT_ARCHIVE_KEY, []); }
-  function saveEventArchive(a){ VitalStore.set(EVENT_ARCHIVE_KEY, a); }
+  function saveEventArchive(a){ return VitalStore.set(EVENT_ARCHIVE_KEY, a); }
 
   function t(key, fallback) {
     try { return i18n.t(key) || fallback || key; }
@@ -24,8 +24,8 @@
   }
 
   // ---- Modal helpers ----
-  function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-  function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+  function openModal(id) { VitalModal.open(id); }
+  function closeModal(id){ VitalModal.close(id); }
 
   document.querySelectorAll('[data-close]').forEach(el => {
     el.addEventListener('click', () => closeModal(el.dataset.close));
@@ -122,9 +122,10 @@
     document.getElementById('task-deadline-time').value = data && data.deadlineTime ? data.deadlineTime : todayTime();
     document.getElementById('task-error').classList.add('hidden');
 
-    // days
+    // days — data.days holds numbers, dataset.day is a string, so compare numerically
     document.querySelectorAll('#task-days .tm-day').forEach(btn => {
-      btn.classList.toggle('active', data && data.days ? data.days.includes(btn.dataset.day) : false);
+      const day = +btn.dataset.day;
+      btn.classList.toggle('active', !!(data && data.days) && data.days.some(d => +d === day));
     });
 
     // tags
