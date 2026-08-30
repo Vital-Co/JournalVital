@@ -656,7 +656,9 @@
     "view_audio_desc": "Displays only voice notes with date and title in the margin. The next one plays automatically when each recording ends.",
     "view_score_desc": "Displays a curve of your score evolution over time.",
     "browse_no_audio": "No entries with voice notes match the criteria.",
-    "browse_no_score": "No entries with a score match the criteria."
+    "browse_no_score": "No entries with a score match the criteria.",
+    "score_scroll_hint": "Showing the last {shown} of {total} entries — scroll left to go further back.",
+    "score_click_to_edit": "Click to edit this entry"
   },
 
   "task": {

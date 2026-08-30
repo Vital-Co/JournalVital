@@ -657,7 +657,9 @@
     "view_audio_desc": "Affiche uniquement les notes vocales avec la date et le titre en marge. La suivante se lance automatiquement à la fin de chaque enregistrement.",
     "view_score_desc": "Affiche une courbe de l'évolution de tes notes au fil du temps.",
     "browse_no_audio": "Aucune entrée avec note vocale ne correspond aux critères.",
-    "browse_no_score": "Aucune entrée avec une note ne correspond aux critères."
+    "browse_no_score": "Aucune entrée avec une note ne correspond aux critères.",
+    "score_scroll_hint": "Les {shown} dernières entrées sur {total} — fais défiler vers la gauche pour remonter le temps.",
+    "score_click_to_edit": "Clique pour modifier cette entrée"
   },
 
   "task": {

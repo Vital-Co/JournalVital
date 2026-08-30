@@ -658,7 +658,9 @@
     "view_audio_desc": "Muestra solo las notas de voz con la fecha y el título al margen. La siguiente se reproduce automáticamente cuando termina cada grabación.",
     "view_score_desc": "Muestra una curva de la evolución de tus notas a lo largo del tiempo.",
     "browse_no_audio": "No hay entradas con notas de voz que coincidan con los criterios.",
-    "browse_no_score": "No hay entradas con una puntuación que coincidan con los criterios."
+    "browse_no_score": "No hay entradas con una puntuación que coincidan con los criterios.",
+    "score_scroll_hint": "Las {shown} últimas entradas de {total} — desplázate a la izquierda para retroceder.",
+    "score_click_to_edit": "Haz clic para editar esta entrada"
   },
 
   "task": {
