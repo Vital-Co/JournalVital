@@ -228,18 +228,18 @@
   const MAX_WEEKS = 52;
 
   // Heure de changement de jour pour le journal (0-23).
-  // Avant cette heure, on considère qu'on est encore « la veille  ».
+  // Avant cette heure, on considère qu'on est encore « la veille ».
   // Ex : 6 = le jour change à 06h00 (les consos de nuit restent sur le jour précédent).
   const DAY_BOUNDARY_HOUR = 6;
 
   // ============ COURBES DE PROGRESSION ============
   // Chaque courbe est une fonction qui prend (totalWeeks) et renvoie un tableau
   // de ratios de longueur totalWeeks. Le ratio représente la fraction de
-  // (startDose - endDose) qui reste APRÀ S la semaine.
+  // (startDose - endDose) qui reste APRÈS la semaine.
   // ratios[0] = part de la "distance" qui reste en fin de semaine 1 (proche de 1 = peu enlevé)
   // ratios[totalWeeks-1] = part qui reste à la dernière semaine avant phase libre (proche de 0 = presque fini)
   //
-  // Pour simplifier on raisonne sur des positions normalisées x â   [0, 1] :
+  // Pour simplifier on raisonne sur des positions normalisées x ∈ [0, 1] :
   //   x = i / totalWeeks pour le palier i (1-indexé : i = 1..totalWeeks)
   // Et on définit f(x) qui descend de 1 vers 0.
 
@@ -438,18 +438,25 @@
     return Math.max(cur, bestPast);
   }
 
-  // Format humain : 0 → "0 jour", 1 → "1 jour", 30 → "30 jours", 60 → "2 mois (60j)", 365 → "1 an (365j)"
+  // Singular/plural pick — Spanish and English don't share French's suffix rule,
+  // so each form gets its own key rather than relying on the {s} shorthand.
+  function pluralT(baseKey, n) {
+    return i18n.t(baseKey + (n === 1 ? '_one' : '_other'), { n });
+  }
+
+  // Format humain : 30 → "30 jours · 1 mois", 365 → "365 jours · 1 an"
   function formatStreakDays(days) {
-    if (days <= 1) return `${days} jour`;
-    if (days < 30) return `${days} jours`;
+    const base = i18n.t('addiction.abstain_hist_days', { n: days });
+    if (days < 30) return base;
     if (days < 365) {
       const months = Math.floor(days / 30);
-      return `${days} jours <small>· ${months} mois</small>`;
+      return `${base} <small>· ${pluralT('addiction.abstain_fmt_months', months)}</small>`;
     }
     const years = Math.floor(days / 365);
     const remDays = days - (years * 365);
-    if (remDays === 0) return `${days} jours <small>· ${years} ${years === 1 ? 'an' : 'ans'}</small>`;
-    return `${days} jours <small>· ${years} ${years === 1 ? 'an' : 'ans'} et ${remDays} j</small>`;
+    const yearsLabel = pluralT('addiction.abstain_fmt_years', years);
+    if (remDays === 0) return `${base} <small>· ${yearsLabel}</small>`;
+    return `${base} <small>· ${i18n.t('addiction.abstain_fmt_years_days', { y: yearsLabel, n: remDays })}</small>`;
   }
 
   // Marque le jour comme "tenu". Crée le streak si pas encore démarré.
@@ -677,7 +684,7 @@
     const u = getUnit();
     let html = '';
     currentDoses.forEach((entry, idx) => {
-      const timeStr = entry.time ? new Date(entry.time).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '';
+      const timeStr = entry.time ? new Date(entry.time).toLocaleTimeString(getLangLocale(), {hour:'2-digit', minute:'2-digit'}) : '';
       html += `<div class="dose-list-item">
         <span class="dose-list-item-value">${u.format(entry.value)}</span>
         <span class="dose-list-item-time">${timeStr}</span>
@@ -713,7 +720,7 @@
     if (currentNotes.length === 0) { container.innerHTML = ''; return; }
     let html = '';
     currentNotes.forEach((entry, idx) => {
-      const timeStr = entry.time ? new Date(entry.time).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '';
+      const timeStr = entry.time ? new Date(entry.time).toLocaleTimeString(getLangLocale(), {hour:'2-digit', minute:'2-digit'}) : '';
       html += `<div class="text-note-item">
         <div class="text-note-item-body">
           <div class="text-note-item-text">${escapeHtml(entry.text)}</div>
@@ -752,7 +759,7 @@
   })();
 
   // Renvoie un objet Date décalé de DAY_BOUNDARY_HOUR heures.
-  // Avant DAY_BOUNDARY_HOUR le matin, on est encore « hier  » pour le journal.
+  // Avant DAY_BOUNDARY_HOUR le matin, on est encore « hier » pour le journal.
   function effectiveNow() {
     const d = new Date();
     d.setHours(d.getHours() - DAY_BOUNDARY_HOUR);
@@ -771,7 +778,7 @@
 
   function formatDateFR(iso) {
     const d = new Date(iso + 'T00:00:00');
-    return d.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
+    return d.toLocaleDateString(getLangLocale(), { weekday:'short', day:'numeric', month:'short' });
   }
 
   function formatDateNumeric(iso) {
@@ -1250,7 +1257,7 @@
         const journalName = j ? j.name : 'journal';
         const stateData = VitalStore.get(journalStorageKey(id)) || {};
         const exportData = Object.assign({ _meta: j }, stateData);
-        VitalStore.exportJSON(exportData, journalName.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüÿç&Sæ _-]/g, '_') + '.json');
+        VitalStore.exportJSON(exportData, journalName.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüÿçæœ _-]/g, '_') + '.json');
       });
     });
     list.querySelectorAll('button[data-action="delete"]').forEach(btn => {
@@ -1316,7 +1323,7 @@
 
   function renderWelcome() {
     const today = effectiveNow();
-    const todayStr = today.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const todayStr = today.toLocaleDateString(getLangLocale(), { weekday:'long', day:'numeric', month:'long', year:'numeric' });
     const todayStrCap = todayStr.charAt(0).toUpperCase() + todayStr.slice(1);
     const todayDateEl = document.getElementById('welcome-today-date');
     if (todayDateEl) todayDateEl.textContent = todayStrCap;
@@ -1422,7 +1429,7 @@
     const today = effectiveNow();
     const end = new Date(today);
     end.setDate(end.getDate() + state.totalWeeks * 7);
-    const endStr = end.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const endStr = end.toLocaleDateString(getLangLocale(), { weekday:'long', day:'numeric', month:'long', year:'numeric' });
     const endEl = document.getElementById('welcome-end-date');
     if (endEl) endEl.textContent = endStr.charAt(0).toUpperCase() + endStr.slice(1);
   }
@@ -1447,7 +1454,7 @@
     let d = '';
     for (let i = 0; i <= samples; i++) {
       const x = i / samples;
-      // On utilise la courbe pour position normalisée x â   [0,1]
+      // On utilise la courbe pour position normalisée x ∈ [0,1]
       // En passant (x*N, N) la fonction renvoie f(x). On prend N=samples pour cohérence.
       const ratio = CURVES[curveId].fn(i, samples);
       const px = pad + x * (W - 2 * pad);
@@ -1757,9 +1764,8 @@
   function openCatchupModal(dates) {
     pendingDaysList = dates.slice();
     renderCatchupModal(dates);
-    const modal = document.getElementById('catchup-modal');
+    const modal = VitalModal.open('catchup-modal');
     if (modal) {
-      modal.classList.remove('hidden');
       // Focus sur le premier input pour saisie rapide
       setTimeout(() => {
         const firstInput = modal.querySelector('.catchup-input');
@@ -1769,11 +1775,13 @@
   }
 
   function closeCatchupModal() {
-    const modal = document.getElementById('catchup-modal');
-    if (modal) modal.classList.add('hidden');
+    VitalModal.close('catchup-modal');
     pendingTodayLog = null;
     pendingDaysList = [];
   }
+
+  // Escape / backdrop dismissal must run the cleanup above, not just hide.
+  VitalModal.onDismiss('catchup-modal', closeCatchupModal);
 
   // Valide tous les inputs de la modale et enregistre les logs si OK.
   // Retourne true si la sauvegarde a abouti (validation + saveState), false sinon.
@@ -2289,7 +2297,7 @@
       : i18n.t('addiction.hero_phase');
     document.getElementById('hero-phase').textContent = phaseLabel;
 
-    // «  Widgets objectifs du jour « 
+    // « Widgets objectifs du jour »
     const objContainer = document.getElementById('today-objectives');
     let objHTML = '';
 
@@ -2440,7 +2448,7 @@
     const log = state.logs[today];
     const status = document.getElementById('save-status');
     if (log && log.savedAt) {
-      const t = new Date(log.savedAt).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+      const t = new Date(log.savedAt).toLocaleTimeString(getLangLocale(), {hour:'2-digit', minute:'2-digit'});
       status.textContent = i18n.t('addiction.save_status_saved_at', {t});
       status.classList.add('ok');
     } else {
@@ -2533,7 +2541,7 @@
         hasNotes = true;
         noteHtml = log.notes.map(n => {
           const entry = typeof n === 'object' ? n : { text: n, time: null };
-          const timeStr = entry.time ? `<span style="font-family:var(--mono); font-size:11px; color:var(--ink-mute); margin-left:6px;">${new Date(entry.time).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>` : '';
+          const timeStr = entry.time ? `<span style="font-family:var(--mono); font-size:11px; color:var(--ink-mute); margin-left:6px;">${new Date(entry.time).toLocaleTimeString(getLangLocale(), {hour:'2-digit', minute:'2-digit'})}</span>` : '';
           return `<div class="history-note">${escapeHtml(entry.text)}${timeStr}</div>`;
         }).join('');
       } else if (log.note && log.note.trim()) {
@@ -2547,7 +2555,7 @@
         dosesDetailHtml = '<div style="margin-top:4px; font-size:12px; color:var(--ink-mute); font-family:var(--mono);">';
         log.doses.forEach(d => {
           const entry = typeof d === 'object' ? d : { value: d, time: null };
-          const timeStr = entry.time ? new Date(entry.time).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) + ' — ' : '';
+          const timeStr = entry.time ? new Date(entry.time).toLocaleTimeString(getLangLocale(), {hour:'2-digit', minute:'2-digit'}) + ' — ' : '';
           dosesDetailHtml += `<div>${timeStr}${logUnit.format(entry.value)}</div>`;
         });
         dosesDetailHtml += '</div>';
@@ -2965,13 +2973,13 @@
       relapseBtn.classList.remove('marked');
 
       if (todayLog && todayLog.kind === 'held') {
-        const t = todayLog.savedAt ? new Date(todayLog.savedAt).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '';
+        const t = todayLog.savedAt ? new Date(todayLog.savedAt).toLocaleTimeString(getLangLocale(), {hour:'2-digit', minute:'2-digit'}) : '';
         actionStatusEl.innerHTML = t ? i18n.t('addiction.abstain_today_held_at', {t}) : i18n.t('addiction.abstain_today_held');
         actionStatusEl.classList.add('ok');
         actionStatusEl.classList.remove('relapse');
         holdBtn.classList.add('marked');
       } else if (todayLog && todayLog.kind === 'relapse') {
-        const t = todayLog.savedAt ? new Date(todayLog.savedAt).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '';
+        const t = todayLog.savedAt ? new Date(todayLog.savedAt).toLocaleTimeString(getLangLocale(), {hour:'2-digit', minute:'2-digit'}) : '';
         actionStatusEl.innerHTML = t ? i18n.t('addiction.abstain_today_relapse_at', {t}) : i18n.t('addiction.abstain_today_relapse');
         actionStatusEl.classList.add('relapse');
         actionStatusEl.classList.remove('ok');
@@ -3016,7 +3024,7 @@
       if (reached) cls += ' reached';
       if (isNext) cls += ' next';
       html += `<div class="${cls}">
-        <div class="milestone-marker">${reached ? '✓' : (isNext ? '→' : 'â⬹')}</div>
+        <div class="milestone-marker">${reached ? '✓' : (isNext ? '→' : '○')}</div>
         <div class="milestone-text">
           <div class="milestone-label">${m.label}</div>
           <div class="milestone-note">${m.note}</div>
@@ -3690,19 +3698,11 @@
     }
 
     // Clic sur le backdrop : équivalent à Annuler
+    // (Escape est géré par VitalModal, qui appelle closeCatchupModal via onDismiss.)
     const catchupBackdrop = document.getElementById('catchup-backdrop');
     if (catchupBackdrop) {
       catchupBackdrop.addEventListener('click', () => closeCatchupModal());
     }
-
-    // Touche Escape : ferme la modale
-    document.addEventListener('keydown', e => {
-      if (e.key !== 'Escape') return;
-      const modal = document.getElementById('catchup-modal');
-      if (modal && !modal.classList.contains('hidden')) {
-        closeCatchupModal();
-      }
-    });
 
     // Touche Enter dans un input de la modale : déclenche la sauvegarde
     // (uniquement si tous les inputs sont remplis — sinon focus sur le suivant vide)
@@ -3882,17 +3882,19 @@
       dots.forEach((d, i) => {
         d.classList.toggle('done', i <= idx);
       });
-      nextBtn.textContent = idx >= steps.length - 1 ? 'Terminer ✓' : 'Suivant →';
+      nextBtn.textContent = idx >= steps.length - 1
+        ? i18n.t('addiction.btn_urge_finish')
+        : i18n.t('addiction.btn_urge_next');
     }
 
     function openModal() {
       current = 0;
       showStep(0);
-      modal.classList.remove('hidden');
+      VitalModal.open('urge-modal');
     }
 
     function closeModal() {
-      modal.classList.add('hidden');
+      VitalModal.close('urge-modal');
     }
 
     openBtn.addEventListener('click', openModal);
@@ -3908,11 +3910,7 @@
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-        closeModal();
-      }
-    });
+    // Escape is handled globally by VitalModal.
   })();
 
   // ============ INIT ============

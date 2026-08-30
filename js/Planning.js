@@ -1,11 +1,14 @@
-﻿﻿// ============ PLANNING PAGE ============
+// ============ PLANNING PAGE ============
 // Common logic (lang, theme, date, constants) is in js/Common.js
 
 let _oldPresetTitles = [];
 
 _beforeLangSwitch = function() {
-  // Capture old preset titles before loading new language
-  _oldPresetTitles = getAllPresetActivities().map(p => p.title);
+  // Capture old preset titles before loading new language. On the very first
+  // call no locale is loaded yet, so there is nothing to remap.
+  _oldPresetTitles = i18n.has('planning.activities_preset')
+    ? getAllPresetActivities().map(p => p.title)
+    : [];
 };
 
 _onLangApplied = function() {
@@ -27,8 +30,6 @@ _onLangApplied = function() {
   if (!viewShow.classList.contains('hidden') && currentShowIdx !== null) {
     openPlanning(currentShowIdx);
   }
-  // Update date
-  setTodayDate();
 };
 
 initLanguage();
@@ -95,7 +96,7 @@ function getActiveGrid(){ return activeWeekData().grid; }
 function getActiveSleepConfig(){ return activeWeekData().sleepConfig; }
 
 function loadPlannings(){plannings=VitalStore.get(STORAGE_KEY,[]); if(!Array.isArray(plannings)) plannings=[];}
-function savePlannings(){VitalStore.set(STORAGE_KEY,plannings);}
+function savePlannings(){return VitalStore.set(STORAGE_KEY,plannings);}
 
 function getMainPlanning(){
   if(plannings.length===0) return null;
@@ -135,19 +136,13 @@ function renderNowWidget(){
   }
   const p = plannings[mainIdx];
   const now = new Date();
-  // JS: 0=Sun,1=Mon..6=Sat -> planning: 0=Mon..6=Sun
-  const jsDay = now.getDay();
-  const dayIdx = jsDay === 0 ? 6 : jsDay - 1;
+  const dayIdx = planningDayIndex(now);
   const hour = now.getHours();
   const min = now.getMinutes();
   const slot = hour * 4 + Math.floor(min / 15);
 
   const weeks = getWeeks(p);
-  // Determine which week to use (cycle based on ISO week number)
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
-  const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
-  const isoWeek = Math.ceil((dayOfYear + startOfYear.getDay()) / 7);
-  const weekIdx = weeks.length > 1 ? (isoWeek - 1) % weeks.length : 0;
+  const weekIdx = planningWeekIndex(p, now);
   const grid = weeks[weekIdx].grid;
 
   const isQuarter = grid.length === 96;
@@ -158,8 +153,7 @@ function renderNowWidget(){
   let endLabel = '';
   let nextAct = null;
   if(act && isQuarter){
-    let endSlot = slot;
-    while(endSlot < 96 && grid[endSlot][dayIdx] === ai) endSlot++;
+    const endSlot = planningBlockEnd(grid, dayIdx, slot);
     if(endSlot < 96){
       const eH = Math.floor(endSlot / 4);
       const eM = (endSlot % 4) * 15;

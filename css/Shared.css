@@ -2498,3 +2498,40 @@
     .mode-grid { grid-template-columns: 1fr; }
     .streak-history-row { flex-direction: column; gap: 4px; }
   }
+
+  /* ============ TOAST — feedback transitoire (échec de sauvegarde, etc.) ============ */
+  .vital-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translate(-50%, 16px);
+    z-index: 9999;
+    max-width: min(560px, calc(100vw - 32px));
+    padding: 12px 18px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+  }
+  .vital-toast.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .vital-toast-error {
+    border-color: var(--warn);
+    background: var(--warn-bg);
+    color: var(--warn);
+    font-weight: 600;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vital-toast { transition: none; }
+  }

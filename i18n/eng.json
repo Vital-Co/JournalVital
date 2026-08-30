@@ -28,7 +28,10 @@
     "theme_rose": "Pink theme",
     "theme_dark": "Dark theme",
     "move_up": "Move up",
-    "move_down": "Move down"
+    "move_down": "Move down",
+    "save_error": "Could not save. Your latest changes were not stored.",
+    "save_error_quota": "Could not save: browser storage is full. Export then delete older entries (images and voice notes above all).",
+    "duplicate": "Duplicate"
   },
 
   "index": {
@@ -68,7 +71,14 @@
       "sleep_label": "Sleep",
       "now_label": "Now",
       "quest_title": "Quest Log",
-      "quest_limit_label": "Max:"
+      "quest_limit_label": "Max:",
+      "remaining": "{d} left",
+      "until": "until {t}",
+      "starts_in": "in {d}",
+      "rel_today": "Today",
+      "rel_tomorrow": "Tomorrow",
+      "rel_in_days": "D+{n}",
+      "rel_overdue": "D{n}"
     }
   },
 
@@ -294,6 +304,12 @@
     "urge_step5_text": "The urge is a wave: it rises, reaches a peak, then falls back down.<br>You don’t need to act. Just surf.<br><br><em>Stay here a little longer. You already held on — that’s the victory.</em>",
     "btn_urge_close": "Close",
     "btn_urge_next": "Next →",
+    "btn_urge_finish": "Finish ✓",
+    "abstain_fmt_months_one": "{n} month",
+    "abstain_fmt_months_other": "{n} months",
+    "abstain_fmt_years_one": "{n} year",
+    "abstain_fmt_years_other": "{n} years",
+    "abstain_fmt_years_days": "{y} and {n} d",
 
     "hero_phase": "— Dose reduction",
     "hero_phase_libre": "— Free phase · Target reached",
@@ -640,7 +656,9 @@
     "view_audio_desc": "Displays only voice notes with date and title in the margin. The next one plays automatically when each recording ends.",
     "view_score_desc": "Displays a curve of your score evolution over time.",
     "browse_no_audio": "No entries with voice notes match the criteria.",
-    "browse_no_score": "No entries with a score match the criteria."
+    "browse_no_score": "No entries with a score match the criteria.",
+    "score_scroll_hint": "Showing the last {shown} of {total} entries — scroll left to go further back.",
+    "score_click_to_edit": "Click to edit this entry"
   },
 
   "task": {
@@ -655,6 +673,8 @@
     "empty_events": "No events yet.",
     "modal_task_title": "New task",
     "modal_event_title": "New event",
+    "modal_task_edit_title": "Edit task",
+    "modal_event_edit_title": "Edit event",
     "field_name": "Name",
     "field_name_ph": "Task or event name",
     "field_duration": "Duration",
@@ -746,6 +766,7 @@
     "btn_save": "Save",
     "error_name_required": "Name is required.",
     "prompt_rename": "New name:",
+    "prompt_duplicate_name": "Name for the duplicate:",
     "confirm_delete": "Delete this skill?",
     "filter_all": "All",
     "xp_gain_title": "Add XP",

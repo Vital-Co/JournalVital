@@ -16,17 +16,25 @@ let nuHistSort = 'time-desc';
 
 // ============ DATA ============
 
+// nuFindTemplate is called once per entry per macro, and every call used to
+// decrypt and parse the whole template store. Cache the id→template map for the
+// duration of a render pass; any write drops it.
+let _nuTplCache = null;
+
+function nuInvalidateTemplateCache() { _nuTplCache = null; }
+
 function nuLoadTemplates() {
   return VitalStore.loadIndex(NU_TPL_INDEX_KEY);
 }
 function nuSaveTemplates(list) {
-  VitalStore.saveIndex(NU_TPL_INDEX_KEY, list);
+  nuInvalidateTemplateCache();
+  return VitalStore.saveIndex(NU_TPL_INDEX_KEY, list);
 }
 function nuLoadEntries() {
   return VitalStore.get(NU_ENTRIES_KEY, []) || [];
 }
 function nuSaveEntries(list) {
-  VitalStore.set(NU_ENTRIES_KEY, list);
+  return VitalStore.set(NU_ENTRIES_KEY, list);
 }
 
 function nuGetAllTags(list) {
@@ -35,8 +43,15 @@ function nuGetAllTags(list) {
   return [...tags].sort();
 }
 
+function nuTemplateMap() {
+  if (!_nuTplCache) {
+    _nuTplCache = new Map(nuLoadTemplates().map(t => [t.id, t]));
+  }
+  return _nuTplCache;
+}
+
 function nuFindTemplate(id) {
-  return nuLoadTemplates().find(t => t.id === id) || null;
+  return nuTemplateMap().get(id) || null;
 }
 
 // ============ MACRO MATH ============
@@ -158,11 +173,11 @@ function nuOpenTplModal(editId) {
   nuApplyTplMode();
   nuRenderTplTags();
   nuRenderTplCustoms();
-  document.getElementById('modal-template').classList.remove('hidden');
+  VitalModal.open('modal-template');
 }
 
 function nuCloseTplModal() {
-  document.getElementById('modal-template').classList.add('hidden');
+  VitalModal.close('modal-template');
   nuTplEditId = null;
 }
 
@@ -351,11 +366,11 @@ function nuOpenEntryModal(presetTplId) {
   nuUpdateEntryUnitLabel();
   nuUpdateEntryPreview();
   nuClosePickerModal();
-  document.getElementById('modal-entry').classList.remove('hidden');
+  VitalModal.open('modal-entry');
 }
 
 function nuCloseEntryModal() {
-  document.getElementById('modal-entry').classList.add('hidden');
+  VitalModal.close('modal-entry');
 }
 
 function nuUpdateEntryUnitLabel() {
@@ -440,11 +455,11 @@ function nuOpenCustomEntryModal() {
     now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate())
     + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
 
-  document.getElementById('modal-custom-entry').classList.remove('hidden');
+  VitalModal.open('modal-custom-entry');
 }
 
 function nuCloseCustomEntryModal() {
-  document.getElementById('modal-custom-entry').classList.add('hidden');
+  VitalModal.close('modal-custom-entry');
 }
 
 function nuSaveCustomEntry() {
@@ -541,14 +556,14 @@ function nuRenderToday() {
     let html = '<div class="nu-macro-breakdown">';
     sorted.forEach(([src, val]) => {
       const meta = srcMeta[src];
-      let detail = src;
+      let detail = escHtml(src);
       if (meta) {
         detail += ' ' + meta.count + '×';
         if (meta.totalAmount && meta.amountUnit) {
           detail += ' ' + fmt(meta.totalAmount) + meta.amountUnit;
         }
       }
-      html += '<div class="nu-macro-breakdown-row"><span>' + detail + '</span><span>' + fmt(val) + ' ' + unit + '</span></div>';
+      html += '<div class="nu-macro-breakdown-row"><span>' + detail + '</span><span>' + fmt(val) + ' ' + escHtml(unit) + '</span></div>';
     });
     html += '</div>';
     return html;
@@ -558,9 +573,9 @@ function nuRenderToday() {
     const d = document.createElement('div');
     d.className = 'nu-macro-tile';
     d.innerHTML =
-      '<div class="nu-macro-tile-name">' + name + '</div>'
+      '<div class="nu-macro-tile-name">' + escHtml(name) + '</div>'
       + '<div><span class="nu-macro-tile-value">' + fmt(value) + '</span>'
-      + '<span class="nu-macro-tile-unit">' + unit + '</span></div>'
+      + '<span class="nu-macro-tile-unit">' + escHtml(unit) + '</span></div>'
       + (bd ? buildBreakdownHTML(bd, unit) : '');
     return d;
   };
@@ -719,7 +734,7 @@ function nuOpenDetail(tplId) {
     + 'S ' + fmt(tpl.macros.sugar) + 'g · '
     + 'Na ' + fmt(tpl.macros.sodium) + 'mg'
     + ((tpl.customs && tpl.customs.length)
-        ? '<br>' + tpl.customs.map(c => c.name + ': ' + fmt(c.value) + (c.unit || '')).join(' · ')
+        ? '<br>' + tpl.customs.map(c => escHtml(c.name) + ': ' + fmt(c.value) + escHtml(c.unit || '')).join(' · ')
         : '');
 
   const entries = nuLoadEntries()
@@ -735,11 +750,11 @@ function nuOpenDetail(tplId) {
     emptyEl.classList.add('hidden');
     entries.forEach(e => listEl.appendChild(nuRenderEntryRow(e, tpl)));
   }
-  document.getElementById('modal-tpl-detail').classList.remove('hidden');
+  VitalModal.open('modal-tpl-detail');
 }
 
 function nuCloseDetail() {
-  document.getElementById('modal-tpl-detail').classList.add('hidden');
+  VitalModal.close('modal-tpl-detail');
 }
 
 // ============ HISTORY ============
@@ -776,9 +791,8 @@ function nuSortEntries(entries, tplMap) {
 function nuRenderHistory() {
   const startTs = nuHistoryStartTs();
   const entries = nuLoadEntries().filter(e => e.ts >= startTs);
-  const tplList = nuLoadTemplates();
   const tplMap = {};
-  tplList.forEach(t => tplMap[t.id] = t);
+  nuTemplateMap().forEach((t, id) => { tplMap[id] = t; });
 
   // ---- Chart (kcal per nutrition-day) ----
   nuRenderChart(entries);
@@ -916,16 +930,18 @@ function nuRenderChart(entries) {
 
 function nuOpenPickerModal() {
   nuRenderTemplates();
-  document.getElementById('modal-picker').classList.remove('hidden');
+  VitalModal.open('modal-picker');
 }
 
 function nuClosePickerModal() {
-  document.getElementById('modal-picker').classList.add('hidden');
+  VitalModal.close('modal-picker');
 }
 
 // ============ RENDER ALL ============
 
 function nuRenderAll() {
+  // One fresh read of the template store shared by the three renders below.
+  nuInvalidateTemplateCache();
   nuRenderToday();
   nuRenderTemplates();
   nuRenderHistory();

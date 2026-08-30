@@ -10,6 +10,11 @@
   let currentJournalId = null;
   let browseMode = 'all'; // 'all' | 'journal' | 'audio' | 'score'
   let _scoreTooltip = null;
+  let _scoreResizeObs = null;
+  // Where the reader had scrolled the score chart, kept across the full teardown
+  // that renderBrowse() does. Keyed so a different journal or a different set of
+  // entries starts fresh at the most recent instead of restoring a stale offset.
+  let _scoreScroll = null;  // { key, left }
 
   // Pending entry data (add tab)
   let pendingAudios = [];   // base64 data-urls
@@ -29,7 +34,7 @@
     if (!Array.isArray(journals)) journals = [];
   }
   function saveAll() {
-    VitalStore.set(STORAGE_KEY, journals);
+    return VitalStore.set(STORAGE_KEY, journals);
   }
   function getJournal(id) { return journals.find(j => j.id === id); }
 
@@ -81,12 +86,12 @@
   }
 
   function openAddModal() {
-    $('add-entry-modal').classList.remove('hidden');
+    VitalModal.open('add-entry-modal');
     $('entry-title').focus();
   }
 
   function closeAddModal() {
-    $('add-entry-modal').classList.add('hidden');
+    VitalModal.close('add-entry-modal');
   }
 
   // ---- Home rendering ----
@@ -378,6 +383,11 @@
     const j = getJournal(currentJournalId);
     if (!j) return;
 
+    // Images and voice notes can push the journal past the browser's storage
+    // limit. Keep a snapshot so a failed write doesn't leave the UI showing an
+    // entry that was never persisted.
+    const entriesBackup = j.entries.slice();
+
     if (editingEntryId) {
       const idx = j.entries.findIndex(e => e.id === editingEntryId);
       if (idx !== -1) {
@@ -409,7 +419,13 @@
       j.entries.push(newEntry);
     }
 
-    saveAll();
+    if (!saveAll()) {
+      j.entries = entriesBackup;
+      $('save-status').textContent = i18n.t('common.save_error');
+      $('save-status').style.color = '#e53935';
+      return;
+    }
+
     resetAddForm();
     closeAddModal();
     openTab('browse');
@@ -654,6 +670,11 @@
     return _scoreTooltip;
   }
 
+  // Horizontal room reserved per point. Enough for a rotated date label to stay
+  // legible; the plot grows past the viewport and scrolls rather than squeezing
+  // every entry onto one screen.
+  const SCORE_PX_PER_POINT = 58;
+
   function renderModeScore(entries, list) {
     const scored = entries.filter(e => e.score != null).sort((a, b) => new Date(a.date) - new Date(b.date));
     if (scored.length === 0) {
@@ -661,26 +682,88 @@
       return;
     }
 
-    const W = 760, H = 320;
-    const PAD = { t: 30, r: 30, b: 72, l: 52 };
-    const CW = W - PAD.l - PAD.r;
+    if (_scoreResizeObs) { _scoreResizeObs.disconnect(); _scoreResizeObs = null; }
+
+    const host = document.createElement('div');
+    host.className = 'score-chart-host';
+    list.appendChild(host);
+
+    let lastAvailable = -1;
+    let pending = false;
+    const draw = () => { lastAvailable = host.clientWidth; drawScoreChart(scored, host); };
+
+    draw();
+
+    // clientWidth is 0 until the pane is laid out, and it changes when the window
+    // resizes — redraw whenever the usable width actually moves. The redraw is
+    // deferred to the next frame: rebuilding the subtree inside the observer
+    // callback makes the browser drop the notifications that follow it.
+    if (typeof ResizeObserver === 'function') {
+      _scoreResizeObs = new ResizeObserver(() => {
+        if (!host.isConnected) { _scoreResizeObs.disconnect(); _scoreResizeObs = null; return; }
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(() => {
+          pending = false;
+          if (!host.isConnected) return;
+          const w = host.clientWidth;
+          if (w > 0 && Math.abs(w - lastAvailable) > 2) draw();
+        });
+      });
+      _scoreResizeObs.observe(list);
+    }
+  }
+
+  function drawScoreChart(scored, host) {
+    host.innerHTML = '';
+
+    const H = 320;
+    const AXIS_W = 52;
+    // Left padding leaves room for the first date label, which is rotated -45°
+    // and so extends up and to the left of its anchor point.
+    const PAD = { t: 30, r: 28, b: 72, l: 44 };
     const CH = H - PAD.t - PAD.b;
     const n = scored.length;
     const uid = 'sc' + Math.random().toString(36).slice(2, 7);
+    const ticks = [-10, -5, 0, 5, 10];
 
-    function xp(i) { return PAD.l + (n === 1 ? CW / 2 : (i / (n - 1)) * CW); }
     function yp(s) { return PAD.t + ((10 - s) / 20) * CH; }
-
     const y0 = yp(0);
 
-    // Grid lines + Y labels
+    // The scale lives in its own SVG outside the scroller, so the values stay
+    // readable however far back you scroll.
+    const axisLabels = ticks.map(v => {
+      const lbl = (v > 0 ? '+' : '') + v;
+      return '<text class="score-axis-label" x="' + (AXIS_W - 8) + '" y="' + (yp(v) + 4).toFixed(1)
+           + '" text-anchor="end">' + lbl + '</text>';
+    }).join('');
+
+    const outer = document.createElement('div');
+    outer.className = 'score-chart-outer';
+    outer.innerHTML =
+      '<svg class="score-axis-svg" width="' + AXIS_W + '" height="' + H + '" viewBox="0 0 ' + AXIS_W + ' ' + H
+      + '" aria-hidden="true">' + axisLabels + '</svg>'
+      + '<div class="score-chart-scroll"></div>';
+    host.appendChild(outer);
+
+    const scroller = outer.querySelector('.score-chart-scroll');
+    // Measure the host, which is already laid out; the scroller is still empty
+    // and would report 0. Falls back to a sane width before first layout. Not
+    // clamped upward — on a phone the real width is genuinely small, and
+    // overstating it makes the plot wider than its container for no reason.
+    const hostW = host.clientWidth;
+    const available = hostW > AXIS_W ? hostW - AXIS_W : 640 - AXIS_W;
+    const plotW = Math.max(available, PAD.l + PAD.r + n * SCORE_PX_PER_POINT);
+    const CW = plotW - PAD.l - PAD.r;
+
+    function xp(i) { return PAD.l + (n === 1 ? CW / 2 : (i / (n - 1)) * CW); }
+
+    // Grid lines (labels live in the fixed axis above)
     let grid = '';
-    [-10, -5, 0, 5, 10].forEach(v => {
+    ticks.forEach(v => {
       const y = yp(v);
       const cls = v === 0 ? 'score-grid score-zero-line' : 'score-grid';
-      grid += '<line class="' + cls + '" x1="' + PAD.l + '" y1="' + y.toFixed(1) + '" x2="' + (W - PAD.r) + '" y2="' + y.toFixed(1) + '"/>';
-      const lbl = (v > 0 ? '+' : '') + v;
-      grid += '<text class="score-axis-label" x="' + (PAD.l - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end">' + lbl + '</text>';
+      grid += '<line class="' + cls + '" x1="0" y1="' + y.toFixed(1) + '" x2="' + plotW + '" y2="' + y.toFixed(1) + '"/>';
     });
 
     // Area fill path (closed polygon from zero line through data back to zero)
@@ -694,8 +777,8 @@
       d += ' L' + xp(n - 1).toFixed(1) + ',' + y0.toFixed(1) + ' Z';
       fillPath =
         '<defs>' +
-          '<clipPath id="' + uid + '-pos"><rect x="' + PAD.l + '" y="' + PAD.t + '" width="' + CW + '" height="' + (y0 - PAD.t).toFixed(1) + '"/></clipPath>' +
-          '<clipPath id="' + uid + '-neg"><rect x="' + PAD.l + '" y="' + y0.toFixed(1) + '" width="' + CW + '" height="' + (H - PAD.b - y0).toFixed(1) + '"/></clipPath>' +
+          '<clipPath id="' + uid + '-pos"><rect x="0" y="' + PAD.t + '" width="' + plotW + '" height="' + (y0 - PAD.t).toFixed(1) + '"/></clipPath>' +
+          '<clipPath id="' + uid + '-neg"><rect x="0" y="' + y0.toFixed(1) + '" width="' + plotW + '" height="' + (H - PAD.b - y0).toFixed(1) + '"/></clipPath>' +
         '</defs>' +
         '<path class="score-fill-pos" d="' + d + '" clip-path="url(#' + uid + '-pos)"/>' +
         '<path class="score-fill-neg" d="' + d + '" clip-path="url(#' + uid + '-neg)"/>';
@@ -709,34 +792,66 @@
     }
 
     // Dots + labels + date ticks
+    const editHint = i18n.t('perso.score_click_to_edit');
     let dots = '', xlabels = '';
     scored.forEach((e, i) => {
       const x = xp(i), y = yp(e.score);
       const cls = e.score > 0 ? 'pos' : e.score < 0 ? 'neg' : 'neu';
       const slbl = (e.score > 0 ? '+' : '') + e.score;
-      const dateStr = new Date(e.date).toLocaleDateString(getLangLocale(), { day: '2-digit', month: 'short' });
-      dots += '<circle class="score-dot score-dot-' + cls + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="6" data-idx="' + i + '"></circle>';
+      const d = new Date(e.date);
+      const dateStr = d.toLocaleDateString(getLangLocale(), { day: '2-digit', month: 'short' });
+      const fullDate = d.toLocaleDateString(getLangLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
+      const label = esc((e.title ? e.title + ' — ' : '') + fullDate + ' · ' + slbl + ' — ' + editHint);
+      dots += '<circle class="score-dot score-dot-' + cls + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1)
+           + '" r="6" data-idx="' + i + '" role="button" tabindex="0" aria-label="' + label + '"></circle>';
       dots += '<text class="score-dot-label score-dot-label-' + cls + '" x="' + x.toFixed(1) + '" y="' + (y - 12).toFixed(1) + '" text-anchor="middle">' + slbl + '</text>';
       const lx = x.toFixed(1), ly = (H - PAD.b + 18).toFixed(1);
       xlabels += '<text class="score-date-label" x="' + lx + '" y="' + ly + '" text-anchor="end" transform="rotate(-45 ' + lx + ' ' + ly + ')">' + esc(dateStr) + '</text>';
     });
 
-    const svg =
-      '<svg class="score-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' +
+    scroller.innerHTML =
+      '<svg class="score-chart-svg" width="' + plotW + '" height="' + H + '" viewBox="0 0 ' + plotW + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' +
         fillPath + grid + line + dots + xlabels +
       '</svg>';
 
-    const wrap = document.createElement('div');
-    wrap.className = 'score-chart-wrap';
-    wrap.innerHTML = svg;
-    list.appendChild(wrap);
+    // Open on the most recent entries; earlier ones are a scroll away. Saving an
+    // edit tears the whole chart down and rebuilds it, so the reader's position
+    // is remembered outside this function and restored when it still applies.
+    const scrollKey = currentJournalId + ':' + n + ':' + plotW;
+    scroller.scrollLeft = (_scoreScroll && _scoreScroll.key === scrollKey)
+      ? _scoreScroll.left
+      : scroller.scrollWidth;
+    _scoreScroll = { key: scrollKey, left: scroller.scrollLeft };
+
+    // Measure the rendered result rather than predicting it: whether it scrolls
+    // and how much fits are both properties of the real box.
+    const canScroll = scroller.scrollWidth > scroller.clientWidth + 4;
+    if (canScroll) {
+      // If it scrolls at all, at least one entry is off-screen — so never claim
+      // to be showing all n while telling the reader to scroll for more.
+      const shown = Math.max(1, Math.min(n - 1, Math.round(scroller.clientWidth / SCORE_PX_PER_POINT)));
+      const hint = document.createElement('div');
+      hint.className = 'score-chart-hint';
+      hint.style.paddingLeft = AXIS_W + 'px'; // line up with the plot, not the axis
+      hint.textContent = i18n.t('perso.score_scroll_hint', { shown: shown, total: n });
+      outer.insertAdjacentElement('afterend', hint);
+    }
 
     // Hover tooltip on each dot
     const tooltip = getScoreTooltip();
-    const svgEl = wrap.querySelector('svg');
+    const svgEl = scroller.querySelector('svg');
 
-    wrap.querySelectorAll('circle.score-dot').forEach(circle => {
+    scroller.querySelectorAll('circle.score-dot').forEach(circle => {
       const e = scored[parseInt(circle.dataset.idx, 10)];
+
+      const openEntry = () => {
+        tooltip.style.display = 'none';
+        startEditEntry(e);
+      };
+      circle.addEventListener('click', openEntry);
+      circle.addEventListener('keydown', evt => {
+        if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); openEntry(); }
+      });
 
       circle.addEventListener('mouseenter', evt => {
         const text = e.text || (e.texts && e.texts.length ? e.texts.join('\n') : '');
@@ -750,6 +865,7 @@
         if (e.title) html += '<div class="stt-title">' + esc(e.title) + '</div>';
         html += '<div class="stt-meta">' + esc(dateStr) + ' &nbsp;·&nbsp; ' + slbl + '</div>';
         if (truncated) html += '<div class="stt-text">' + esc(truncated).replace(/\n/g, '<br>') + '</div>';
+        html += '<div class="stt-action">' + esc(editHint) + '</div>';
 
         tooltip.innerHTML = html;
         tooltip.style.display = 'block';
@@ -782,9 +898,14 @@
       });
     });
 
-    // Hide tooltip when leaving the chart area entirely
-    wrap.addEventListener('mouseleave', () => {
+    // Hide tooltip when leaving the chart area entirely, or while scrolling —
+    // it is anchored to a dot that has just moved.
+    outer.addEventListener('mouseleave', () => {
       tooltip.style.display = 'none';
+    });
+    scroller.addEventListener('scroll', () => {
+      tooltip.style.display = 'none';
+      if (_scoreScroll) _scoreScroll.left = scroller.scrollLeft;
     });
   }
 
@@ -840,10 +961,11 @@
   }
 
   // ---- Helpers ----
+  // Delegates to the shared helper. The old textContent→innerHTML trick escaped
+  // only & < >, because the serializer only quotes in attribute mode — fine while
+  // every call site was text content, wrong now that dot labels build attributes.
   function esc(s) {
-    const d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
+    return escHtml(s);
   }
 
   function toDateStr(iso) {
@@ -857,7 +979,6 @@
 
   // ---- i18n hooks ----
   _onLangApplied = function () {
-    setTodayDate();
     // Re-translate select options
     ['filter-mode', 'score-filter-mode', 'sort-order'].forEach(selId => {
       const sel = $(selId);
@@ -896,6 +1017,10 @@
     $('add-entry-modal').addEventListener('click', e => {
       if (e.target === $('add-entry-modal')) { resetAddForm(); closeAddModal(); }
     });
+    // Dismissing with Escape has to clear editingEntryId too — otherwise the next
+    // "add an entry" reopens still bound to the entry that was being edited and
+    // saving overwrites it.
+    VitalModal.onDismiss('add-entry-modal', () => { resetAddForm(); closeAddModal(); });
 
     // Home buttons
     $('create-journal-btn').addEventListener('click', () => showView('welcome'));

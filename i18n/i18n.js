@@ -40,6 +40,11 @@ const i18n = (() => {
     }
   }
 
+  /** True when a key resolves in the current locale. Never warns. */
+  function has(key) {
+    return _get(key) !== undefined;
+  }
+
   /** Translate key (dot-separated path) with optional interpolation params. */
   function t(key, params) {
     const val = _get(key);
@@ -117,5 +122,5 @@ const i18n = (() => {
     return 'i18n/';
   }
 
-  return { load, t, apply };
+  return { load, has, t, apply };
 })();

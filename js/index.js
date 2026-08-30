@@ -1,5 +1,13 @@
-﻿// ============ INDEX PAGE ============
+// ============ INDEX PAGE ============
 // Common logic (lang, theme, date, constants) is in js/Common.js
+
+// The widgets on this page are built with innerHTML and carry no data-i18n
+// attributes, so i18n.apply() can't refresh them. Each one registers a
+// re-render here and gets called when the language changes.
+const _idxRerender = [];
+_onLangApplied = () => {
+  _idxRerender.forEach(fn => fn());
+};
 
 const _langReady = initLanguage();
 initTheme();
@@ -29,19 +37,12 @@ setTodayDate();
     if(!p || !p.activities){ resetLabel(descEl); return; }
 
     const now = new Date();
-    const jsDay = now.getDay();
-    const dayIdx = jsDay === 0 ? 6 : jsDay - 1;
+    const dayIdx = planningDayIndex(now);
     const hour = now.getHours();
     const min = now.getMinutes();
     const slot = hour * 4 + Math.floor(min / 15);
 
-    // Get weeks (compat with old single-week plannings)
-    const weeks = (p.weeks && p.weeks.length) ? p.weeks : [{ grid: p.grid, sleepConfig: p.sleepConfig }];
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
-    const isoWeek = Math.ceil((dayOfYear + startOfYear.getDay()) / 7);
-    const weekIdx = weeks.length > 1 ? (isoWeek - 1) % weeks.length : 0;
-    const grid = weeks[weekIdx].grid;
+    const grid = planningGridFor(p, now);
     if(!grid){ resetLabel(descEl); return; }
 
     const isQuarter = grid.length === 96;
@@ -54,8 +55,7 @@ setTodayDate();
     let endLabel = '';
     let nextAct = null;
     if(isQuarter){
-      let endSlot = slot;
-      while(endSlot < 96 && grid[endSlot][dayIdx] === ai) endSlot++;
+      const endSlot = planningBlockEnd(grid, dayIdx, slot);
       if(endSlot < 96){
         const eH = Math.floor(endSlot / 4);
         const eM = (endSlot % 4) * 15;
@@ -71,14 +71,14 @@ setTodayDate();
     const nextLabel = i18n.t('index.planning_next_label') || 'Ensuite :';
 
     const untilHtml = endLabel ? '<span class="idx-now-until">' + untilLabel + ' ' + endLabel + '</span>' : '';
-    const nextHtml = nextAct ? '<span class="idx-now-next"><span class="idx-now-dot" style="background:' + nextAct.color + '"></span>' + nextLabel + ' ' + nextAct.title + '</span>' : '';
+    const nextHtml = nextAct ? '<span class="idx-now-next"><span class="idx-now-dot" style="background:' + nextAct.color + '"></span>' + nextLabel + ' ' + escHtml(nextAct.title) + '</span>' : '';
 
     descEl.innerHTML =
       '<div class="idx-now-widget">' +
         '<div class="idx-now-body">' +
           '<span class="idx-now-dot" style="background:' + act.color + '"></span>' +
           '<span class="idx-now-act-label">' + actLabel + '</span>' +
-          '<span class="idx-now-act-name">' + act.title + '</span>' +
+          '<span class="idx-now-act-name">' + escHtml(act.title) + '</span>' +
           untilHtml +
         '</div>' +
         (nextAct ? '<div class="idx-now-body">' + nextHtml + '</div>' : '') +
@@ -92,6 +92,7 @@ setTodayDate();
     el.setAttribute('data-i18n', 'index.card_planning_desc');
   }
 
+  _idxRerender.push(run);
   _langReady.then(()=>{ run(); });
   setInterval(run, 60000);
 })();
@@ -142,23 +143,15 @@ setTodayDate();
   function updateNowCard(now, plannings, tasks, events) {
     const todayStr = now.toISOString().slice(0, 10);
     const dayOfWeek = now.getDay();
-    const dayIdx = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const dayIdx = planningDayIndex(now);
     const hh = now.getHours();
     const mm = now.getMinutes();
     const nowMinutes = hh * 60 + mm;
 
     let mainIdx = plannings.length === 1 ? 0 : parseInt(VitalStore.getRaw(MAIN_PL_KEY));
     const p = (!isNaN(mainIdx) && plannings[mainIdx]) ? plannings[mainIdx] : null;
-    let grid = null, isQuarter = false;
-    if (p) {
-      const weeks = (p.weeks && p.weeks.length) ? p.weeks : [{ grid: p.grid }];
-      const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
-      const isoWeek = Math.ceil((dayOfYear + startOfYear.getDay()) / 7);
-      const weekIdx = weeks.length > 1 ? (isoWeek - 1) % weeks.length : 0;
-      grid = weeks[weekIdx].grid;
-      isQuarter = grid && grid.length === 96;
-    }
+    const grid = p ? planningGridFor(p, now) : null;
+    const isQuarter = !!grid && grid.length === 96;
 
     const freeTitle  = i18n.t('planning.free_activity_title')  || 'Temps Libre';
     const sleepTitle = i18n.t('planning.sleep_activity_title') || 'Sommeil';
@@ -172,14 +165,6 @@ setTodayDate();
       if (h > 0 && m > 0) return `${h}h${String(m).padStart(2, '0')}`;
       if (h > 0) return `${h}h`;
       return `${m} min`;
-    }
-
-    function fmtClock(totalMin) {
-      const h = Math.floor(totalMin / 60) % 24;
-      const m = totalMin % 60;
-      return m === 0
-        ? `${String(h).padStart(2, '0')}h`
-        : `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}`;
     }
 
     // Returns the contiguous-same-cell block at refMin: { startMin, endMin, cell }
@@ -301,15 +286,15 @@ setTodayDate();
         const endMin = slot.blockEnd || slot.slotEnd;
         const remaining = endMin - nowMinutes;
         if (remaining > 0) {
-          timeInfo = `encore ${fmtDur(remaining)}`;
-          if (slot.blockEnd) timeInfo += ` · jusqu'à ${fmtClock(slot.blockEnd)}`;
+          timeInfo = i18n.t('index.todo.remaining', { d: fmtDur(remaining) });
+          if (slot.blockEnd) timeInfo += ' · ' + i18n.t('index.todo.until', { t: fmtClockMin(slot.blockEnd) });
         }
       } else {
         const minsUntil = slot.slotStart - nowMinutes;
-        timeInfo = `dans ${fmtDur(minsUntil)}`;
+        timeInfo = i18n.t('index.todo.starts_in', { d: fmtDur(minsUntil) });
       }
 
-      const label  = isNow ? nowLabel : fmtClock(slot.slotStart);
+      const label  = isNow ? nowLabel : fmtClockMin(slot.slotStart);
       const marker = isNow ? '▶' : '→';
 
       html += `<div class="todo-now-slot${isNow ? ' is-now' : ' is-next'}">`;
@@ -336,7 +321,7 @@ setTodayDate();
           html += `<div class="todo-now-row">
             <span class="todo-now-color-dot" style="background:${slot.planAct.color}"></span>
             <span class="todo-now-badge tnb-planning">${planLabel}</span>
-            <span class="todo-now-item-name">${slot.planAct.title}</span>
+            <span class="todo-now-item-name">${escHtml(slot.planAct.title)}</span>
           </div>`;
         }
         for (const ev of slot.events) {
@@ -345,7 +330,7 @@ setTodayDate();
             <span class="todo-now-color-dot" style="background:#e74c3c"></span>
             <span class="todo-now-badge tnb-event">${evLabel}</span>
             ${ts}
-            <span class="todo-now-item-name">${ev.name}</span>
+            <span class="todo-now-item-name">${escHtml(ev.name)}</span>
           </div>`;
         }
         for (const t of slot.tasks) {
@@ -355,7 +340,7 @@ setTodayDate();
             <span class="todo-now-color-dot" style="background:#3498db"></span>
             <span class="todo-now-badge tnb-task">${taskLabel}</span>
             ${ts}
-            <span class="todo-now-item-name">${t.name}</span>
+            <span class="todo-now-item-name">${escHtml(t.name)}</span>
           </div>`;
         }
       }
@@ -370,7 +355,7 @@ setTodayDate();
   function updateDayWidget(now, plannings, tasks, events) {
     const todayStr = now.toISOString().slice(0, 10);
     const dayOfWeek = now.getDay();
-    const dayIdx = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const dayIdx = planningDayIndex(now);
     const mainIdx = plannings.length === 1 ? 0 : parseInt(VitalStore.getRaw(MAIN_PL_KEY));
     const p = plannings[mainIdx];
     const sleepTitle = i18n.t('planning.sleep_activity_title') || 'Sommeil';
@@ -380,27 +365,11 @@ setTodayDate();
     const nowM = now.getMinutes();
     const nowMinutes = nowH * 60 + nowM;
 
-    let grid = null;
-    if (p) {
-      const weeks = (p.weeks && p.weeks.length) ? p.weeks : [{ grid: p.grid, sleepConfig: p.sleepConfig }];
-      const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
-      const isoWeek = Math.ceil((dayOfYear + startOfYear.getDay()) / 7);
-      const weekIdx = weeks.length > 1 ? (isoWeek - 1) % weeks.length : 0;
-      grid = weeks[weekIdx].grid;
-    }
+    const grid = p ? planningGridFor(p, now) : null;
 
     const isQuarter = grid && grid.length === 96;
     const cellMin   = isQuarter ? 15 : 60;
     const cellCount = isQuarter ? 96 : 24;
-
-    function fmtClock(totalMin) {
-      const h = Math.floor(totalMin / 60) % 24;
-      const m = totalMin % 60;
-      return m === 0
-        ? `${String(h).padStart(2, '0')}h`
-        : `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}`;
-    }
 
     // Build per-cell data (cell = 15 min on quarter grids, 60 min otherwise).
     // Sleep cells are dropped, free cells are kept as a "free" pseudo-activity.
@@ -498,8 +467,8 @@ setTodayDate();
       }
 
       const timeLabel = (s.endMin - s.startMin) > cellMin
-        ? `${fmtClock(s.startMin)}&nbsp;&ndash;&nbsp;${fmtClock(s.endMin)}`
-        : fmtClock(s.startMin);
+        ? `${fmtClockMin(s.startMin)}&nbsp;&ndash;&nbsp;${fmtClockMin(s.endMin)}`
+        : fmtClockMin(s.startMin);
 
       const classes = ['todo-day-segment'];
       if (isPast)    classes.push('is-past');
@@ -510,7 +479,7 @@ setTodayDate();
       html += `<div class="todo-day-seg-body">`;
 
       if (s.activity) {
-        html += `<div class="todo-day-activity-pill" style="background:${s.activity.color}">${s.activity.name}</div>`;
+        html += `<div class="todo-day-activity-pill" style="background:${s.activity.color}">${escHtml(s.activity.name)}</div>`;
       }
 
       // Now marker inside current segment (after the pill)
@@ -528,7 +497,7 @@ setTodayDate();
           <span class="todo-day-item-dot" style="background:${dotColor}"></span>
           <span class="todo-day-item-badge ${badge}">${badgeLabel}</span>
           ${timeStr}
-          <span class="todo-day-item-name">${item.name}</span>
+          <span class="todo-day-item-name">${escHtml(item.name)}</span>
         </div>`;
       }
 
@@ -605,10 +574,10 @@ setTodayDate();
     }
 
     function relativeLabel(days) {
-      if (days < 0) return `J${days}`;
-      if (days === 0) return "Aujourd'hui";
-      if (days === 1) return 'Demain';
-      return `J+${days}`;
+      if (days < 0)   return i18n.t('index.todo.rel_overdue',  { n: days });
+      if (days === 0) return i18n.t('index.todo.rel_today');
+      if (days === 1) return i18n.t('index.todo.rel_tomorrow');
+      return i18n.t('index.todo.rel_in_days', { n: days });
     }
 
     const taskLabel  = i18n.t('index.todo.task_label')  || 'Tâche';
@@ -631,11 +600,13 @@ setTodayDate();
           ${impHtml}
           <span class="quest-date-label">${dateLbl}</span>
         </div>
-        <div class="quest-entry-name">${entry.name}${timeHtml}</div>
+        <div class="quest-entry-name">${escHtml(entry.name)}${timeHtml}</div>
       </div>`;
     }
     questContent.innerHTML = html;
   }
+
+  _idxRerender.push(run);
 
   _langReady.then(() => {
     if (questLimitInput) {

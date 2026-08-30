@@ -28,7 +28,10 @@
     "theme_rose": "Thème rose",
     "theme_dark": "Thème sombre",
     "move_up": "Monter",
-    "move_down": "Descendre"
+    "move_down": "Descendre",
+    "save_error": "Enregistrement impossible. Tes dernières modifications n'ont pas été sauvegardées.",
+    "save_error_quota": "Enregistrement impossible : la mémoire du navigateur est pleine. Exporte puis supprime d'anciennes entrées (surtout les images et les notes vocales).",
+    "duplicate": "Dupliquer"
   },
 
   "index": {
@@ -68,7 +71,14 @@
       "sleep_label": "Sommeil",
       "now_label": "Maintenant",
       "quest_title": "Journal de Quêtes",
-      "quest_limit_label": "Max :"
+      "quest_limit_label": "Max :",
+      "remaining": "encore {d}",
+      "until": "jusqu'à {t}",
+      "starts_in": "dans {d}",
+      "rel_today": "Aujourd'hui",
+      "rel_tomorrow": "Demain",
+      "rel_in_days": "J+{n}",
+      "rel_overdue": "J{n}"
     }
   },
 
@@ -296,6 +306,12 @@
     "urge_step5_text": "L'envie est une vague : elle monte, elle atteint un pic, puis elle redescend.<br>Tu n'as pas besoin d'agir. Juste de surfer.<br><br><em>Reste ici encore un instant. Tu as déjà tenu — c'est ça, la victoire.</em>",
     "btn_urge_close": "Fermer",
     "btn_urge_next": "Suivant →",
+    "btn_urge_finish": "Terminer ✓",
+    "abstain_fmt_months_one": "{n} mois",
+    "abstain_fmt_months_other": "{n} mois",
+    "abstain_fmt_years_one": "{n} an",
+    "abstain_fmt_years_other": "{n} ans",
+    "abstain_fmt_years_days": "{y} et {n} j",
 
     "hero_phase": "— Réduction de dose",
     "hero_phase_libre": "— Phase libre · Objectif atteint",
@@ -641,7 +657,9 @@
     "view_audio_desc": "Affiche uniquement les notes vocales avec la date et le titre en marge. La suivante se lance automatiquement à la fin de chaque enregistrement.",
     "view_score_desc": "Affiche une courbe de l'évolution de tes notes au fil du temps.",
     "browse_no_audio": "Aucune entrée avec note vocale ne correspond aux critères.",
-    "browse_no_score": "Aucune entrée avec une note ne correspond aux critères."
+    "browse_no_score": "Aucune entrée avec une note ne correspond aux critères.",
+    "score_scroll_hint": "Les {shown} dernières entrées sur {total} — fais défiler vers la gauche pour remonter le temps.",
+    "score_click_to_edit": "Clique pour modifier cette entrée"
   },
 
   "task": {
@@ -656,6 +674,8 @@
     "empty_events": "Aucun événement pour l'instant.",
     "modal_task_title": "Nouvelle tâche",
     "modal_event_title": "Nouvel événement",
+    "modal_task_edit_title": "Modifier la tâche",
+    "modal_event_edit_title": "Modifier l'événement",
     "field_name": "Nom",
     "field_name_ph": "Nom de la tâche ou de l'événement",
     "field_duration": "Durée",
@@ -747,6 +767,7 @@
     "btn_save": "Enregistrer",
     "error_name_required": "Le nom est obligatoire.",
     "prompt_rename": "Nouveau nom :",
+    "prompt_duplicate_name": "Nom de la copie :",
     "confirm_delete": "Supprimer cette compétence ?",
     "filter_all": "Toutes",
     "xp_gain_title": "Ajouter de l'XP",

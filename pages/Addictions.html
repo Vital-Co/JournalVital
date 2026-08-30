@@ -31,23 +31,8 @@
         <div class="header-title-sub hidden" id="header-title-sub"></div>
       </div>
     </div>
-    <div class="header-right">
-      <div class="lang-switcher" role="group" aria-label="Langue / Language">
-        <button type="button" class="lang-btn" data-lang="fr" title="Français">FR</button>
-        <button type="button" class="lang-btn" data-lang="eng" title="English">EN</button>
-        <button type="button" class="lang-btn" data-lang="es" title="Español">ES</button>
-      </div>
-      <div class="theme-switcher" role="group" data-i18n-aria-label="common.theme_chooser_aria">
-        <span class="theme-label" data-i18n="common.theme_chooser_label">Choisis ta couleur...</span>
-        <button type="button" class="theme-dot theme-dot-light" data-theme="light" data-i18n-aria-label="common.theme_light" data-i18n-title="common.theme_light"></button>
-        <button type="button" class="theme-dot theme-dot-green" data-theme="green" data-i18n-aria-label="common.theme_green" data-i18n-title="common.theme_green"></button>
-        <button type="button" class="theme-dot theme-dot-blue" data-theme="blue" data-i18n-aria-label="common.theme_blue" data-i18n-title="common.theme_blue"></button>
-        <button type="button" class="theme-dot theme-dot-orange" data-theme="orange" data-i18n-aria-label="common.theme_orange" data-i18n-title="common.theme_orange"></button>
-        <button type="button" class="theme-dot theme-dot-rose" data-theme="rose" data-i18n-aria-label="common.theme_rose" data-i18n-title="common.theme_rose"></button>
-        <button type="button" class="theme-dot theme-dot-dark" data-theme="dark" data-i18n-aria-label="common.theme_dark" data-i18n-title="common.theme_dark"></button>
-      </div>
-      <div class="header-meta" id="today-date"></div>
-    </div>
+    <!-- lang switcher, theme dots and date are built by js/Common.js -->
+    <div class="header-right"></div>
   </header>
 
   <div class="journal-name-row hidden" id="journal-name-row">
@@ -301,7 +286,7 @@
           <div class="config-title" data-i18n="addiction.config_how_it_works">— Comment ça marche</div>
           <div class="abstain-intro">
             <p data-i18n="addiction.abstain_intro_p1">Pas de palier hebdomadaire, pas de dose à respecter. Une seule chose : tenir.</p>
-            <p data-i18n-html="addiction.abstain_intro_p2">Chaque jour, tu marques <strong>« journée tenue  »</strong> ou <strong>« j'ai consommé  »</strong>. Le compteur monte. En cas de rechute, il repart à zéro — mais ton record précédent reste affiché. Le travail accompli ne disparaît pas.</p>
+            <p data-i18n-html="addiction.abstain_intro_p2">Chaque jour, tu marques <strong>« journée tenue »</strong> ou <strong>« j'ai consommé »</strong>. Le compteur monte. En cas de rechute, il repart à zéro — mais ton record précédent reste affiché. Le travail accompli ne disparaît pas.</p>
             <p data-i18n="addiction.abstain_intro_p3">Des paliers symboliques se franchissent automatiquement : 24h, 72h, 7j, 14j, 30j, 60j, 90j, 6 mois, 1 an—…</p>
           </div>
         </div>
@@ -447,7 +432,7 @@
         <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
           <div class="today-row-label" data-i18n="addiction.today_vocal_label">Note vocale</div>
           <div class="vocal-note-zone" id="vocal-zone-taper">
-            <button type="button" class="btn btn-vocal" id="vocal-rec-btn-taper" data-i18n="addiction.btn_record">🎙 Enregistrer</button>
+            <button type="button" class="btn btn-vocal" id="vocal-rec-btn-taper" data-i18n="addiction.btn_record">🎙️ Enregistrer</button>
             <span class="vocal-status" id="vocal-status-taper"></span>
             <div class="vocal-list" id="vocal-list-taper"></div>
           </div>
@@ -520,7 +505,7 @@
         <div class="today-row" style="flex-direction:column; align-items:stretch; gap:10px;">
           <div class="today-row-label" data-i18n="addiction.today_vocal_label">Note vocale</div>
           <div class="vocal-note-zone" id="vocal-zone-abstain">
-            <button type="button" class="btn btn-vocal" id="vocal-rec-btn-abstain" data-i18n="addiction.btn_record">🎙 Enregistrer</button>
+            <button type="button" class="btn btn-vocal" id="vocal-rec-btn-abstain" data-i18n="addiction.btn_record">🎙️ Enregistrer</button>
             <span class="vocal-status" id="vocal-status-abstain"></span>
             <div class="vocal-list" id="vocal-list-abstain"></div>
           </div>
